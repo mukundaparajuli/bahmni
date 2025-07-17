@@ -50,7 +50,12 @@ exports.requestPasswordReset = asyncHandler(async (req, res) => {
     await sendEmail({
         to: user.email,
         subject: 'Password Reset Request',
-        html: `<p>Click <a href="${resetUrl}">here</a> to reset your password. This link expires in 1 hour.</p>`,
+        html: `
+      <h2>Password Reset</h2>
+      <p>Click <a href="${resetUrl}">here</a> to reset your password.</p>
+      <p>This link expires in 1 hour.</p>
+      <p>If you did not request this, please ignore this email.</p>
+    `,
     });
 
     ApiResponse(res, 200, null, 'Password reset link sent to email');
@@ -58,10 +63,12 @@ exports.requestPasswordReset = asyncHandler(async (req, res) => {
 
 // Reset Password
 exports.resetPassword = asyncHandler(async (req, res) => {
-    const { token } = req.params;
+    const { token } = req.query;
     const { newPassword } = req.body;
     const resetRecord = await PasswordReset.findOne({ token });
     if (!resetRecord || resetRecord.expiresAt < Date.now()) {
+        console.log(resetRecord.expiresAt)
+        console.log(Date.now())
         const error = new Error('Invalid or expired token');
         error.statusCode = 400;
         throw error;
