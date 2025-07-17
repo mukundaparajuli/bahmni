@@ -63,11 +63,12 @@ exports.requestPasswordReset = asyncHandler(async (req, res) => {
 
 // Reset Password
 exports.resetPassword = asyncHandler(async (req, res) => {
-    const { token } = req.query;
+    const { token } = req.params;
     const { newPassword } = req.body;
     const resetRecord = await PasswordReset.findOne({ token });
+    console.log(resetRecord);
     if (!resetRecord || resetRecord.expiresAt < Date.now()) {
-        console.log(resetRecord.expiresAt)
+        console.log(resetRecord)
         console.log(Date.now())
         const error = new Error('Invalid or expired token');
         error.statusCode = 400;
