@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/user');
 const asyncHandler = require('./async-handler');
+const env = require('../config/env');
 
 const authenticateToken = asyncHandler(async (req, res, next) => {
     const token = req.headers.authorization?.startsWith('Bearer ')
@@ -13,7 +14,9 @@ const authenticateToken = asyncHandler(async (req, res, next) => {
         throw error;
     }
 
+
     try {
+        const decoded = jwt.verify(token, env.jwtSecret);
         req.user = await User.findById(decoded.id).select('-password');
         if (!req.user || !req.user.isActive) {
             const error = new Error('User not found or inactive');
