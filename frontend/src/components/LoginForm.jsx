@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useContext } from 'react';
 import { AuthContext } from '@/contexts/auth-context';
@@ -9,11 +9,13 @@ import FormField from '@/components/common/form-field';
 const LoginForm = () => {
     const { login, isLoading } = useContext(AuthContext);
     const { showError } = useToastError();
+    const navigate = useNavigate();
     const { formData, handleChange } = useForm({ email: '', password: '' });
 
     const handleSubmit = (e) => {
         e.preventDefault();
         login(formData, {
+            onSuccess: () => navigate('/'),
             onError: (error) => showError(error, 'Login failed'),
         });
     };

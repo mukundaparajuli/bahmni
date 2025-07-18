@@ -6,6 +6,7 @@ const {
     reviewSelfRegistration,
     toggleUserStatus,
     updateUserRoles,
+    getUsers,
 } = require('../controllers/user.controller');
 const { authenticateToken } = require('../middleware/auth-middleware');
 const { restrictTo } = require('../middleware/rbac-handler');
@@ -15,5 +16,6 @@ router.post('/self-register', selfRegister);
 router.post('/review-registration', authenticateToken, restrictTo('Admin'), reviewSelfRegistration);
 router.put('/status/:userId', authenticateToken, restrictTo('Admin'), toggleUserStatus);
 router.put('/roles/:userId', authenticateToken, restrictTo('Admin'), updateUserRoles);
+router.get('/', authenticateToken, getUsers);
 
 module.exports = router;

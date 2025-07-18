@@ -1,1 +1,6 @@
-export const ROLES = ['Admin', 'ScannerClerk', 'Approver', 'Uploader'];
+export const ROLES = {
+    ADMIN: 'Admin',
+    SCANNER_CLERK: 'ScannerClerk',
+    APPROVER: 'Approver',
+    UPLOADER: 'Uploader',
+};

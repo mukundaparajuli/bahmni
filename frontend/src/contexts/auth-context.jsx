@@ -1,6 +1,6 @@
 import { createContext, useState, useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { login, logout } from '@/api';
+import { login } from '@/api';
 
 export const AuthContext = createContext();
 

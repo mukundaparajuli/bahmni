@@ -5,6 +5,7 @@ const { ApiResponse } = require('../utils/api-response');
 
 // Admin: Register a user
 exports.registerUser = asyncHandler(async (req, res) => {
+    console.log(req.body);
     const { employeeId, fullName, department, email, education, profession, password, employeeIdPhoto, photo, roles } = req.body;
     const user = await User.create({
         employeeId,
@@ -116,3 +117,14 @@ exports.updateUserRoles = asyncHandler(async (req, res) => {
 
     ApiResponse(res, 200, { ...user.toObject(), password: undefined }, 'User roles updated');
 });
+
+exports.getUsers = asyncHandler(async (req, res) => {
+    const users = await User.find();
+    if (!users) {
+        const error = new Error('No users found');
+        error.statusCode = 404;
+        throw error;
+    }
+
+    return ApiResponse(res, 200, { users }, 'All users are here');
+})
