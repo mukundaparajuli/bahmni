@@ -26,6 +26,7 @@ exports.registerUser = asyncHandler(async (req, res) => {
 
 // Self-Registration
 exports.selfRegister = asyncHandler(async (req, res) => {
+    console.log(req.body)
     const { employeeId, fullName, department, email, education, profession, password, employeeIdPhoto, photo } = req.body;
     const user = await User.create({
         employeeId,
