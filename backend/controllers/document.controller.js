@@ -3,8 +3,9 @@ const fs = require('fs');
 const asyncHandler = require('../middleware/async-handler');
 const multer = require('multer');
 const { ApiResponse } = require('../utils/api-response');
-// Create 'documents' folder if it doesn't exist
+const { v4: uuidv4 } = require('uuid');
 const uploadDir = path.join(__dirname, '..', 'documents');
+const Document = require('../models/document');
 if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
 }
@@ -32,12 +33,17 @@ exports.uploadDocument = asyncHandler(async (req, res) => {
     if (!file) {
         return ApiResponse(res, 400, null, 'No file uploaded');
     }
+    const fileName = uuidv4();
 
-    const filePath = path.join('documents', file.filename);
-
-    // Save to DB if needed here
-
+    const filePath = path.join('documents', fileName);
+    const document = await Document.create({
+        scannerClerk,
+        patientMRN,
+        fileName
+    });
+    const id = document._id;
     ApiResponse(res, 201, {
+        id,
         scannerClerk,
         patientMRN,
         filePath,
