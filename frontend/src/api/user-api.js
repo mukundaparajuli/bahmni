@@ -6,3 +6,7 @@ export const reviewSelfRegistration = (data) => axiosInstance.post('/user/review
 export const toggleUserStatus = (userId, data) => axiosInstance.put(`/user/status/${userId}`, data);
 export const updateUserRoles = (userId, data) => axiosInstance.put(`/user/roles/${userId}`, data);
 export const getUsers = () => axiosInstance.get('/user');
+export const updateUser = (userId, data) =>
+    axiosInstance.put(`/user/${userId}`, data, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+    });

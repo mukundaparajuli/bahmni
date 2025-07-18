@@ -31,6 +31,7 @@ export const AuthProvider = ({ children }) => {
         <AuthContext.Provider
             value={{
                 user,
+                setUser,
                 login: loginMutation.mutate,
                 logout: logoutMutation.mutate,
                 isLoading: loginMutation.isLoading || logoutMutation.isLoading,

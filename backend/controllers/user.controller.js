@@ -2,6 +2,8 @@ const asyncHandler = require('../middleware/async-handler');
 const User = require('../models/user');
 const { sendEmail } = require('../utils/email-service');
 const { ApiResponse } = require('../utils/api-response');
+const path = require("path")
+const fs = require("fs")
 
 // Admin: Register a user
 exports.registerUser = asyncHandler(async (req, res) => {
@@ -128,3 +130,35 @@ exports.getUsers = asyncHandler(async (req, res) => {
 
     return ApiResponse(res, 200, { users }, 'All users are here');
 })
+
+exports.updateUser = asyncHandler(async (req, res) => {
+    const { userId } = req.params;
+    const { fullName, email, department, employeeId, password } = req.body;
+    if (!fullName || !email || !department || !employeeId) {
+        return res.status(400).json({ message: 'Required fields missing' });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    // Delete old photo if it exists
+    if (user.photo && req.file) {
+        const oldPhotoPath = path.join(__dirname, '..', user.photo);
+        if (fs.existsSync(oldPhotoPath)) {
+            fs.unlink(oldPhotoPath, (err) => {
+                if (err) {
+                    console.error('Failed to delete file:', err);
+                } else {
+                    console.log('Old photo deleted successfully');
+                }
+            });
+        }
+    }
+
+    const updates = { fullName, email, department, employeeId };
+    if (password) updates.password = bcrypt.hashSync(password, 10);
+    if (req.file) updates.photo = `/uploads/profile-photos/${req.file.filename}`;
+
+    const updatedUser = await User.findByIdAndUpdate(userId, updates, { new: true });
+    return ApiResponse(res, 200, updatedUser, "User updated successfully")
+});

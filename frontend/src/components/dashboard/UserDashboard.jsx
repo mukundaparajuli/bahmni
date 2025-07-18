@@ -2,6 +2,7 @@ import { useContext } from 'react';
 import { AuthContext } from '@/contexts/auth-context';
 import DashboardCard from '@/components/common/DashboardCard';
 import { ROLES } from '@/utils/constants';
+import { Badge } from '../ui/badge';
 
 const UserDashboard = () => {
     const { user } = useContext(AuthContext);
@@ -11,8 +12,17 @@ const UserDashboard = () => {
             <h2 className="text-2xl font-bold mb-4">
                 Welcome, {user?.fullName || 'User'}!
             </h2>
-            <p className="text-gray-600 mb-6">
-                Your roles: {user?.roles?.join(', ') || 'None'}
+            <p className="text-gray-600 mb-6 flex gap-2 justify-start items-center">
+                Your roles:
+                <div className='flex gap-1'>{user.roles.length > 0 ? (
+                    user.roles.map((role) => (
+                        <Badge key={role} variant="secondary" className="text-xs">
+                            {role}
+                        </Badge>
+                    ))
+                ) : (
+                    <span className="text-sm text-gray-500">No roles assigned</span>
+                )}</div>
             </p>
             <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
                 {user?.roles.includes(ROLES.ADMIN) && (
