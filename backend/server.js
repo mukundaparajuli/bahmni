@@ -5,6 +5,7 @@ const connectDB = require('./config/db');
 const routes = require('./routes');
 const errorHandler = require('./middleware/error-handler');
 const env = require('./config/env');
+const path = require('path')
 
 dotenv.config();
 
@@ -14,6 +15,7 @@ connectDB();
 
 app.use(cors());
 app.use(express.json());
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 app.use('/api/v1/', routes);
 
