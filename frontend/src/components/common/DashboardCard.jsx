@@ -10,7 +10,7 @@ const DashboardCard = ({ title, description, link, disabled, onClick }) => (
                 <Button disabled={disabled}>Go to {title}</Button>
             </Link>
         ) : (
-            <Button onClick={onClick} disabled={disabled}>
+            <Button onClick={onClick} disabled={disabled} className={disabled === true ? "cursor-not-allowed" : ""}>
                 {title}
             </Button>
         )}

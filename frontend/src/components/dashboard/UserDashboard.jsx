@@ -37,7 +37,7 @@ const UserDashboard = () => {
                         title="Scan Documents"
                         description="Scan or upload documents for processing."
                         onClick={() => alert('Document scanning coming soon!')}
-                        disabled // Placeholder until Section 1.2
+                        disabled
                     />
                 )}
                 {user?.roles.includes(ROLES.APPROVER) && (
@@ -45,7 +45,7 @@ const UserDashboard = () => {
                         title="Review Documents"
                         description="Review and approve/reject scanned documents."
                         onClick={() => alert('Document review coming soon!')}
-                        disabled // Placeholder
+                        disabled
                     />
                 )}
                 {user?.roles.includes(ROLES.UPLOADER) && (
@@ -53,7 +53,7 @@ const UserDashboard = () => {
                         title="Upload to Bahmni"
                         description="Upload approved documents to Bahmni EMR."
                         onClick={() => alert('Bahmni upload coming soon!')}
-                        disabled // Placeholder
+                        disabled
                     />
                 )}
             </div>

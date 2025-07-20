@@ -84,7 +84,7 @@ const Profile = () => {
             <form onSubmit={onSubmit} className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 bg-white p-6 rounded-lg shadow-md">
                 <div className="col-span-2 flex justify-center mb-4">
                     <Avatar className="h-24 w-24">
-                        <AvatarImage src={getPhotoUrl(user)} alt={user.fullName} />
+                        <AvatarImage src={formData.photo || getPhotoUrl(user)} alt={user.fullName} />
                         <AvatarFallback className="bg-gray-600 text-white text-2xl">
                             {user.fullName.charAt(0).toUpperCase()}
                         </AvatarFallback>
