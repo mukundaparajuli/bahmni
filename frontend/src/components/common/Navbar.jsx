@@ -36,7 +36,12 @@ const Navbar = () => {
                             <Popover>
                                 <PopoverTrigger asChild>
                                     <Button variant="ghost" className="text-white flex items-center gap-2">
-                                        <User className="h-4 w-4" />
+                                        <Avatar className="h-8 w-8">
+                                            <AvatarImage src={getPhotoUrl(user)} alt={user.fullName} />
+                                            <AvatarFallback className="bg-gray-600 text-white">
+                                                {user.fullName?.charAt(0).toUpperCase() || '?'}
+                                            </AvatarFallback>
+                                        </Avatar>
                                         {user.fullName}
                                     </Button>
                                 </PopoverTrigger>
@@ -80,7 +85,7 @@ const Navbar = () => {
                                         )}
                                         <Button
                                             variant="ghost"
-                                            className="w-full text-left text-sm text-gray-700 hover:text-red-600 hover:bg-gray-100"
+                                            className="w-full text-left text-sm text-gray-700 bg-gray-100 hover:text-red-600 hover:bg-gray-200"
                                             onClick={handleLogout}
                                         >
                                             <LogOut className="h-4 w-4 mr-2" />

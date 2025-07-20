@@ -2,6 +2,7 @@ const asyncHandler = require('../middleware/async-handler');
 const Document = require('../models/document');
 const { ApiResponse } = require('../utils/api-response');
 const User = require('../models/user');
+
 exports.getClerkDocuments = asyncHandler(async (req, res) => {
     const { scannerClerk } = req.body;
     const clerkId = scannerClerk;

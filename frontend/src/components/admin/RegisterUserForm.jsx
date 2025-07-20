@@ -118,7 +118,7 @@ const RegisterUserForm = ({ onClose }) => {
             />
             <div>
                 <Label>Roles</Label>
-                <div className="grid gap-2">
+                <div className="grid gap-2 m-2">
                     {Object.values(ROLES).map((role) => (
                         <div key={role} className="flex items-center gap-2">
                             <Checkbox

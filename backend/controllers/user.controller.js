@@ -4,7 +4,7 @@ const { sendEmail } = require('../utils/email-service');
 const { ApiResponse } = require('../utils/api-response');
 const path = require("path")
 const fs = require("fs")
-
+const bcrypt = require("bcrypt")
 // Admin: Register a user
 exports.registerUser = asyncHandler(async (req, res) => {
     console.log(req.body);
