@@ -5,6 +5,10 @@ const DocumentSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
+    employeeId: {
+        type: String,
+        required: true
+    },
     patientMRN: {
         type: String,
         required: true,

@@ -5,10 +5,12 @@ const { v4: uuidv4 } = require('uuid');
 const path = require("path")
 
 
-// Upload document handler
+
 exports.uploadDocument = asyncHandler(async (req, res) => {
     const file = req.file;
-    const { scannerClerk, patientMRN } = req.body;
+    const { scannerClerk, patientMRN, employeeId } = req.body;
+    console.log(scannerClerk, patientMRN, employeeId);
+    console.log(file);
 
     if (!file) {
         return ApiResponse(res, 400, null, 'No file uploaded');
@@ -19,7 +21,8 @@ exports.uploadDocument = asyncHandler(async (req, res) => {
     const document = await Document.create({
         scannerClerk,
         patientMRN,
-        fileName
+        fileName,
+        employeeId
     });
     const id = document._id;
     ApiResponse(res, 201, {

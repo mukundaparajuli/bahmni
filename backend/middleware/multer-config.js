@@ -22,10 +22,11 @@ const configureMulter = (uploadDir) => {
     return multer({
         storage,
         fileFilter: (req, file, cb) => {
-            if (['image/jpeg', 'image/png'].includes(file.mimetype)) {
+            const allowedTypes = ['image/jpeg', 'image/png', 'application/pdf'];
+            if (allowedTypes.includes(file.mimetype)) {
                 cb(null, true);
             } else {
-                cb(new Error('Only JPEG or PNG images are allowed'), false);
+                cb(new Error('Only JPEG, PNG images or PDFs are allowed'), false);
             }
         },
         limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit

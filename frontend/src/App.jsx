@@ -8,6 +8,7 @@ import Navbar from './components/common/Navbar';
 import Dashboard from '@/pages/Dashboard';
 import AdminDashboardPage from './pages/AdminDashboard';
 import Profile from './pages/Profile';
+import Scanner from './components/Scanner';
 
 const App = () => (
   <Router>
@@ -20,6 +21,7 @@ const App = () => (
       <Route path="/reset-password" element={<PasswordResetRequest />} />
       <Route path="/reset-password/:token" element={<PasswordReset />} />
       <Route path="/profile" element={<Profile />} />
+      <Route path="/scanner" element={<Scanner />} />
     </Routes>
     <Toaster />
   </Router>
