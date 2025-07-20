@@ -19,7 +19,7 @@ const DocumentSchema = new mongoose.Schema({
     },
     status: {
         type: String,
-        enum: ['draft', 'submitted', 'approved', 'rejected'],
+        enum: ['draft', 'submitted', 'approved', 'rejected', 'uploaded'],
         default: 'draft',
     },
     comment: {
