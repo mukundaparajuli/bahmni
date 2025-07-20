@@ -5,24 +5,27 @@ import 'cropperjs/dist/cropper.css';
 import { Document, Page, pdfjs } from 'react-pdf';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import axios from 'axios';
-import { upload } from '../api/uploadDoc-api'
+import jsPDF from 'jspdf';
+import { upload } from '../api/uploadDoc-api';
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.js`;
 
 const DocumentScanner = () => {
     const [image, setImage] = useState(null);
+    const [capturedImages, setCapturedImages] = useState([]);
     const [pdfFile, setPdfFile] = useState(null);
     const [mrn, setMrn] = useState('');
     const [showWebcam, setShowWebcam] = useState(false);
     const [pdfName, setPdfName] = useState('');
     const cropperRef = useRef(null);
     const webcamRef = useRef(null);
-    console.log(upload);
 
     const handleCapture = useCallback(() => {
         const screenshot = webcamRef.current.getScreenshot();
-        setImage(screenshot);
-        setShowWebcam(false);
+        if (screenshot) {
+            setCapturedImages(prev => [...prev, screenshot]);
+            setShowWebcam(false);
+        }
     }, []);
 
     const handleFileChange = (e) => {
@@ -55,17 +58,15 @@ const DocumentScanner = () => {
 
         const formData = new FormData();
         formData.append('file', file);
-        formData.append('scannerClerk', '687903b74d2933e28308743f'); // replace with actual
+        formData.append('scannerClerk', '687903b74d2933e28308743f');
         formData.append('patientMRN', mrn);
         formData.append('employeeId', '12345');
-        console.log(blob);
-        try {
-            const res = await axios.post('http://localhost:5000/api/v1/doc/uploadDocument', formData);
 
+        try {
+            await axios.post('http://localhost:5000/api/v1/doc/uploadDocument', formData);
             alert('Image uploaded successfully!');
             setImage(null);
         } catch (err) {
-            console.log(res.data);
             console.error(err);
             alert('Upload failed');
         }
@@ -75,16 +76,44 @@ const DocumentScanner = () => {
         if (!mrn || !pdfFile) return alert('Missing Patient MRN or PDF');
         const formData = new FormData();
         formData.append('file', pdfFile);
-        formData.append('scannerClerk', '687903b74d2933e28308743f'); // replace with actual
+        formData.append('scannerClerk', '687903b74d2933e28308743f');
         formData.append('patientMRN', mrn);
         formData.append('employeeId', '1234');
-        console.log(pdfFile);
 
         try {
-            const res = await axios.post('http://localhost:5000/api/v1/doc/uploadDocument', formData);
+            await axios.post('http://localhost:5000/api/v1/doc/uploadDocument', formData);
             alert('PDF uploaded successfully!');
             setPdfFile(null);
             setPdfName('');
+        } catch (err) {
+            console.error(err);
+            alert('Upload failed');
+        }
+    };
+
+    const generateAndUploadPdf = async () => {
+        if (!mrn || capturedImages.length === 0) return alert('Add MRN and capture images');
+
+        const doc = new jsPDF();
+
+        for (let i = 0; i < capturedImages.length; i++) {
+            if (i !== 0) doc.addPage();
+            doc.addImage(capturedImages[i], 'JPEG', 10, 10, 190, 270); // A4 ratio
+        }
+
+        const pdfBlob = doc.output('blob');
+        const file = new File([pdfBlob], 'scanned-document.pdf', { type: 'application/pdf' });
+
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('scannerClerk', '687903b74d2933e28308743f');
+        formData.append('patientMRN', mrn);
+        formData.append('employeeId', '1234');
+
+        try {
+            await axios.post('http://localhost:5000/api/v1/doc/uploadDocument', formData);
+            alert('Scanned PDF uploaded successfully!');
+            setCapturedImages([]);
         } catch (err) {
             console.error(err);
             alert('Upload failed');
@@ -115,7 +144,7 @@ const DocumentScanner = () => {
                    file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
             />
 
-            {/* Camera */}
+            {/* Camera Button */}
             <button
                 onClick={() => setShowWebcam(true)}
                 className="mb-4 bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition"
@@ -131,15 +160,51 @@ const DocumentScanner = () => {
                         ref={webcamRef}
                         screenshotFormat="image/jpeg"
                         className="w-full rounded-md"
-                        videoConstraints={{
-                            facingMode: 'environment',
-                        }}
+                        videoConstraints={{ facingMode: 'environment' }}
                     />
                     <button
                         onClick={handleCapture}
                         className="mt-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition"
                     >
-                        Capture & Crop
+                        Capture Image
+                    </button>
+                </div>
+            )}
+
+            {/* Captured Image Gallery */}
+            {capturedImages.length > 0 && (
+                <div className="mb-4">
+                    <h2 className="text-lg font-medium mb-2">Captured Images</h2>
+                    <div className="grid grid-cols-2 gap-2">
+                        {capturedImages.map((img, index) => (
+                            <div key={index} className="relative">
+                                <img src={img} alt={`Captured ${index}`} className="w-full rounded shadow" />
+                                <button
+                                    onClick={() => {
+                                        const updated = [...capturedImages];
+                                        updated.splice(index, 1);
+                                        setCapturedImages(updated);
+                                    }}
+                                    className="absolute top-1 right-1 bg-red-600 text-white text-xs px-2 py-1 rounded hover:bg-red-700"
+                                >
+                                    Delete
+                                </button>
+                            </div>
+                        ))}
+
+
+                    </div>
+                    <button
+                        onClick={generateAndUploadPdf}
+                        className="mt-4 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition"
+                    >
+                        Upload All as PDF
+                    </button>
+                    <button
+                        onClick={() => setCapturedImages([])}
+                        className="mt-2 bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition ml-2"
+                    >
+                        Clear Captured Images
                     </button>
                 </div>
             )}
@@ -169,17 +234,17 @@ const DocumentScanner = () => {
                 </>
             )}
 
-            {/* PDF Preview */}
+            {/* PDF Preview and Upload */}
             {pdfFile && (
-                <>
-
+                <div className="mt-4">
+                    <p className="text-sm mb-2 text-gray-600">PDF selected: {pdfName}</p>
                     <button
                         onClick={uploadPdf}
                         className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition"
                     >
                         Upload PDF
                     </button>
-                </>
+                </div>
             )}
         </div>
     );
