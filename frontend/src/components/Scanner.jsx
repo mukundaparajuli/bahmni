@@ -4,9 +4,8 @@ import Cropper from 'react-cropper';
 import 'cropperjs/dist/cropper.css';
 import { Document, Page, pdfjs } from 'react-pdf';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
-import axios from 'axios';
 import jsPDF from 'jspdf';
-import { upload } from '../api/uploadDoc-api';
+import axiosInstance from '@/api/axios-instance';
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.js`;
 
@@ -55,12 +54,12 @@ const DocumentScanner = () => {
         const canvas = cropper.getCroppedCanvas();
         const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg'));
         const file = new File([blob], 'cropped-image.jpg', { type: 'image/jpeg' });
-
+        console.log(file)
         const formData = new FormData();
         formData.append('file', file);
-        formData.append('scannerClerk', '687903b74d2933e28308743f');
         formData.append('patientMRN', mrn);
         formData.append('employeeId', '12345');
+        console.log(blob);
 
         try {
             await axios.post('http://localhost:5000/api/v1/doc/uploadDocument', formData);
@@ -76,12 +75,11 @@ const DocumentScanner = () => {
         if (!mrn || !pdfFile) return alert('Missing Patient MRN or PDF');
         const formData = new FormData();
         formData.append('file', pdfFile);
-        formData.append('scannerClerk', '687903b74d2933e28308743f');
         formData.append('patientMRN', mrn);
         formData.append('employeeId', '1234');
 
         try {
-            await axios.post('http://localhost:5000/api/v1/doc/uploadDocument', formData);
+            const res = await axiosInstance.post('/clerk/uploadDoc', formData);
             alert('PDF uploaded successfully!');
             setPdfFile(null);
             setPdfName('');
@@ -111,7 +109,7 @@ const DocumentScanner = () => {
         formData.append('employeeId', '1234');
 
         try {
-            await axios.post('http://localhost:5000/api/v1/doc/uploadDocument', formData);
+            await axiosInstance.post(`/api/v1/clerk/uploadDoc`, formData);
             alert('Scanned PDF uploaded successfully!');
             setCapturedImages([]);
         } catch (err) {

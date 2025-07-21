@@ -89,11 +89,14 @@
 const Router = require("express");
 const { restrictTo } = require("../middleware/rbac-handler");
 const { authenticateToken } = require("../middleware/auth-middleware");
-const { approveDocument, rejectDocument } = require("../controllers/approver.controller");
+const { approveDocument, rejectDocument, getScannedDocuments, getAllMyApprovedDocuments, getAllMyRejectedDocuments } = require("../controllers/approver.controller");
 
 const router = Router();
 
-router.post('/approve/:id', authenticateToken, restrictTo(['Approver']), approveDocument);
-router.post('/reject/:id', authenticateToken, restrictTo(['Approver']), rejectDocument);
+router.post('/approve/:id', authenticateToken, restrictTo('Approver'), approveDocument);
+router.post('/reject/:id', authenticateToken, restrictTo('Approver'), rejectDocument);
+router.get('/scannedDocs', authenticateToken, restrictTo('Approver'), getScannedDocuments);
+router.get('/approvedDocs', authenticateToken, restrictTo('Approver'), getAllMyApprovedDocuments);
+router.get('/rejectedDocs', authenticateToken, restrictTo('Approver'), getAllMyRejectedDocuments);
 
 module.exports = router;

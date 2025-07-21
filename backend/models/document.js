@@ -1,21 +1,36 @@
 const mongoose = require('mongoose');
 
 const DocumentSchema = new mongoose.Schema({
-    scannerClerk: {
-        type: String,
+    scannerId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
         required: true,
+    },
+    approverId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        default: null,
+    },
+    uploaderId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        default: null,
     },
     employeeId: {
         type: String,
         required: true
     },
-    patientMRN: {
+    fileName: {
         type: String,
         required: true,
     },
-    uploadedAt: {
-        type: Date,
-        default: Date.now,
+    filePath: {
+        type: String,
+        required: true,
+    },
+    patientMRN: {
+        type: String,
+        required: true,
     },
     status: {
         type: String,
@@ -26,11 +41,15 @@ const DocumentSchema = new mongoose.Schema({
         type: String,
         default: '',
     },
-    reviewerId: {
+    scannedAt: {
+        type: Date,
+        default: Date.now,
+    },
+    reviewedAt: {
         type: String,
         default: null,
     },
-    reviewedAt: {
+    uploadedAt: {
         type: Date,
         default: null,
     }

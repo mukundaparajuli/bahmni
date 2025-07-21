@@ -7,7 +7,7 @@ import { ROLES } from '@/utils/constants';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { getPhotoUrl } from '@/utils/get-image-url';
+import { getStaticUrl } from '@/utils/get-static-url';
 
 const Navbar = () => {
     const { user, logout } = useContext(AuthContext);
@@ -21,7 +21,6 @@ const Navbar = () => {
         setIsMobileMenuOpen(false);
     };
 
-    console.log(getPhotoUrl(user))
 
     return (
         <nav className="bg-gray-800 text-white p-4 sticky top-0 z-50 shadow-md">
@@ -37,7 +36,7 @@ const Navbar = () => {
                                 <PopoverTrigger asChild>
                                     <Button variant="ghost" className="text-white flex items-center gap-2">
                                         <Avatar className="h-8 w-8">
-                                            <AvatarImage src={getPhotoUrl(user)} alt={user.fullName} />
+                                            <AvatarImage src={getStaticUrl(user.photo)} alt={user.fullName} />
                                             <AvatarFallback className="bg-gray-600 text-white">
                                                 {user.fullName?.charAt(0).toUpperCase() || '?'}
                                             </AvatarFallback>
@@ -48,7 +47,7 @@ const Navbar = () => {
                                 <PopoverContent className="w-72 bg-white rounded-lg shadow-lg p-4 border border-gray-200">
                                     <div className="flex items-center gap-3 mb-4">
                                         <Avatar className="h-8 w-8">
-                                            <AvatarImage src={getPhotoUrl(user)} alt={user.fullName} />
+                                            <AvatarImage src={getStaticUrl(user.photo)} alt={user.fullName} />
                                             <AvatarFallback className="bg-gray-600 text-white">
                                                 {user.fullName?.charAt(0).toUpperCase() || '?'}
                                             </AvatarFallback>
@@ -120,7 +119,7 @@ const Navbar = () => {
                         <>
                             <div className="flex items-center gap-3">
                                 <Avatar className="h-8 w-8">
-                                    <AvatarImage src={getPhotoUrl()} alt={user.fullName} />
+                                    <AvatarImage src={getStaticUrl(user.photo)} alt={user.fullName} />
                                     <AvatarFallback className="bg-gray-600 text-white">
                                         {user.fullName?.charAt(0).toUpperCase() || '?'}
                                     </AvatarFallback>
