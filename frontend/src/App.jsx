@@ -8,7 +8,15 @@ import Navbar from './components/common/Navbar';
 import Dashboard from '@/pages/Dashboard';
 import AdminDashboardPage from './pages/AdminDashboard';
 import Profile from './pages/Profile';
-import Scanner from './components/Scanner';
+import ScannerPage from './pages/ScannerPage';
+import Unauthorized from './pages/Unauthorized';
+import ScannerDashboard from './components/ScannerDashboard';
+import DocumentScanner from './components/Scanner';
+import DisplayScannedDocs from './components/DisplayScannedDocs';
+import ApproverPage from './pages/ApproverPage';
+import ReviewSection from './components/ReviewSection';
+import RejectedSection from './components/RejectedSection';
+import ApprovedSection from './components/ApprovedSection';
 
 const App = () => (
   <Router>
@@ -21,7 +29,20 @@ const App = () => (
       <Route path="/reset-password" element={<PasswordResetRequest />} />
       <Route path="/reset-password/:token" element={<PasswordReset />} />
       <Route path="/profile" element={<Profile />} />
-      <Route path="/scanner" element={<Scanner />} />
+      <Route path="/unauthorized" element={<Unauthorized />} />
+
+
+      <Route path="/scanner" element={<ScannerPage />} >
+        <Route path="scan" element={<DocumentScanner />} />
+        <Route path="docs" element={<DisplayScannedDocs />} />
+      </Route>
+
+      <Route path="/approver" element={<ApproverPage />} >
+        <Route path="review" element={<ReviewSection />} />
+        <Route path="approved" element={<ApprovedSection />} />
+        <Route path="rejected" element={<RejectedSection />} />
+      </Route>
+
     </Routes>
     <Toaster />
   </Router>

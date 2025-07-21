@@ -1,3 +1,11 @@
+const Router = require('express');
+const { getClerkDocuments, scanDocument } = require('../controllers/clerk.controller');
+const { authenticateToken } = require('../middleware/auth-middleware');
+const { restrictTo } = require('../middleware/rbac-handler');
+const configureMulter = require('../middleware/multer-config');
+const path = require('path');
+
+const router = Router();
 /**
  * @swagger
  * tags:
@@ -36,8 +44,12 @@
  *       400:
  *         description: Invalid input
  */
-const Router = require('express');
-const router = Router();
-const { getClerkDocuments } = require('../controllers/clerk.document');
-router.post('/clerkDocs', getClerkDocuments);
+
+const uploadDir = path.join(__dirname, '..', 'uploads', 'documents');
+const upload = configureMulter(uploadDir);
+
+router.get('/clerkDocs', authenticateToken, restrictTo('ScannerClerk'), getClerkDocuments);
+router.post('/uploadDoc', authenticateToken, upload.single('file'), scanDocument);
+
+
 module.exports = router;

@@ -9,7 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import useToastError from '@/hooks/useToastError';
 import FormField from '@/components/common/form-field';
 import useForm from '@/hooks/useForm';
-import { getPhotoUrl } from '@/utils/get-image-url';
+import { getStaticUrl } from '@/utils/get-static-url';
 
 
 const Profile = () => {
@@ -84,7 +84,7 @@ const Profile = () => {
             <form onSubmit={onSubmit} className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 bg-white p-6 rounded-lg shadow-md">
                 <div className="col-span-2 flex justify-center mb-4">
                     <Avatar className="h-24 w-24">
-                        <AvatarImage src={formData.photo || getPhotoUrl(user)} alt={user.fullName} />
+                        <AvatarImage src={formData.photo || getStaticUrl(user.photo)} alt={user.fullName} />
                         <AvatarFallback className="bg-gray-600 text-white text-2xl">
                             {user.fullName.charAt(0).toUpperCase()}
                         </AvatarFallback>
