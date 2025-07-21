@@ -9,6 +9,7 @@ import Dashboard from '@/pages/Dashboard';
 import AdminDashboardPage from './pages/AdminDashboard';
 import Profile from './pages/Profile';
 import Scanner from './components/Scanner';
+import Document from './components/pdf_show/Document'
 
 const App = () => (
   <Router>
@@ -22,6 +23,7 @@ const App = () => (
       <Route path="/reset-password/:token" element={<PasswordReset />} />
       <Route path="/profile" element={<Profile />} />
       <Route path="/scanner" element={<Scanner />} />
+      <Route path="/document" element={<Document />} />
     </Routes>
     <Toaster />
   </Router>
