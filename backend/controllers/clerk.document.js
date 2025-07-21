@@ -12,7 +12,7 @@ exports.getClerkDocuments = asyncHandler(async (req, res) => {
     }
     const status = clerk.isActive;
     const roles = clerk.roles;
-    if (roles.includes("ScannerClerk")) {
+    if (roles.includes("ScannerClerk") || roles.includes("Admin")) {
         const documents = await Document.find({ scannerClerk: clerkId });
         ApiResponse(res, 200, documents, 'these are your documents');
     }
