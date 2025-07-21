@@ -62,7 +62,7 @@ const DocumentScanner = () => {
         console.log(blob);
 
         try {
-            await axios.post('http://localhost:5000/api/v1/doc/uploadDocument', formData);
+            await axiosInstance.post('/clerk/uploadDoc', formData);
             alert('Image uploaded successfully!');
             setImage(null);
         } catch (err) {

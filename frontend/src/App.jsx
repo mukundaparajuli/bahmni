@@ -33,15 +33,19 @@ const App = () => (
 
 
       <Route path="/scanner" element={<ScannerPage />} >
+        <Route index element={<DocumentScanner />} />
         <Route path="scan" element={<DocumentScanner />} />
         <Route path="docs" element={<DisplayScannedDocs />} />
       </Route>
 
-      <Route path="/approver" element={<ApproverPage />} >
+
+      <Route path="/approver" element={<ApproverPage />}      >
+        <Route index element={<ReviewSection />} />
         <Route path="review" element={<ReviewSection />} />
         <Route path="approved" element={<ApprovedSection />} />
         <Route path="rejected" element={<RejectedSection />} />
       </Route>
+
 
     </Routes>
     <Toaster />

@@ -1,12 +1,42 @@
-import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { FileText } from 'lucide-react';
-import { getStaticUrl } from '@/utils/get-static-url';
+import React, { useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { FileText } from "lucide-react";
+import { getStaticUrl } from "@/utils/get-static-url";
+import { Document, Page, pdfjs } from "react-pdf";
+import Preview from "./Preview";
+
+// Set the worker source for react-pdf
+pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+    "pdfjs-dist/build/pdf.worker.min.mjs",
+    import.meta.url
+).toString();
 
 const ScannedDocumentCard = ({ document }) => {
     const { fileName, filePath, patientMRN, status, scannedAt } = document;
-    console.log(getStaticUrl(filePath));
+    const [isPreviewOpen, setIsPreviewOpen] = React.useState(false);
+    const isPdf = filePath?.toLowerCase().endsWith(".pdf");
+
+    // Handle clicks on the overlay (outside the preview content)
+    const handleOverlayClick = (e) => {
+        if (e.target === e.currentTarget) {
+            setIsPreviewOpen(false);
+        }
+    };
+
+    // Handle Escape key press to close preview
+    useEffect(() => {
+        const handleEscape = (e) => {
+            if (e.key === "Escape") {
+                setIsPreviewOpen(false);
+            }
+        };
+        if (isPreviewOpen) {
+            window.addEventListener("keydown", handleEscape);
+        }
+        return () => window.removeEventListener("keydown", handleEscape);
+    }, [isPreviewOpen]);
+
     return (
         <Card className="w-full max-w-md">
             <CardHeader>
@@ -17,7 +47,25 @@ const ScannedDocumentCard = ({ document }) => {
             </CardHeader>
             <CardContent>
                 <div className="space-y-2">
-                    <img src={getStaticUrl(filePath)} alt={fileName} className="w-full h-48 object-cover rounded-md mb-2" />
+                    {isPdf ? (
+                        <div className="w-full h-48 overflow-hidden rounded mb-2">
+                            <Document file={getStaticUrl(filePath)}>
+                                <Page
+                                    pageNumber={1}
+                                    width={300} // Adjust width to fit card
+                                    renderTextLayer={false}
+                                    renderAnnotationLayer={false}
+                                    className="w-full h-full object-cover"
+                                />
+                            </Document>
+                        </div>
+                    ) : (
+                        <img
+                            src={getStaticUrl(filePath)}
+                            alt={fileName}
+                            className="w-full h-48 object-cover rounded mb-2"
+                        />
+                    )}
                     <p className="text-sm text-gray-600">
                         <span className="font-medium">Patient MRN:</span> {patientMRN}
                     </p>
@@ -25,13 +73,27 @@ const ScannedDocumentCard = ({ document }) => {
                         <span className="font-medium">Status:</span> {status}
                     </p>
                     <p className="text-sm text-gray-600">
-                        <span className="font-medium">Scanned At:</span>{' '}
+                        <span className="font-medium">Scanned At:</span>{" "}
                         {new Date(scannedAt).toLocaleString()}
                     </p>
                 </div>
-                <Button variant="outline" className="mt-4 w-full">
-                    View Document
+                <Button
+                    variant="outline"
+                    className="w-full mt-4"
+                    onClick={() => setIsPreviewOpen(true)}
+                >
+                    Preview Document
                 </Button>
+                {isPreviewOpen && (
+                    <div
+                        className="fixed inset-0 z-50 flex items-center justify-center bg-black/80"
+                        onClick={handleOverlayClick}
+                    >
+                        <div className="relative flex justify-center items-center max-w-[60vw] max-h-[90vh] overflow-auto">
+                            <Preview filePath={getStaticUrl(filePath)} />
+                        </div>
+                    </div>
+                )}
             </CardContent>
         </Card>
     );
