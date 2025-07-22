@@ -46,11 +46,11 @@ exports.selfRegister = asyncHandler(async (req, res) => {
         isSelfRegistered: true,
         registrationStatus: 'Pending',
     });
-    await sendEmail({
-        to: email,
-        subject: 'Self-Registration Submitted',
-        html: `<p>Your registration is pending admin approval. You'll be notified once reviewed.</p>`,
-    });
+    // await sendEmail({
+    //     to: email,
+    //     subject: 'Self-Registration Submitted',
+    //     html: `<p>Your registration is pending admin approval. You'll be notified once reviewed.</p>`,
+    // });
     ApiResponse(res, 201, null, 'Registration submitted, pending approval');
 });
 
@@ -75,13 +75,13 @@ exports.reviewSelfRegistration = asyncHandler(async (req, res) => {
     user.rejectionReason = status === 'Rejected' ? rejectionReason : null;
     await user.save();
 
-    await sendEmail({
-        to: user.email,
-        subject: `Registration ${status}`,
-        html: status === 'Approved'
-            ? `<p>Your registration has been approved. You can now log in.</p>`
-            : `<p>Your registration was rejected. Reason: ${rejectionReason}</p>`,
-    });
+    // await sendEmail({
+    //     to: user.email,
+    //     subject: `Registration ${status}`,
+    //     html: status === 'Approved'
+    //         ? `<p>Your registration has been approved. You can now log in.</p>`
+    //         : `<p>Your registration was rejected. Reason: ${rejectionReason}</p>`,
+    // });
 
     ApiResponse(res, 200, null, `User registration ${status.toLowerCase()}`);
 });
