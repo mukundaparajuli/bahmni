@@ -6,6 +6,9 @@ import { getStaticUrl } from "@/utils/get-static-url";
 import { Document, Page, pdfjs } from "react-pdf";
 import Preview from "./Preview";
 
+// Ensure you have the correct path to pdf.worker.min.mjs
+
+
 // Set the worker source for react-pdf
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
     "pdfjs-dist/build/pdf.worker.min.mjs",
