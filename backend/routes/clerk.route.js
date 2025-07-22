@@ -1,5 +1,5 @@
 const Router = require('express');
-const { getClerkDocuments, scanDocument } = require('../controllers/clerk.controller');
+const { getClerkDocuments, scanDocument, deleteDocument } = require('../controllers/clerk.controller');
 const { authenticateToken } = require('../middleware/auth-middleware');
 const { restrictTo } = require('../middleware/rbac-handler');
 const configureMulter = require('../middleware/multer-config');
@@ -49,6 +49,7 @@ const uploadDir = path.join(__dirname, '..', 'uploads', 'documents');
 const upload = configureMulter(uploadDir);
 
 router.get('/clerkDocs', authenticateToken, restrictTo('ScannerClerk'), getClerkDocuments);
+router.get('/deleteDoc/:id', authenticateToken, restrictTo('ScannerClerk'), deleteDocument);
 router.post('/uploadDoc', authenticateToken, upload.single('file'), scanDocument);
 
 

@@ -8,7 +8,7 @@ import FormField from '@/components/common/form-field';
 
 const RegisterForm = () => {
     const { showError, showSuccess } = useToastError();
-    const { formData, handleChange, handleFileChange } = useForm({
+    const { formData, handleChange } = useForm({
         employeeId: '',
         fullName: '',
         department: '',
@@ -19,20 +19,14 @@ const RegisterForm = () => {
     });
 
     const mutation = useMutation({
-        mutationFn: () => {
-            const data = new FormData();
-            Object.entries(formData).forEach(([key, value]) => {
-                if (value) data.append(key, value);
-            });
-            return selfRegister(data);
-        },
+        mutationFn: selfRegister,
         onSuccess: () => showSuccess('Registration submitted, pending approval'),
         onError: (error) => showError(error, 'Registration failed'),
     });
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        mutation.mutate();
+        mutation.mutate(formData);
     };
 
     return (

@@ -1,13 +1,10 @@
 import React, { useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { FileText } from "lucide-react";
+import { FileText, Trash2 } from "lucide-react";
 import { getStaticUrl } from "@/utils/get-static-url";
 import { Document, Page, pdfjs } from "react-pdf";
 import Preview from "./Preview";
-
-// Ensure you have the correct path to pdf.worker.min.mjs
-
 
 // Set the worker source for react-pdf
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
@@ -15,7 +12,7 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL(
     import.meta.url
 ).toString();
 
-const ScannedDocumentCard = ({ document }) => {
+const ScannedDocumentCard = ({ document, deleteButton, onDelete }) => {
     const { fileName, filePath, patientMRN, status, scannedAt } = document;
     const [isPreviewOpen, setIsPreviewOpen] = React.useState(false);
     const isPdf = filePath?.toLowerCase().endsWith(".pdf");
@@ -41,7 +38,7 @@ const ScannedDocumentCard = ({ document }) => {
     }, [isPreviewOpen]);
 
     return (
-        <Card className="w-full max-w-md">
+        <Card className="w-full max-w-md relative">
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                     <FileText className="h-5 w-5 text-blue-500" />
@@ -55,7 +52,7 @@ const ScannedDocumentCard = ({ document }) => {
                             <Document file={getStaticUrl(filePath)}>
                                 <Page
                                     pageNumber={1}
-                                    width={300} // Adjust width to fit card
+                                    width={300}
                                     renderTextLayer={false}
                                     renderAnnotationLayer={false}
                                     className="w-full h-full object-cover"
@@ -80,13 +77,15 @@ const ScannedDocumentCard = ({ document }) => {
                         {new Date(scannedAt).toLocaleString()}
                     </p>
                 </div>
-                <Button
-                    variant="outline"
-                    className="w-full mt-4"
-                    onClick={() => setIsPreviewOpen(true)}
-                >
-                    Preview Document
-                </Button>
+                <div className="mt-4">
+                    <Button
+                        variant="outline"
+                        className="w-full"
+                        onClick={() => setIsPreviewOpen(true)}
+                    >
+                        Preview Document
+                    </Button>
+                </div>
                 {isPreviewOpen && (
                     <div
                         className="fixed inset-0 z-50 flex items-center justify-center bg-black/80"
@@ -98,6 +97,17 @@ const ScannedDocumentCard = ({ document }) => {
                     </div>
                 )}
             </CardContent>
+            {deleteButton && (
+                <Button
+                    variant="destructive"
+                    size="icon"
+                    onClick={onDelete}
+                    title="Delete Document"
+                    className="absolute top-2 right-2 bg-red-600 hover:bg-red-700"
+                >
+                    <Trash2 className="h-4 w-4" />
+                </Button>
+            )}
         </Card>
     );
 };

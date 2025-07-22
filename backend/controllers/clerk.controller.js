@@ -45,3 +45,35 @@ exports.scanDocument = asyncHandler(async (req, res) => {
     });
     ApiResponse(res, 201, document, 'File uploaded successfully');
 });
+
+exports.deleteDocument = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+
+    if (!id) {
+        const error = new Error('Document ID is required');
+        error.statusCode = 400;
+        throw error;
+    }
+
+    const documentExists = await Document.findById(id);
+    if (!documentExists) {
+        const error = new Error('Document not found');
+        error.statusCode = 404;
+        throw error;
+    }
+
+    if (!documentExists.status === 'draft') {
+        const error = new Error('You can only delete draft documents');
+        error.statusCode = 403;
+        throw error;
+    }
+    const document = await Document.findByIdAndDelete(id);
+
+    if (!document) {
+        const error = new Error('Document not found');
+        error.statusCode = 404;
+        throw error;
+    }
+
+    return ApiResponse(res, 200, null, 'Document deleted successfully');
+});
