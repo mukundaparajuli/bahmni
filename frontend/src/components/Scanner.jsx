@@ -109,7 +109,7 @@ const DocumentScanner = () => {
         formData.append('employeeId', '1234');
 
         try {
-            await axiosInstance.post(`/api/v1/clerk/uploadDoc`, formData);
+            await axiosInstance.post(`/clerk/uploadDoc`, formData);
             alert('Scanned PDF uploaded successfully!');
             setCapturedImages([]);
         } catch (err) {
