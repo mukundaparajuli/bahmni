@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const axiosInstance = axios.create({
-    baseURL: `${import.meta.env.VITE_API_URL}/api/v1` || 'http://localhost:5000/api/v1',
+    baseURL: `${import.meta.env.VITE_API_URL}/api/v1` || 'http://localhost:5555/api/v1',
 });
 
 // Set Content-Type only for non-file requests
