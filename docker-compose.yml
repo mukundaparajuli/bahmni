@@ -1,25 +1,23 @@
+version: "3.8"
+
 services:
-  backend:
-    build: ./backend
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
     ports:
       - "5000:5000"
     volumes:
-      - ./backend/uploads:/app/uploads
+      - ./backend/uploads:/app/backend/uploads
     environment:
       - NODE_ENV=production
       - MONGO_URI=mongodb://mongodb:27017/bahmini
+      - PORT=5000
     depends_on:
       mongodb:
         condition: service_healthy
-
-  frontend:
-    build: ./frontend
-    ports:
-      - "3000:80"
-    environment:
-      - NODE_ENV=production
-    stdin_open: true
-    tty: true
+    networks:
+      - bahmni-network
 
   mongodb:
     image: mongo:7
@@ -31,10 +29,16 @@ services:
     environment:
       - MONGO_INITDB_DATABASE=bahmini
     healthcheck:
-      test: mongosh --eval 'db.runCommand("ping").ok' localhost:27017/test --quiet
+      test: ["CMD", "mongosh", "--eval", "db.runCommand('ping').ok", "--quiet"]
       interval: 5s
       timeout: 5s
       retries: 5
+    networks:
+      - bahmni-network
 
 volumes:
   mongo_data:
+
+networks:
+  bahmni-network:
+    driver: bridge

@@ -1,0 +1,26 @@
+# Ignore node_modules from both frontend and backend
+**/node_modules
+**/npm-debug.log
+**/.env
+**/.env.*
+
+# Ignore local build artifacts
+frontend/build
+backend/frontend
+
+# Ignore IDE/editor configs
+*.log
+.vscode
+.idea
+.DS_Store
+
+# Ignore uploads if you mount them via volume
+backend/uploads
+
+# Git
+.git
+.gitignore
+
+# Docker files we don’t want to copy into the image
+docker-compose.yml
+Dockerfile
