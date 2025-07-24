@@ -1,7 +1,8 @@
 const db = require('../config/db');
 const asyncHandler = require('../middleware/async-handler');
 const { ApiResponse } = require('../utils/api-response');
-
+const path = require('path');
+const fs = require('fs').promises;
 
 exports.getClerkDocuments = asyncHandler(async (req, res) => {
     const page = parseInt(req.query.page) || 1;
@@ -67,6 +68,7 @@ exports.scanDocument = asyncHandler(async (req, res) => {
         },
     });
 
+    console.log(document);
     ApiResponse(res, 201, document, 'File uploaded successfully');
 });
 
@@ -172,18 +174,23 @@ exports.updateDocument = asyncHandler(async (req, res) => {
     if (!document) {
         return ApiResponse(res, 404, null, 'Document not found');
     }
-    try {
-        const oldFilePath = path.join(__dirname, '..', document.filePath);
-        await fs.unlink(oldFilePath);
-    } catch (err) {
-        console.warn(`⚠️ Failed to delete old file: ${err.message}`);
-    }
+    const oldFilePath = path.join(__dirname, '..', document.filePath);
+    console.log(`Deleting old file at: ${oldFilePath}`);
+    await fs.unlink(oldFilePath, (err) => {
+        if (err) {
+            console.error(`Error deleting old file: ${err.message}`);
+        } else {
+            console.log('Old file deleted successfully');
+        }
+    });
+
+    const filePath = `/uploads/documents/${file.filename}`;
 
     const updatedDocument = await db.document.update({
         where: { id: parseInt(id) },
         data: {
             fileName: file.originalname,
-            filePath: file.path,
+            filePath: filePath,
             uploadedAt: new Date(),
         },
         include: {

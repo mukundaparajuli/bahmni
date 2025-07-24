@@ -2,6 +2,7 @@ import React from "react";
 import PDFPreviewer from "./pdf_show/Document";
 
 const Preview = ({ filePath }) => {
+    console.log("Previewing file:", filePath);
     const isPdf = filePath?.toLowerCase().endsWith(".pdf");
 
     return (

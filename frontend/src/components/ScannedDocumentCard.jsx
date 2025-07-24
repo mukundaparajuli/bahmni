@@ -27,7 +27,6 @@ const ScannedDocumentCard = ({ document, deleteButton, onDelete }) => {
                 fileName: document.fileName,
                 filePath: document.filePath,
                 uploadedAt: document.uploadedAt,
-                // any other fields needed
             },
         });
     };
@@ -129,7 +128,7 @@ const ScannedDocumentCard = ({ document, deleteButton, onDelete }) => {
                         onClick={handleOverlayClick}
                     >
                         <div className="relative flex justify-center items-center w-[60vw] h-[90vh] overflow-auto">
-                            <PDFPreviewerIframe filePath={getStaticUrl(filePath)} />
+                            <Preview filePath={getStaticUrl(filePath)} />
                         </div>
                     </div>
                 )}
