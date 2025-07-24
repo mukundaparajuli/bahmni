@@ -8,7 +8,7 @@ const Preview = ({ filePath }) => {
     return (
         <div className="w-[60vw] h-[90vh] flex justify-center items-center">
             {isPdf ? (
-                <PDFPreviewer file={filePath} />
+                <PDFPreviewer filePath={filePath} />
             ) : (
                 <img src={filePath} alt="Preview" className="max-w-full max-h-[80vh] object-contain" />
             )}

@@ -7,6 +7,9 @@ import axios from 'axios';
 const Rescan = () => {
     const { state } = useLocation();
     const webcamRef = useRef(null);
+    const [draft, setDraft] = useState("draft");
+    const [
+        submitted, setSubmitted] = useState("submitted");
 
     const [capturedImages, setCapturedImages] = useState([]);
     const [showWebcam, setShowWebcam] = useState(false);
@@ -38,12 +41,11 @@ const Rescan = () => {
         return doc.output('blob');
     };
 
-    const uploadUpdatedDocument = async (fileToUpload) => {
+    const uploadUpdatedDocument = async (fileToUpload, status) => {
         const formData = new FormData();
         formData.append('id', id);
         formData.append('file', fileToUpload);
-
-
+        formData.append('status', status); // append status
         try {
             await axios.post('http://localhost:5555/api/v1/clerk/updateDoc', formData);
             alert('Document updated successfully!');
@@ -55,13 +57,13 @@ const Rescan = () => {
         }
     };
 
-    const handleUpload = async () => {
+    const handleUpload = async (status) => {
         if (capturedImages.length > 0) {
             const pdfBlob = generatePDFfromImages();
             const pdfFile = new File([pdfBlob], 'rescanned-document.pdf', { type: 'application/pdf' });
-            await uploadUpdatedDocument(pdfFile);
+            await uploadUpdatedDocument(pdfFile, status);
         } else if (file) {
-            await uploadUpdatedDocument(file);
+            await uploadUpdatedDocument(file, status);
         } else {
             alert('Please capture images or upload a file.');
         }
@@ -132,12 +134,18 @@ const Rescan = () => {
             )}
 
             <button
-                onClick={handleUpload}
-                className="mt-4 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition"
+                onClick={() => handleUpload('draft')}
+                className="mt-4 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition mr-2"
             >
-                Upload Rescan/Resubmitted Document
+                Upload as Draft
             </button>
-        </div>
+            <button
+                onClick={() => handleUpload('submitted')}
+                className="mt-4 bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition"
+            >
+                Upload as Submitted
+            </button>
+        </div >
     );
 };
 

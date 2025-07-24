@@ -157,8 +157,9 @@ exports.getSearchResult = asyncHandler(async (req, res) => {
         totalPages: Math.ceil(total / limit),
     }, 'Documents retrieved successfully');
 });
+
 exports.updateDocument = asyncHandler(async (req, res) => {
-    const { id } = req.body;
+    const { id, status } = req.body;
     const file = req.file;
 
     if (!id || !file) {
@@ -191,6 +192,7 @@ exports.updateDocument = asyncHandler(async (req, res) => {
         data: {
             fileName: file.originalname,
             filePath: filePath,
+            status: status,
             uploadedAt: new Date(),
         },
         include: {
