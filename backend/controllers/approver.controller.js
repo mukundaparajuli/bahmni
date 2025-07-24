@@ -1,87 +1,245 @@
+const db = require('../config/db');
 const asyncHandler = require('../middleware/async-handler');
-const Document = require('../models/document');
 const { ApiResponse } = require('../utils/api-response');
 
 exports.approveDocument = asyncHandler(async (req, res) => {
     const { id } = req.params;
-    const document = await Document.findById(id);
+
+    const document = await db.document.findUnique({
+        where: { id: parseInt(id) },
+    });
+
     if (!document) {
         const error = new Error('Document not found');
         error.statusCode = 404;
         throw error;
     }
+
     if (document.status !== 'draft' && document.status !== 'submitted') {
         const error = new Error('Document already processed');
         error.statusCode = 400;
         throw error;
     }
 
-    document.status = 'approved';
-    document.approverId = req.user._id;
-    document.reviewedAt = new Date();
-    document.filePath = document.filePath;
-    document.fileName = document.fileName;
-    await document.save();
+    const updatedDocument = await db.document.update({
+        where: { id: parseInt(id) },
+        data: {
+            status: 'approved',
+            approverId: req.user.id,
+            reviewedAt: new Date(),
+            filePath: document.filePath,
+            fileName: document.fileName,
+        },
+        include: {
+            scanner: true,
+            approver: true,
+            uploader: true,
+        },
+    });
 
-    return ApiResponse(res, 200, document, "Document was approved successfully")
+    if (!updatedDocument) {
+        const error = new Error('Failed to approve document');
+        error.statusCode = 500;
+        throw error;
+    }
+
+    return ApiResponse(res, 200, updatedDocument, 'Document was approved successfully');
 });
 
 exports.rejectDocument = asyncHandler(async (req, res) => {
     const { id } = req.params;
     const { rejectComment } = req.body;
 
-    const document = await Document.findById(id);
+    if (!rejectComment) {
+        const error = new Error('Rejection comment is required');
+        error.statusCode = 400;
+        throw error;
+    }
+
+    const document = await db.document.findUnique({
+        where: { id: parseInt(id) },
+    });
+
     if (!document) {
         const error = new Error('Document not found');
         error.statusCode = 404;
         throw error;
     }
+
     if (document.status !== 'draft' && document.status !== 'submitted') {
         const error = new Error('Document already processed');
         error.statusCode = 400;
         throw error;
     }
-    document.approverId = req.user._id;
-    document.comment = rejectComment;
-    document.status = 'rejected';
-    document.approverId = req.user._id;
-    document.filePath = document.filePath;
-    document.fileName = document.fileName;
-    document.reviewedAt = new Date();
-    await document.save();
 
-    return ApiResponse(res, 200, document, "Document has been rejected");
+    const updatedDocument = await db.document.update({
+        where: { id: parseInt(id) },
+        data: {
+            status: 'rejected',
+            approverId: req.user.id,
+            comment: rejectComment,
+            reviewedAt: new Date(),
+            filePath: document.filePath,
+            fileName: document.fileName,
+        },
+        include: {
+            scanner: true,
+            approver: true,
+            uploader: true,
+        },
+    });
+
+    return ApiResponse(res, 200, updatedDocument, 'Document has been rejected');
 });
 
 exports.getScannedDocuments = asyncHandler(async (req, res) => {
-    //using draft status here but should be changed to submitted later
-    const scannedDocs = await Document.find({ status: 'draft' });
-    if (!scannedDocs || scannedDocs.length === 0) {
-        const error = new Error('No scanned documents found');
-        error.statusCode = 404;
-        throw error;
-    }
-    return ApiResponse(res, 200, scannedDocs, 'Scanned documents retrieved successfully');
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    // Count total matching documents
+    const total = await db.document.count({
+        where: {
+            status: {
+                in: ['draft', 'submitted'],
+            }
+        },
+    });
+
+    const scannedDocs = await db.document.findMany({
+        where: {
+            status: {
+                in: ['draft', 'submitted'],
+            }
+        },
+        skip,
+        take: limit,
+        orderBy: { scannedAt: 'desc' },
+        include: {
+            scanner: true,
+            approver: true,
+            uploader: true,
+        },
+    });
+
+    return ApiResponse(res, 200, {
+        data: scannedDocs,
+        page,
+        total,
+        totalPages: Math.ceil(total / limit),
+    }, 'Scanned documents retrieved successfully');
 });
 
 exports.getAllMyApprovedDocuments = asyncHandler(async (req, res) => {
-    const { user } = req;
-    const approvedDocs = await Document.find({ approverId: user._id, status: 'approved' });
-    if (!approvedDocs || approvedDocs.length === 0) {
-        const error = new Error('No approved documents found');
-        error.statusCode = 404;
-        throw error;
+    const userId = req.user.id;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const total = await db.document.count({
+        where: { approverId: userId, status: 'approved' },
+    });
+
+    const approvedDocs = await db.document.findMany({
+        where: { approverId: userId, status: 'approved' },
+        skip,
+        take: limit,
+        orderBy: { reviewedAt: 'desc' },
+        include: {
+            scanner: true,
+            approver: true,
+            uploader: true,
+        },
+    });
+
+    if (!approvedDocs.length) {
+        return ApiResponse(res, 404, null, 'No approved documents found');
     }
-    return ApiResponse(res, 200, approvedDocs, 'Approved documents retrieved successfully');
+
+    return ApiResponse(res, 200, {
+        data: approvedDocs,
+        page,
+        total,
+        totalPages: Math.ceil(total / limit),
+    }, 'Approved documents retrieved successfully');
 });
 
 exports.getAllMyRejectedDocuments = asyncHandler(async (req, res) => {
-    const { user } = req;
-    const rejectedDocs = await Document.find({ approverId: user._id, status: 'rejected' });
-    if (!rejectedDocs || rejectedDocs.length === 0) {
-        const error = new Error('No rejected documents found');
-        error.statusCode = 404;
+    const userId = req.user.id;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const total = await db.document.count({
+        where: { approverId: userId, status: 'rejected' },
+    });
+
+    const rejectedDocs = await db.document.findMany({
+        where: { approverId: userId, status: 'rejected' },
+        skip,
+        take: limit,
+        orderBy: { reviewedAt: 'desc' },
+        include: {
+            scanner: true,
+            approver: true,
+            uploader: true,
+        },
+    });
+
+    if (!rejectedDocs.length) {
+        return ApiResponse(res, 404, null, 'No rejected documents found');
+    }
+
+    return ApiResponse(res, 200, {
+        data: rejectedDocs,
+        page,
+        total,
+        totalPages: Math.ceil(total / limit),
+    }, 'Rejected documents retrieved successfully');
+});
+
+exports.getSearchedDocuments = asyncHandler(async (req, res) => {
+    const searchTerm = req.query.query || req.query.searchTerm;
+    if (!searchTerm) {
+        const error = new Error('Search term is required');
+        error.statusCode = 400;
         throw error;
     }
-    return ApiResponse(res, 200, rejectedDocs, 'Rejected documents retrieved successfully');
+
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const whereClause = {
+        OR: [
+            { patientMRN: { contains: searchTerm, mode: 'insensitive' } },
+            { employeeId: { contains: searchTerm, mode: 'insensitive' } },
+            { fileName: { contains: searchTerm, mode: 'insensitive' } },
+        ],
+    };
+
+    const total = await db.document.count({ where: whereClause });
+
+    const documents = await db.document.findMany({
+        where: whereClause,
+        skip,
+        take: limit,
+        orderBy: { scannedAt: 'desc' },
+        include: {
+            scanner: true,
+            approver: true,
+            uploader: true,
+        },
+    });
+
+    if (!documents.length) {
+        return ApiResponse(res, 404, null, 'No documents found for the given search query');
+    }
+
+    return ApiResponse(res, 200, {
+        data: documents,
+        page,
+        total,
+        totalPages: Math.ceil(total / limit),
+    }, 'Documents retrieved successfully');
 });

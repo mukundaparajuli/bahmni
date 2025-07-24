@@ -90,6 +90,7 @@ const Router = require("express");
 const { restrictTo } = require("../middleware/rbac-handler");
 const { authenticateToken } = require("../middleware/auth-middleware");
 const { approveDocument, rejectDocument, getScannedDocuments, getAllMyApprovedDocuments, getAllMyRejectedDocuments } = require("../controllers/approver.controller");
+const { getSearchResult } = require("../controllers/clerk.controller");
 
 const router = Router();
 
@@ -98,5 +99,6 @@ router.post('/reject/:id', authenticateToken, restrictTo('Approver'), rejectDocu
 router.get('/scannedDocs', authenticateToken, restrictTo('Approver'), getScannedDocuments);
 router.get('/approvedDocs', authenticateToken, restrictTo('Approver'), getAllMyApprovedDocuments);
 router.get('/rejectedDocs', authenticateToken, restrictTo('Approver'), getAllMyRejectedDocuments);
+router.get('/search', authenticateToken, restrictTo('Approver'), getSearchResult);
 
 module.exports = router;

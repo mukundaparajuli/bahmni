@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { registerUser } from '@/api';
 import { Button } from '@/components/ui/button';
@@ -7,7 +8,6 @@ import useForm from '@/hooks/useForm';
 import useToastError from '@/hooks/useToastError';
 import FormField from '@/components/common/form-field';
 import { ROLES } from '@/utils/constants';
-import { useState } from 'react';
 
 const RegisterUserForm = ({ onClose }) => {
     const { showError, showSuccess } = useToastError();
@@ -24,9 +24,7 @@ const RegisterUserForm = ({ onClose }) => {
 
     const mutation = useMutation({
         mutationFn: () => {
-            console.log(formData)
             const data = { ...formData, roles: selectedRoles };
-            console.log(data);
             return registerUser(data);
         },
         onSuccess: () => {
@@ -51,71 +49,70 @@ const RegisterUserForm = ({ onClose }) => {
         );
     };
 
+    const fields = [
+        { id: 'employeeId', label: 'Employee ID', type: 'text', placeholder: 'Enter your employee ID' },
+        { id: 'fullName', label: 'Full Name', type: 'text', placeholder: 'Enter your full name' },
+        {
+            id: 'department',
+            label: 'Department',
+            type: 'select',
+            placeholder: 'Select your department',
+            options: [
+                { value: 'engineering', label: 'Engineering' },
+                { value: 'hr', label: 'Human Resources' },
+                { value: 'marketing', label: 'Marketing' },
+                { value: 'finance', label: 'Finance' },
+                { value: 'it', label: 'Information Technology' },
+            ],
+        },
+        { id: 'email', label: 'Email', type: 'email', placeholder: 'Enter your email' },
+        {
+            id: 'education',
+            label: 'Education',
+            type: 'select',
+            placeholder: 'Select your education level',
+            options: [
+                { value: 'highschool', label: 'High School' },
+                { value: 'bachelor', label: 'Bachelor’s Degree' },
+                { value: 'master', label: 'Master’s Degree' },
+                { value: 'phd', label: 'PhD' },
+            ],
+        },
+        {
+            id: 'profession',
+            label: 'Profession',
+            type: 'select',
+            placeholder: 'Select your profession',
+            options: [
+                { value: 'engineer', label: 'Engineer' },
+                { value: 'manager', label: 'Manager' },
+                { value: 'analyst', label: 'Analyst' },
+                { value: 'developer', label: 'Developer' },
+                { value: 'designer', label: 'Designer' },
+            ],
+        },
+        { id: 'password', label: 'Password', type: 'password', placeholder: 'Enter your password' },
+    ];
+
     return (
-        <form onSubmit={handleSubmit} className="grid gap-4">
-            <FormField
-                label="Employee Id"
-                id="employeeId"
-                type="text"
-                name="employeeId"
-                value={formData.employeeId}
-                onChange={handleChange}
-                required
-            />
-            <FormField
-                label="Full Name"
-                id="fullName"
-                type="text"
-                name="fullName"
-                value={formData.fullName}
-                onChange={handleChange}
-                required
-            />
-            <FormField
-                label="Email"
-                id="email"
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                required
-            />
-            <FormField
-                label="Department"
-                id="department"
-                type="text"
-                name="department"
-                value={formData.department}
-                onChange={handleChange}
-                required
-            />
-            <FormField
-                label="Education"
-                id="education"
-                type="text"
-                name="education"
-                value={formData.education}
-                onChange={handleChange}
-                required
-            />
-            <FormField
-                label="Profession"
-                id="profession"
-                type="text"
-                name="profession"
-                value={formData.profession}
-                onChange={handleChange}
-                required
-            />
-            <FormField
-                label="Password"
-                id="password"
-                type="password"
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
-                required
-            />
+        <form onSubmit={handleSubmit} className="w-full max-w-md p-6 bg-white rounded shadow">
+            <h2 className="text-2xl font-bold mb-6">Register</h2>
+
+            {fields.map((field) => (
+                <FormField
+                    key={field.id}
+                    label={field.label}
+                    id={field.id}
+                    type={field.type}
+                    name={field.id}
+                    value={formData[field.id]}
+                    onChange={handleChange}
+                    required
+                    placeholder={field.placeholder}
+                    options={field.options}
+                />
+            ))}
+
             <div>
                 <Label>Roles</Label>
                 <div className="grid gap-2 m-2">
@@ -131,9 +128,11 @@ const RegisterUserForm = ({ onClose }) => {
                     ))}
                 </div>
             </div>
-            <Button type="submit" disabled={mutation.isLoading}>
-                {mutation.isLoading ? 'Registering...' : 'Register User'}
+
+            <Button type="submit" disabled={mutation.isLoading} className="w-full">
+                {mutation.isLoading ? 'Submitting...' : 'Submit'}
             </Button>
+
         </form>
     );
 };

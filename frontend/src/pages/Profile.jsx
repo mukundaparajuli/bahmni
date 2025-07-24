@@ -27,7 +27,7 @@ const Profile = () => {
     const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 
     const mutation = useMutation({
-        mutationFn: (data) => updateUser(user._id, data),
+        mutationFn: (data) => updateUser(user.id, data),
         onSuccess: ({ data }) => {
             localStorage.setItem('user', JSON.stringify(data.data));
             setUser(data.data);

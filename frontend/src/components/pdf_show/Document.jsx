@@ -7,7 +7,7 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL(
     import.meta.url
 ).toString();
 
-const PDFPreviewer = ({ file }) => {
+const PDFPreviewer = ({ filePath }) => {
     const [numPages, setNumPages] = useState(null);
     const [width, setWidth] = useState(0);
 
@@ -34,9 +34,9 @@ const PDFPreviewer = ({ file }) => {
             id="pdf-container"
             className="w-full max-w-4xl mx-auto p-4 overflow-y-auto max-h-[85vh] bg-white rounded-lg"
         >
-            {file ? (
+            {filePath ? (
                 <Document
-                    file={file}
+                    file={filePath}
                     onLoadSuccess={onDocumentLoadSuccess}
                     className="flex flex-col items-center"
                 >

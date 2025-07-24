@@ -40,7 +40,7 @@ const ReviewDocumentCard = ({ document }) => {
 
 
     const approveMutation = useMutation({
-        mutationFn: () => approveDocument(document._id),
+        mutationFn: () => approveDocument(document.id),
         onSuccess: () => {
             showSuccess(`${document.fileName} approved successfully.`);
             refetch();
@@ -51,12 +51,13 @@ const ReviewDocumentCard = ({ document }) => {
     });
 
     const rejectMutation = useMutation({
-        mutationFn: () => rejectDocument(document._id, rejectComment),
+        mutationFn: () => rejectDocument(document.id, { rejectComment }),
         onSuccess: () => {
             showSuccess(`${document.fileName} rejected successfully.`);
             setIsDialogOpen(false);
             setRejectComment('');
             queryClient.invalidateQueries(['approver-scanned-docs']);
+            refetch();
         },
         onError: (error) => showError(error, 'Failed to reject document'),
     });
@@ -75,7 +76,7 @@ const ReviewDocumentCard = ({ document }) => {
 
     return (
         <>
-            <Card className="w-full max-w-md">
+            <Card className="w-full max-w-sm">
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                         <FileText className="h-5 w-5 text-blue-500" />

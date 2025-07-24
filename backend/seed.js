@@ -1,32 +1,42 @@
-const User = require('./models/user'); // no need for mongoose or dotenv here
+const bcrypt = require('bcrypt');
+const db = require('./config/db');
 
 const seedAdmin = async () => {
     try {
-        const existingAdmin = await User.findOne({ roles: 'Admin' });
+        const existingAdmin = await db.user.findFirst({
+            where: { roles: { has: 'Admin' } },
+        });
+
         if (existingAdmin) {
-            console.log("Admin already exists");
+            console.log('Admin already exists');
             return;
         }
 
-        const adminUser = new User({
-            employeeId: "EMP001",
-            fullName: "Super Admin",
-            department: "IT",
-            email: "admin@example.com",
-            education: "M.Tech",
-            profession: "System Administrator",
-            password: "AdminPass123",
-            roles: ["Admin", "ScannerClerk", "Approver", "Uploader"],
-            isActive: true,
-            isSelfRegistered: false,
-            registrationStatus: "Approved"
+        // Hash the admin password
+        const hashedPassword = await bcrypt.hash('AdminPass123', 10);
+
+        // Create admin user
+        await db.user.create({
+            data: {
+                employeeId: 'EMP001',
+                fullName: 'Super Admin',
+                department: 'IT',
+                email: 'admin@example.com',
+                education: 'M.Tech',
+                profession: 'System Administrator',
+                password: hashedPassword,
+                roles: ['Admin', 'ScannerClerk', 'Approver', 'Uploader'],
+                isActive: true,
+                isSelfRegistered: false,
+                registrationStatus: 'Approved',
+            },
         });
 
-        await adminUser.save();
-        console.log("Admin user created successfully");
-
+        console.log('Admin user created successfully');
     } catch (err) {
-        console.error("Seeding failed:", err);
+        console.error('Seeding failed:', err);
+    } finally {
+        await db.$disconnect();
     }
 };
 

@@ -1,48 +1,72 @@
+const db = require('../config/db');
 const asyncHandler = require('../middleware/async-handler');
-const Document = require('../models/document');
 const { ApiResponse } = require('../utils/api-response');
 
-exports.getClerkDocuments = asyncHandler(async (req, res) => {
-    //take the user id from the request
-    const { user } = req;
-    const scannerClerkId = user._id;
 
-    //find the documents that are scanned by the scanner clerk
-    const documents = await Document.find({ scannerId: scannerClerkId });
+exports.getClerkDocuments = asyncHandler(async (req, res) => {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+    const { user } = req;
+    const scannerClerkId = user.id;
+
+    // Get total count
+    const total = await db.document.count({
+        where: { scannerId: scannerClerkId },
+    });
+
+    const documents = await db.document.findMany({
+        where: { scannerId: scannerClerkId },
+        skip,
+        take: limit,
+        include: {
+            scanner: true,
+            approver: true,
+            uploader: true,
+        },
+    });
 
     if (!documents || documents.length === 0) {
-        const error = new Error('No documents found for this scanner clerk');
-        error.statusCode = 404;
-        throw error;
+        return ApiResponse(res, 404, null, 'No documents found for the clerk');
     }
 
-    return ApiResponse(res, 200, documents, 'Documents retrieved successfully');
+    return ApiResponse(res, 200, {
+        data: documents,
+        page,
+        total,
+        totalPages: Math.ceil(total / limit),
+    }, 'Documents retrieved successfully');
 });
 
 
 exports.scanDocument = asyncHandler(async (req, res) => {
-    // get the file and other details from the request
+    // Get the file and other details from the request
     const file = req.file;
     const { patientMRN, employeeId } = req.body;
-
-    console.log(file);
 
     if (!file) {
         const error = new Error('No file uploaded');
         error.statusCode = 400;
         throw error;
     }
+
     const fileName = file.originalname;
     const filePath = `/uploads/documents/${file.filename}`;
-    const scannerId = req.user._id;
+    const scannerId = req.user.id; // Changed from req.user._id to req.user.id
 
-    const document = await Document.create({
-        scannerId,
-        patientMRN,
-        employeeId,
-        fileName,
-        filePath,
+    // Create new document
+    const document = await db.document.create({
+        data: {
+            scannerId,
+            patientMRN,
+            employeeId,
+            fileName,
+            filePath,
+            status: 'draft', // Default status as per schema
+            scannedAt: new Date(), // Explicitly set for clarity
+        },
     });
+
     ApiResponse(res, 201, document, 'File uploaded successfully');
 });
 
@@ -55,25 +79,79 @@ exports.deleteDocument = asyncHandler(async (req, res) => {
         throw error;
     }
 
-    const documentExists = await Document.findById(id);
-    if (!documentExists) {
-        const error = new Error('Document not found');
-        error.statusCode = 404;
-        throw error;
+    // Find document by ID
+    const document = await db.document.findUnique({
+        where: { id: parseInt(id) }, // Convert string ID to integer
+    });
+
+    if (!document) {
+        return ApiResponse(res, 404, null, 'Document not found');
     }
 
-    if (!documentExists.status === 'draft') {
+    // Check if document is in draft status
+    if (document.status !== 'draft') {
         const error = new Error('You can only delete draft documents');
         error.statusCode = 403;
         throw error;
     }
-    const document = await Document.findByIdAndDelete(id);
 
-    if (!document) {
-        const error = new Error('Document not found');
-        error.statusCode = 404;
+    // Delete document
+    await db.document.delete({
+        where: { id: parseInt(id) },
+    });
+
+    return ApiResponse(res, 200, null, 'Document deleted successfully');
+});
+
+
+
+// Search for documents by patient MRN 
+// can only search for documents that are in draft or submitted status and are scanned by the clerk
+exports.getSearchResult = asyncHandler(async (req, res) => {
+    const { query } = req.query;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    if (!query) {
+        const error = new Error('Search query is required');
+        error.statusCode = 400;
         throw error;
     }
 
-    return ApiResponse(res, 200, null, 'Document deleted successfully');
+    const whereClause = {
+        OR: [
+            { patientMRN: { contains: query, mode: 'insensitive' } },
+            { fileName: { contains: query, mode: 'insensitive' } },
+        ],
+        scannerId: req.user.id,
+        status: {
+            in: ['draft', 'submitted'],
+        }
+    };
+
+    // Get total count for pagination
+    const total = await db.document.count({ where: whereClause });
+
+    const documents = await db.document.findMany({
+        where: whereClause,
+        skip,
+        take: limit,
+        include: {
+            scanner: true,
+            approver: true,
+            uploader: true,
+        },
+    });
+
+    if (!documents || documents.length === 0) {
+        return ApiResponse(res, 404, null, 'No documents found for the given search query');
+    }
+
+    return ApiResponse(res, 200, {
+        data: documents,
+        page,
+        total,
+        totalPages: Math.ceil(total / limit),
+    }, 'Documents retrieved successfully');
 });

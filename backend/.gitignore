@@ -2,3 +2,4 @@ node_modules
 documents
 .env
 uploads
+/generated/prisma

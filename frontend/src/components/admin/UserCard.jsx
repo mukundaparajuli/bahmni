@@ -42,7 +42,7 @@ const UserCard = ({ user, handleReview, handleStatusToggle, handleRoleUpdate, re
                                     <DialogTitle>Review Registration</DialogTitle>
                                 </DialogHeader>
                                 <div className="grid gap-4">
-                                    <Button onClick={() => handleReview(user._id, 'Approved')} size="sm">
+                                    <Button onClick={() => handleReview(user.id, 'Approved')} size="sm">
                                         Approve
                                     </Button>
                                     <div>
@@ -53,7 +53,7 @@ const UserCard = ({ user, handleReview, handleStatusToggle, handleRoleUpdate, re
                                             onChange={(e) => setRejectionReason(e.target.value)}
                                         />
                                         <Button
-                                            onClick={() => handleReview(user._id, 'Rejected')}
+                                            onClick={() => handleReview(user.id, 'Rejected')}
                                             disabled={!rejectionReason}
                                             className="mt-2"
                                             size="sm"
@@ -66,7 +66,7 @@ const UserCard = ({ user, handleReview, handleStatusToggle, handleRoleUpdate, re
                         </Dialog>
                     )}
                     <Button
-                        onClick={() => handleStatusToggle(user._id, !user.isActive)}
+                        onClick={() => handleStatusToggle(user.id, !user.isActive)}
                     >
                         {user.isActive ? 'Deactivate' : 'Activate'}
                     </Button>
@@ -81,16 +81,16 @@ const UserCard = ({ user, handleReview, handleStatusToggle, handleRoleUpdate, re
                                 {Object.values(ROLES).map((role) => (
                                     <div key={role} className="flex items-center gap-2">
                                         <Checkbox
-                                            id={`${user._id}-${role}`}
+                                            id={`${user.id}-${role}`}
                                             checked={user.roles.includes(role)}
                                             onCheckedChange={(checked) => {
                                                 const newRoles = checked
                                                     ? [...user.roles, role]
                                                     : user.roles.filter((r) => r !== role);
-                                                handleRoleUpdate(user._id, newRoles);
+                                                handleRoleUpdate(user.id, newRoles);
                                             }}
                                         />
-                                        <Label htmlFor={`${user._id}-${role}`}>{role}</Label>
+                                        <Label htmlFor={`${user.id}-${role}`}>{role}</Label>
                                     </div>
                                 ))}
                             </div>

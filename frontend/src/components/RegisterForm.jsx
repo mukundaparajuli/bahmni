@@ -29,20 +29,67 @@ const RegisterForm = () => {
         mutation.mutate(formData);
     };
 
+    const fields = [
+        { id: 'employeeId', label: 'Employee ID', type: 'text', placeholder: 'Enter your employee ID' },
+        { id: 'fullName', label: 'Full Name', type: 'text', placeholder: 'Enter your full name' },
+        {
+            id: 'department',
+            label: 'Department',
+            type: 'select',
+            placeholder: 'Select your department',
+            options: [
+                { value: 'engineering', label: 'Engineering' },
+                { value: 'hr', label: 'Human Resources' },
+                { value: 'marketing', label: 'Marketing' },
+                { value: 'finance', label: 'Finance' },
+                { value: 'it', label: 'Information Technology' },
+            ],
+        },
+        { id: 'email', label: 'Email', type: 'email', placeholder: 'Enter your email' },
+        {
+            id: 'education',
+            label: 'Education',
+            type: 'select',
+            placeholder: 'Select your education level',
+            options: [
+                { value: 'highschool', label: 'High School' },
+                { value: 'bachelor', label: 'Bachelor’s Degree' },
+                { value: 'master', label: 'Master’s Degree' },
+                { value: 'phd', label: 'PhD' },
+            ],
+        },
+        {
+            id: 'profession',
+            label: 'Profession',
+            type: 'select',
+            placeholder: 'Select your profession',
+            options: [
+                { value: 'engineer', label: 'Engineer' },
+                { value: 'manager', label: 'Manager' },
+                { value: 'analyst', label: 'Analyst' },
+                { value: 'developer', label: 'Developer' },
+                { value: 'designer', label: 'Designer' },
+            ],
+        },
+        { id: 'password', label: 'Password', type: 'password', placeholder: 'Enter your password' },
+    ];
+
     return (
         <div className="flex items-center justify-center min-h-screen bg-gray-100">
             <form onSubmit={handleSubmit} className="w-full max-w-md p-6 bg-white rounded shadow">
                 <h2 className="text-2xl font-bold mb-6">Register</h2>
-                {['employeeId', 'fullName', 'department', 'email', 'education', 'profession', 'password'].map((field) => (
+                {fields.map((field) => (
                     <FormField
-                        key={field}
-                        label={field.charAt(0).toUpperCase() + field.slice(1)}
-                        id={field}
-                        type={field === 'password' ? 'password' : field === 'email' ? 'email' : 'text'}
-                        name={field}
-                        value={formData[field]}
+                        key={field.id}
+                        label={field.label}
+                        id={field.id}
+                        type={field.type}
+                        name={field.id}
+                        value={formData[field.id]}
                         onChange={handleChange}
                         required
+                        placeholder={field.placeholder}
+                        options={field.options}
                     />
                 ))}
                 <Button type="submit" disabled={mutation.isLoading} className="w-full">

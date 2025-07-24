@@ -5,6 +5,7 @@ import { FileText, Trash2 } from "lucide-react";
 import { getStaticUrl } from "@/utils/get-static-url";
 import { Document, Page, pdfjs } from "react-pdf";
 import Preview from "./Preview";
+import PDFPreviewerIframe from "./pdf_show/Document";
 
 // Set the worker source for react-pdf
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
@@ -91,8 +92,8 @@ const ScannedDocumentCard = ({ document, deleteButton, onDelete }) => {
                         className="fixed inset-0 z-50 flex items-center justify-center bg-black/80"
                         onClick={handleOverlayClick}
                     >
-                        <div className="relative flex justify-center items-center max-w-[60vw] max-h-[90vh] overflow-auto">
-                            <Preview filePath={getStaticUrl(filePath)} />
+                        <div className="relative flex justify-center items-center w-[60vw] h-[90vh] overflow-auto">
+                            <PDFPreviewerIframe filePath={getStaticUrl(filePath)} />
                         </div>
                     </div>
                 )}

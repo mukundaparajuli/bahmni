@@ -1,14 +1,9 @@
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { getUsers, reviewSelfRegistration, toggleUserStatus, updateUserRoles } from '@/api';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import useToastError from '@/hooks/useToastError';
-import { useState } from 'react';
-import { ROLES } from '@/utils/constants';
+import { useContext, useState } from 'react';
 import RegisterUserForm from './RegisterUserForm';
 import UserCard from './UserCard';
 
@@ -47,6 +42,7 @@ const AdminDashboard = () => {
 
     const handleReview = (userId, status) => {
         const data = { userId, status };
+        console.log('Reviewing user:', data);
         if (status === 'Rejected') {
             data.rejectionReason = rejectionReason;
         }

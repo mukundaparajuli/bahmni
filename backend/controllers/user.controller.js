@@ -1,87 +1,159 @@
 const asyncHandler = require('../middleware/async-handler');
-const User = require('../models/user');
-const { sendEmail } = require('../utils/email-service');
+const { PrismaClient } = require('@prisma/client');
 const { ApiResponse } = require('../utils/api-response');
-const path = require("path")
-const fs = require("fs")
-const bcrypt = require("bcrypt")
+const path = require('path');
+const fs = require('fs');
+const bcrypt = require('bcrypt');
+const db = require('../config/db');
+const { sendEmail } = require('../utils/email-service');
+
+const prisma = new PrismaClient();
+
 // Admin: Register a user
 exports.registerUser = asyncHandler(async (req, res) => {
-    console.log(req.body);
     const { employeeId, fullName, department, email, education, profession, password, employeeIdPhoto, photo, roles } = req.body;
-    const user = await User.create({
-        employeeId,
-        fullName,
-        department,
-        email,
-        education,
-        profession,
-        password,
-        employeeIdPhoto,
-        photo,
-        roles: roles || ['ScannerClerk'],
-        isActive: true,
-        isSelfRegistered: false,
-        registrationStatus: 'Approved',
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create user
+    const user = await db.user.create({
+        data: {
+            employeeId,
+            fullName,
+            department,
+            email,
+            education,
+            profession,
+            password: hashedPassword,
+            employeeIdPhoto,
+            photo,
+            roles: roles || ['ScannerClerk'],
+            isActive: true,
+            isSelfRegistered: false,
+            registrationStatus: 'Approved',
+        },
+        select: {
+            id: true,
+            employeeId: true,
+            fullName: true,
+            department: true,
+            email: true,
+            education: true,
+            profession: true,
+            employeeIdPhoto: true,
+            photo: true,
+            roles: true,
+            isActive: true,
+            isSelfRegistered: true,
+            registrationStatus: true,
+            rejectionReason: true,
+            createdAt: true,
+            updatedAt: true,
+        },
     });
-    ApiResponse(res, 201, { ...user.toObject(), password: undefined }, 'User registered successfully');
+
+    ApiResponse(res, 201, user, 'User registered successfully');
 });
 
 // Self-Registration
 exports.selfRegister = asyncHandler(async (req, res) => {
-    console.log(req.body)
     const { employeeId, fullName, department, email, education, profession, password, employeeIdPhoto, photo } = req.body;
-    const user = await User.create({
-        employeeId,
-        fullName,
-        department,
-        email,
-        education,
-        profession,
-        password,
-        employeeIdPhoto,
-        photo,
-        roles: ['ScannerClerk'],
-        isActive: false,
-        isSelfRegistered: true,
-        registrationStatus: 'Pending',
+
+
+    const employeeIdExists = await db.user.findUnique({
+        where: { employeeId },
     });
-    // await sendEmail({
-    //     to: email,
-    //     subject: 'Self-Registration Submitted',
-    //     html: `<p>Your registration is pending admin approval. You'll be notified once reviewed.</p>`,
-    // });
+
+    if (employeeIdExists) {
+        const error = new Error('Employee ID already exists');
+        error.statusCode = 400;
+        throw error;
+    }
+
+    const emailExists = await db.user.findUnique({
+        where: { email },
+    });
+
+    if (emailExists) {
+        const error = new Error('Email already exists');
+        error.statusCode = 400;
+        throw error;
+    }
+    if (!employeeId || !fullName || !department || !email || !education || !profession || !password) {
+        const error = new Error('Required fields missing');
+        error.statusCode = 400;
+        throw error;
+    }
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create user
+    const user = await db.user.create({
+        data: {
+            employeeId,
+            fullName,
+            department,
+            email,
+            education,
+            profession,
+            password: hashedPassword,
+            employeeIdPhoto,
+            photo,
+            isActive: false,
+            isSelfRegistered: true,
+        },
+    });
+
+    await sendEmail({
+        to: email,
+        subject: 'Self-Registration Submitted',
+        html: `<p>Your registration is pending admin approval. You'll be notified once reviewed.</p>`,
+    });
+
     ApiResponse(res, 201, null, 'Registration submitted, pending approval');
 });
 
 // Admin: Approve/Reject Self-Registration
 exports.reviewSelfRegistration = asyncHandler(async (req, res) => {
     const { userId, status, rejectionReason } = req.body;
+
+    console.log('Reviewing self-registration for user:', userId, 'with status:', status);
     if (!['Approved', 'Rejected'].includes(status)) {
         const error = new Error('Invalid status');
         error.statusCode = 400;
         throw error;
     }
 
-    const user = await User.findById(userId);
+    // Find user
+    const user = await db.user.findUnique({
+        where: { id: parseInt(userId) },
+    });
+
     if (!user || !user.isSelfRegistered) {
         const error = new Error('User not found or not self-registered');
         error.statusCode = 404;
         throw error;
     }
 
-    user.registrationStatus = status;
-    user.isActive = status === 'Approved';
-    user.rejectionReason = status === 'Rejected' ? rejectionReason : null;
-    await user.save();
+    // Update user
+    await db.user.update({
+        where: { id: parseInt(userId) },
+        data: {
+            registrationStatus: status,
+            isActive: status === 'Approved',
+            rejectionReason: status === 'Rejected' ? rejectionReason : null,
+        },
+    });
 
-    // await sendEmail({
-    //     to: user.email,
-    //     subject: `Registration ${status}`,
-    //     html: status === 'Approved'
-    //         ? `<p>Your registration has been approved. You can now log in.</p>`
-    //         : `<p>Your registration was rejected. Reason: ${rejectionReason}</p>`,
-    // });
+    await sendEmail({
+        to: user.email,
+        subject: `Registration ${status}`,
+        html: status === 'Approved'
+            ? `<p>Your registration has been approved. You can now log in.</p>`
+            : `<p>Your registration was rejected. Reason: ${rejectionReason}</p>`,
+    });
 
     ApiResponse(res, 200, null, `User registration ${status.toLowerCase()}`);
 });
@@ -90,15 +162,29 @@ exports.reviewSelfRegistration = asyncHandler(async (req, res) => {
 exports.toggleUserStatus = asyncHandler(async (req, res) => {
     const { userId } = req.params;
     const { isActive } = req.body;
-    const user = await User.findById(userId);
+
+    if (!userId || typeof isActive !== 'boolean') {
+        const error = new Error('Invalid request data');
+        error.statusCode = 400;
+        throw error;
+    }
+
+    // Find user
+    const user = await db.user.findUnique({
+        where: { id: parseInt(userId) },
+    });
+
     if (!user) {
         const error = new Error('User not found');
         error.statusCode = 404;
         throw error;
     }
 
-    user.isActive = isActive;
-    await user.save();
+    // Update user status
+    await db.user.update({
+        where: { id: parseInt(userId) },
+        data: { isActive },
+    });
 
     ApiResponse(res, 200, null, `User ${isActive ? 'activated' : 'deactivated'}`);
 });
@@ -107,41 +193,138 @@ exports.toggleUserStatus = asyncHandler(async (req, res) => {
 exports.updateUserRoles = asyncHandler(async (req, res) => {
     const { userId } = req.params;
     const { roles } = req.body;
-    const user = await User.findById(userId);
+
+    // Find user
+    const user = await db.user.findUnique({
+        where: { id: parseInt(userId) },
+        select: {
+            id: true,
+            employeeId: true,
+            fullName: true,
+            department: true,
+            email: true,
+            education: true,
+            profession: true,
+            employeeIdPhoto: true,
+            photo: true,
+            roles: true,
+            isActive: true,
+            isSelfRegistered: true,
+            registrationStatus: true,
+            rejectionReason: true,
+            createdAt: true,
+            updatedAt: true,
+        },
+    });
+
     if (!user) {
         const error = new Error('User not found');
         error.statusCode = 404;
-        throw error;
+        throwHorizontalAlignmentError;
     }
 
-    user.roles = roles;
-    await user.save();
+    // Update roles
+    const updatedUser = await db.user.update({
+        where: { id: parseInt(userId) },
+        data: { roles },
+        select: {
+            id: true,
+            employeeId: true,
+            fullName: true,
+            department: true,
+            email: true,
+            education: true,
+            profession: true,
+            employeeIdPhoto: true,
+            photo: true,
+            roles: true,
+            isActive: true,
+            isSelfRegistered: true,
+            registrationStatus: true,
+            rejectionReason: true,
+            createdAt: true,
+            updatedAt: true,
+        },
+    });
 
-    ApiResponse(res, 200, { ...user.toObject(), password: undefined }, 'User roles updated');
+    ApiResponse(res, 200, updatedUser, 'User roles updated');
 });
 
+// Get All Users
 exports.getUsers = asyncHandler(async (req, res) => {
-    const users = await User.find();
-    if (!users) {
+    const users = await db.user.findMany({
+        select: {
+            id: true,
+            employeeId: true,
+            fullName: true,
+            department: true,
+            email: true,
+            education: true,
+            profession: true,
+            employeeIdPhoto: true,
+            photo: true,
+            roles: true,
+            isActive: true,
+            isSelfRegistered: true,
+            registrationStatus: true,
+            rejectionReason: true,
+            createdAt: true,
+            updatedAt: true,
+        },
+    });
+
+    if (!users || users.length === 0) {
         const error = new Error('No users found');
         error.statusCode = 404;
         throw error;
     }
 
     return ApiResponse(res, 200, { users }, 'All users are here');
-})
+});
 
+// Update User
 exports.updateUser = asyncHandler(async (req, res) => {
     const { userId } = req.params;
     const { fullName, email, department, employeeId, password } = req.body;
+
     if (!fullName || !email || !department || !employeeId) {
-        return res.status(400).json({ message: 'Required fields missing' });
+        const error = new Error('Required fields missing');
+        error.statusCode = 400;
+        throw error;
     }
 
-    const user = await User.findById(userId);
-    if (!user) return res.status(404).json({ message: 'User not found' });
+    // check if email already exists
+    const emailExists = await db.user.findUnique({
+        where: { email, id: { not: parseInt(userId) } },
+    });
+    if (emailExists) {
+        const error = new Error('Email already exists');
+        error.statusCode = 400;
+        throw error;
+    }
 
-    // Delete old photo if it exists
+    // check if employeeId already exists
+    const employeeIdExists = await db.user.findUnique({
+        where: { employeeId, id: { not: parseInt(userId) } },
+    });
+    if (employeeIdExists) {
+        const error = new Error('Employee ID already exists');
+        error.statusCode = 400;
+        throw error;
+    }
+
+    // Find user
+    const user = await db.user.findUnique({
+        where: { id: parseInt(userId) },
+    });
+
+    if (!user) {
+        const error = new Error('User not found');
+        error.statusCode = 404;
+        throw error;
+    }
+
+    // Delete old photo if it exists and a new file is uploaded
     if (user.photo && req.file) {
         const oldPhotoPath = path.join(__dirname, '..', user.photo);
         if (fs.existsSync(oldPhotoPath)) {
@@ -155,10 +338,34 @@ exports.updateUser = asyncHandler(async (req, res) => {
         }
     }
 
+    // Prepare updates
     const updates = { fullName, email, department, employeeId };
-    if (password) updates.password = bcrypt.hashSync(password, 10);
+    if (password) updates.password = await bcrypt.hash(password, 10);
     if (req.file) updates.photo = `/uploads/profile-photos/${req.file.filename}`;
 
-    const updatedUser = await User.findByIdAndUpdate(userId, updates, { new: true });
-    return ApiResponse(res, 200, updatedUser, "User updated successfully")
+    // Update user
+    const updatedUser = await db.user.update({
+        where: { id: parseInt(userId) },
+        data: updates,
+        select: {
+            id: true,
+            employeeId: true,
+            fullName: true,
+            department: true,
+            email: true,
+            education: true,
+            profession: true,
+            employeeIdPhoto: true,
+            photo: true,
+            roles: true,
+            isActive: true,
+            isSelfRegistered: true,
+            registrationStatus: true,
+            rejectionReason: true,
+            createdAt: true,
+            updatedAt: true,
+        },
+    });
+
+    return ApiResponse(res, 200, updatedUser, 'User updated successfully');
 });

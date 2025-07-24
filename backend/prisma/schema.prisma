@@ -1,0 +1,97 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Enum for User roles
+enum Role {
+  Admin
+  ScannerClerk
+  Approver
+  Uploader
+}
+
+// Enum for User registration status
+enum RegistrationStatus {
+  Pending
+  Approved
+  Rejected
+}
+
+// Enum for Document status
+enum DocumentStatus {
+  draft
+  submitted
+  approved
+  rejected
+  uploaded
+}
+
+model User {
+  id                 Int                @id @default(autoincrement())
+  employeeId         String             @unique
+  fullName           String
+  department         String
+  email              String             @unique
+  education          String
+  profession         String
+  password           String
+  employeeIdPhoto    String?
+  photo              String?
+  roles              Role[]             @default([ScannerClerk])
+  isActive           Boolean            @default(true)
+  isSelfRegistered   Boolean            @default(false)
+  registrationStatus RegistrationStatus @default(Approved)
+  rejectionReason    String?
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+  passwordResets     PasswordReset[]    @relation("UserToPasswordReset")
+  scannedDocuments   Document[]         @relation("ScannedDocuments")
+  approvedDocuments  Document[]         @relation("ApprovedDocuments")
+  uploadedDocuments  Document[]         @relation("UploadedDocuments")
+}
+
+model PasswordReset {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation("UserToPasswordReset", fields: [userId], references: [id])
+  token     String
+  expiresAt DateTime
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model Document {
+  id         Int            @id @default(autoincrement())
+  scannerId  Int
+  scanner    User           @relation("ScannedDocuments", fields: [scannerId], references: [id])
+  approverId Int?
+  approver   User?          @relation("ApprovedDocuments", fields: [approverId], references: [id])
+  uploaderId Int?
+  uploader   User?          @relation("UploadedDocuments", fields: [uploaderId], references: [id])
+  employeeId String
+  fileName   String
+  filePath   String
+  patientMRN String
+  status     DocumentStatus @default(draft)
+  comment    String         @default("")
+  scannedAt  DateTime       @default(now())
+  reviewedAt DateTime?
+  uploadedAt DateTime?
+
+  @@unique([scannerId, patientMRN])
+  @@index([scannerId])
+  @@index([approverId])
+  @@index([uploaderId])
+}
