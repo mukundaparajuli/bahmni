@@ -28,7 +28,7 @@ const PDFPreviewer = ({ filePath }) => {
     const onDocumentLoadSuccess = ({ numPages }) => {
         setNumPages(numPages);
     };
-
+    console.log("PDF file path:", filePath);
     return (
         <div
             id="pdf-container"
