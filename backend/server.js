@@ -22,7 +22,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'Uploads')));
 app.use('/api/v1/', require('./routes/index'));
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 app.use(errorHandler);
-// app.use((req, res) => res.sendFile(path.join(__dirname, 'dist', 'index.html')));
+app.use((req, res) => res.sendFile(path.join(__dirname, 'dist', 'index.html')));
 
 const startServer = async () => {
     console.log(`Starting server in ${env.nodeEnv} mode...`);
@@ -34,7 +34,6 @@ const startServer = async () => {
         // Run admin seeding
         await seedAdmin();
 
-        // Start the server
         const server = app.listen(env.port, '0.0.0.0', () => {
             console.log(`Server running in ${env.nodeEnv} mode on port ${env.port}`);
         });
