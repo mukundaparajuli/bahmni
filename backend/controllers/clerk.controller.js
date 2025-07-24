@@ -155,3 +155,43 @@ exports.getSearchResult = asyncHandler(async (req, res) => {
         totalPages: Math.ceil(total / limit),
     }, 'Documents retrieved successfully');
 });
+exports.updateDocument = asyncHandler(async (req, res) => {
+    const { id } = req.body;
+    const file = req.file;
+
+    if (!id || !file) {
+        const error = new Error('Document ID and file are required');
+        error.statusCode = 400;
+        throw error;
+    }
+
+    const document = await db.document.findUnique({
+        where: { id: parseInt(id) },
+    });
+
+    if (!document) {
+        return ApiResponse(res, 404, null, 'Document not found');
+    }
+    try {
+        const oldFilePath = path.join(__dirname, '..', document.filePath);
+        await fs.unlink(oldFilePath);
+    } catch (err) {
+        console.warn(`⚠️ Failed to delete old file: ${err.message}`);
+    }
+
+    const updatedDocument = await db.document.update({
+        where: { id: parseInt(id) },
+        data: {
+            fileName: file.originalname,
+            filePath: file.path,
+            uploadedAt: new Date(),
+        },
+        include: {
+            scanner: true,
+            approver: true,
+            uploader: true,
+        },
+    });
+    return ApiResponse(res, 200, updatedDocument, 'Document updated successfully');
+});
+

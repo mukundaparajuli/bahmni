@@ -6,6 +6,7 @@ import { getStaticUrl } from "@/utils/get-static-url";
 import { Document, Page, pdfjs } from "react-pdf";
 import Preview from "./Preview";
 import PDFPreviewerIframe from "./pdf_show/Document";
+import { useNavigate } from 'react-router-dom';
 
 // Set the worker source for react-pdf
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
@@ -14,9 +15,22 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL(
 ).toString();
 
 const ScannedDocumentCard = ({ document, deleteButton, onDelete }) => {
-    const { fileName, filePath, patientMRN, status, scannedAt } = document;
+    const { fileName, filePath, patientMRN, status, scannedAt, comment, employeeId } = document;
     const [isPreviewOpen, setIsPreviewOpen] = React.useState(false);
+    const navigate = useNavigate();
     const isPdf = filePath?.toLowerCase().endsWith(".pdf");
+    const handleRescanOrResubmit = () => {
+        // assuming `document` contains all required fields
+        navigate('/rescan', {
+            state: {
+                id: document.id,
+                fileName: document.fileName,
+                filePath: document.filePath,
+                uploadedAt: document.uploadedAt,
+                // any other fields needed
+            },
+        });
+    };
 
     // Handle clicks on the overlay (outside the preview content)
     const handleOverlayClick = (e) => {
@@ -72,11 +86,33 @@ const ScannedDocumentCard = ({ document, deleteButton, onDelete }) => {
                     </p>
                     <p className="text-sm text-gray-600">
                         <span className="font-medium">Status:</span> {status}
+                        {(status === 'draft' || status === 'rejected') && (
+                            <span className="ml-2">
+                                <button
+                                    className="underline mr-2 text-gray-600 hover:text-gray-800"
+                                    onClick={handleRescanOrResubmit}
+                                >
+                                    Rescan or Resubmit the documents
+                                </button>
+
+                            </span>
+                        )}
+                    </p>
+                    <p className="text-sm text-gray-600">
+                        <span className="font-medium">Comments :</span> {comment}
+                    </p>
+                    <p className="text-sm text-gray-600">
+                        <span className="font-medium">Employee Id :</span> {employeeId}
+                    </p>
+                    <p className="text-sm text-gray-600">
+                        <span className="font-medium">Comments :</span> {comment}
                     </p>
                     <p className="text-sm text-gray-600">
                         <span className="font-medium">Scanned At:</span>{" "}
                         {new Date(scannedAt).toLocaleString()}
                     </p>
+
+
                 </div>
                 <div className="mt-4">
                     <Button

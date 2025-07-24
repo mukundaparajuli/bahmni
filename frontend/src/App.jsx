@@ -17,6 +17,7 @@ import ApproverPage from './pages/ApproverPage';
 import ReviewSection from './components/ReviewSection';
 import RejectedSection from './components/RejectedSection';
 import ApprovedSection from './components/ApprovedSection';
+import Rescan from './components/Rescan';
 
 const App = () => (
   <Router>
@@ -38,7 +39,7 @@ const App = () => (
         <Route path="docs" element={<DisplayScannedDocs />} />
       </Route>
 
-
+      <Route path="/rescan" element={<Rescan />} />
       <Route path="/approver" element={<ApproverPage />}      >
         <Route index element={<ReviewSection />} />
         <Route path="review" element={<ReviewSection />} />
