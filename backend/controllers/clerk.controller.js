@@ -157,6 +157,28 @@ exports.getSearchResult = asyncHandler(async (req, res) => {
         totalPages: Math.ceil(total / limit),
     }, 'Documents retrieved successfully');
 });
+exports.submitDocument = asyncHandler(async (req, res) => {
+    const { id } = req.body;
+    if (!id) {
+        return ApiResponse(res, 40, null, 'Id not provided for document');
+    }
+    const updatedDocument = await db.document.update({
+        where: { id: parseInt(id) },
+        data: {
+            status: "submitted",
+        },
+        include: {
+            scanner: true,
+            approver: true,
+            uploader: true,
+        },
+    });
+    if (!updatedDocument) {
+        return ApiResponse(res, 404, null, "Document not found");
+    }
+    return ApiResponse(res, 200, updatedDocument, "Document submitted successfully");
+
+})
 
 exports.updateDocument = asyncHandler(async (req, res) => {
     const { id, status } = req.body;
