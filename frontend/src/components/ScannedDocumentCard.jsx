@@ -1,12 +1,12 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { FileText, Trash2 } from "lucide-react";
 import { getStaticUrl } from "@/utils/get-static-url";
 import { Document, Page, pdfjs } from "react-pdf";
-import Preview from "./Preview";
 import PDFPreviewerIframe from "./pdf_show/Document";
-import { Navigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { updateStatus } from "@/api/scanner-api";
 
 // Set the worker source for react-pdf
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
@@ -15,39 +15,47 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL(
 ).toString();
 
 const ScannedDocumentCard = ({ document, deleteButton, onDelete }) => {
-    const { fileName, filePath, patientMRN, status, scannedAt, comment, employeeId } = document;
-    const [isPreviewOpen, setIsPreviewOpen] = React.useState(false);
+    const {
+        id,
+        fileName,
+        filePath,
+        patientMRN,
+        status,
+        scannedAt,
+        comment,
+        employeeId,
+        uploadedAt
+    } = document;
+
+    const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+    const navigate = useNavigate();
     const isPdf = filePath?.toLowerCase().endsWith(".pdf");
+
     const handleRescanOrResubmit = () => {
-        // assuming `document` contains all required fields
-        navigate('/rescan', {
-            state: {
-                id: document.id,
-                fileName: document.fileName,
-                filePath: document.filePath,
-                uploadedAt: document.uploadedAt,
-                // any other fields needed
-            },
+        navigate("/rescan", {
+            state: { id, fileName, filePath, uploadedAt },
         });
     };
 
-    // Handle clicks on the overlay (outside the preview content)
     const handleOverlayClick = (e) => {
-        if (e.target === e.currentTarget) {
-            setIsPreviewOpen(false);
+        if (e.target === e.currentTarget) setIsPreviewOpen(false);
+    };
+
+    const handleStatus = async () => {
+        try {
+            await updateStatus(id);
+            alert("Document submitted successfully");
+        } catch (error) {
+            console.error(error);
+            alert("Could not update the document");
         }
     };
 
-    // Handle Escape key press to close preview
     useEffect(() => {
         const handleEscape = (e) => {
-            if (e.key === "Escape") {
-                setIsPreviewOpen(false);
-            }
+            if (e.key === "Escape") setIsPreviewOpen(false);
         };
-        if (isPreviewOpen) {
-            window.addEventListener("keydown", handleEscape);
-        }
+        if (isPreviewOpen) window.addEventListener("keydown", handleEscape);
         return () => window.removeEventListener("keydown", handleEscape);
     }, [isPreviewOpen]);
 
@@ -80,39 +88,74 @@ const ScannedDocumentCard = ({ document, deleteButton, onDelete }) => {
                             className="w-full h-48 object-cover rounded mb-2"
                         />
                     )}
+
                     <p className="text-sm text-gray-600">
                         <span className="font-medium">Patient MRN:</span> {patientMRN}
                     </p>
-                    <p className="text-sm text-gray-600">
-                        <span className="font-medium">Status:</span> {status}
-                        {(status === 'draft' || status === 'rejected') && (
-                            <span className="ml-2">
-                                <button
-                                    className="underline mr-2 text-gray-600 hover:text-gray-800"
-                                    onClick={handleRescanOrResubmit}
-                                >
-                                    Rescan or Resubmit the documents
-                                </button>
 
-                            </span>
+                    {/* ✅ Status with color badge */}
+                    <p className="text-sm text-gray-600 flex items-center gap-2">
+                        <span className="font-medium">Status:</span>
+                        <span
+                            className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium
+                ${status === "draft"
+                                    ? "bg-yellow-100 text-yellow-800"
+                                    : status === "rejected"
+                                        ? "bg-red-100 text-red-800"
+                                        : status === "submitted"
+                                            ? "bg-green-100 text-green-800"
+                                            : status === "approved"
+                                                ? "bg-blue-100 text-blue-800"
+                                                : "bg-gray-200 text-gray-800"
+                                }`}
+                        >
+                            <span
+                                className={`w-2 h-2 rounded-full
+                  ${status === "draft"
+                                        ? "bg-yellow-500"
+                                        : status === "rejected"
+                                            ? "bg-red-500"
+                                            : status === "submitted"
+                                                ? "bg-green-500"
+                                                : status === "approved"
+                                                    ? "bg-blue-500"
+                                                    : "bg-gray-500"
+                                    }`}
+                            ></span>
+                            {status}
+                        </span>
+
+                        {(status === "draft" || status === "rejected") && (
+                            <button
+                                className="underline text-gray-600 hover:text-gray-800 text-sm ml-2"
+                                onClick={handleRescanOrResubmit}
+                            >
+                                Rescan or Resubmit
+                            </button>
                         )}
                     </p>
+
+                    {status === "draft" && (
+                        <Button
+                            onClick={handleStatus}
+                            className="mt-1 bg-blue-600 hover:bg-blue-700 text-white"
+                        >
+                            Submit Document
+                        </Button>
+                    )}
+
                     <p className="text-sm text-gray-600">
-                        <span className="font-medium">Comments :</span> {comment}
+                        <span className="font-medium">Comments:</span> {comment}
                     </p>
                     <p className="text-sm text-gray-600">
-                        <span className="font-medium">Employee Id :</span> {employeeId}
-                    </p>
-                    <p className="text-sm text-gray-600">
-                        <span className="font-medium">Comments :</span> {comment}
+                        <span className="font-medium">Employee ID:</span> {employeeId}
                     </p>
                     <p className="text-sm text-gray-600">
                         <span className="font-medium">Scanned At:</span>{" "}
                         {new Date(scannedAt).toLocaleString()}
                     </p>
-
-
                 </div>
+
                 <div className="mt-4">
                     <Button
                         variant="outline"
@@ -122,6 +165,7 @@ const ScannedDocumentCard = ({ document, deleteButton, onDelete }) => {
                         Preview Document
                     </Button>
                 </div>
+
                 {isPreviewOpen && (
                     <div
                         className="fixed inset-0 z-50 flex items-center justify-center bg-black/80"
@@ -133,6 +177,7 @@ const ScannedDocumentCard = ({ document, deleteButton, onDelete }) => {
                     </div>
                 )}
             </CardContent>
+
             {deleteButton && (
                 <Button
                     variant="destructive"
