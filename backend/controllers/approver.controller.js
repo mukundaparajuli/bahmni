@@ -101,7 +101,7 @@ exports.getScannedDocuments = asyncHandler(async (req, res) => {
     const total = await db.document.count({
         where: {
             status: {
-                in: ['draft', 'submitted'],
+                in: ['submitted'],
             }
         },
     });
@@ -109,7 +109,7 @@ exports.getScannedDocuments = asyncHandler(async (req, res) => {
     const scannedDocs = await db.document.findMany({
         where: {
             status: {
-                in: ['draft', 'submitted'],
+                in: ['submitted'],
             }
         },
         skip,

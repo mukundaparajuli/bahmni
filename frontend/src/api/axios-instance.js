@@ -1,7 +1,9 @@
 import axios from 'axios';
 
+// Proper fallback for baseURL
+const base = import.meta.env.VITE_API_URL || 'https://10.3.231.35:5555'; // fallback IP
 const axiosInstance = axios.create({
-    baseURL: `${import.meta.env.VITE_API_URL}/api/v1` || 'http://localhost:5555/api/v1',
+    baseURL: `${base}/api/v1`,
 });
 
 // Set Content-Type only for non-file requests
@@ -9,12 +11,12 @@ axiosInstance.interceptors.request.use((config) => {
     if (!(config.data instanceof FormData)) {
         config.headers['Content-Type'] = 'application/json';
     } else {
-        // Let the browser set Content-Type (with boundary) for FormData
-        delete config.headers['Content-Type'];
+        delete config.headers['Content-Type']; // Let browser set for FormData
     }
     return config;
 });
 
+// Attach token if present
 axiosInstance.interceptors.request.use((config) => {
     const token = localStorage.getItem('token');
     if (token) {
@@ -23,6 +25,7 @@ axiosInstance.interceptors.request.use((config) => {
     return config;
 });
 
+// Handle 401 unauthorized
 axiosInstance.interceptors.response.use(
     (response) => response,
     (error) => {

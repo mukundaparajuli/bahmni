@@ -23,7 +23,9 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/api/v1/', require('./routes/index'));
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 app.use(errorHandler);
-app.use((req, res) => res.sendFile(path.join(__dirname, 'dist', 'index.html')));
+app.get(/^\/(?!api|uploads|assets).*/, async (req, res) => {
+    res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+});
 
 const startServer = async () => {
     console.log(`Starting server in ${env.nodeEnv} mode...`);
