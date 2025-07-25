@@ -6,7 +6,7 @@ import { getStaticUrl } from "@/utils/get-static-url";
 import { Document, Page, pdfjs } from "react-pdf";
 import Preview from "./Preview";
 import PDFPreviewerIframe from "./pdf_show/Document";
-import { useNavigate } from 'react-router-dom';
+import { Navigate } from "react-router-dom";
 
 // Set the worker source for react-pdf
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
@@ -17,7 +17,6 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL(
 const ScannedDocumentCard = ({ document, deleteButton, onDelete }) => {
     const { fileName, filePath, patientMRN, status, scannedAt, comment, employeeId } = document;
     const [isPreviewOpen, setIsPreviewOpen] = React.useState(false);
-    const navigate = useNavigate();
     const isPdf = filePath?.toLowerCase().endsWith(".pdf");
     const handleRescanOrResubmit = () => {
         // assuming `document` contains all required fields
@@ -27,6 +26,7 @@ const ScannedDocumentCard = ({ document, deleteButton, onDelete }) => {
                 fileName: document.fileName,
                 filePath: document.filePath,
                 uploadedAt: document.uploadedAt,
+                // any other fields needed
             },
         });
     };
@@ -128,7 +128,7 @@ const ScannedDocumentCard = ({ document, deleteButton, onDelete }) => {
                         onClick={handleOverlayClick}
                     >
                         <div className="relative flex justify-center items-center w-[60vw] h-[90vh] overflow-auto">
-                            <Preview filePath={getStaticUrl(filePath)} />
+                            <PDFPreviewerIframe filePath={getStaticUrl(filePath)} />
                         </div>
                     </div>
                 )}
