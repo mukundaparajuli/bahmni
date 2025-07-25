@@ -7,6 +7,7 @@ import { Document, Page, pdfjs } from "react-pdf";
 import PDFPreviewerIframe from "./pdf_show/Document";
 import { useNavigate } from "react-router-dom";
 import { updateStatus } from "@/api/scanner-api";
+import Preview from "./Preview";
 
 // Set the worker source for react-pdf
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
@@ -166,17 +167,17 @@ const ScannedDocumentCard = ({ document, deleteButton, onDelete }) => {
                     </Button>
                 </div>
 
-                {isPreviewOpen && (
-                    <div
-                        className="fixed inset-0 z-50 flex items-center justify-center bg-black/80"
-                        onClick={handleOverlayClick}
-                    >
-                        <div className="relative flex justify-center items-center w-[60vw] h-[90vh] overflow-auto">
-                            <PDFPreviewerIframe filePath={getStaticUrl(filePath)} />
-                        </div>
-                    </div>
-                )}
             </CardContent>
+            {isPreviewOpen && (
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/80"
+                    onClick={handleOverlayClick}
+                >
+                    <div className="relative flex justify-center items-center w-[60vw] h-[90vh] overflow-auto">
+                        <Preview filePath={getStaticUrl(filePath)} />
+                    </div>
+                </div>
+            )}
 
             {deleteButton && (
                 <Button

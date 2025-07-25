@@ -5,6 +5,8 @@ const { PrismaClient } = require('@prisma/client');
 const errorHandler = require('./middleware/error-handler');
 const env = require('./config/env');
 const path = require('path');
+const fs = require('fs');
+const https = require('https');
 const swaggerUi = require('swagger-ui-express');
 const swaggerDocs = require('./config/swagger');
 const seedAdmin = require('./seed');
@@ -13,8 +15,7 @@ const db = require('./config/db');
 dotenv.config();
 const app = express();
 
-
-
+// Middleware
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'dist')));
@@ -27,24 +28,30 @@ app.use((req, res) => res.sendFile(path.join(__dirname, 'dist', 'index.html')));
 const startServer = async () => {
     console.log(`Starting server in ${env.nodeEnv} mode...`);
     try {
-        // Connect to PostgreSQL via Prisma
+        // Connect to DB
         await db.$connect();
         console.log('Connected to PostgreSQL database');
 
         // Run admin seeding
         await seedAdmin();
 
-        const server = app.listen(env.port, '0.0.0.0', () => {
-            console.log(`Server running in ${env.nodeEnv} mode on port ${env.port}`);
+        // Read SSL cert and key
+        const httpsOptions = {
+            key: fs.readFileSync(path.join(__dirname, 'key.pem')),
+            cert: fs.readFileSync(path.join(__dirname, 'cert.pem')),
+        };
+
+        const server = https.createServer(httpsOptions, app).listen(env.port, '0.0.0.0', () => {
+            console.log(`🔒 HTTPS Server running on port ${env.port}`);
         });
 
         // Handle unhandled promise rejections
         process.on('unhandledRejection', (err) => {
-            console.log('Unhandled Rejection:', err.message);
+            console.error('Unhandled Rejection:', err.message);
             server.close(() => process.exit(1));
         });
 
-        // Gracefully disconnect Prisma on server shutdown
+        // Graceful shutdown
         process.on('SIGTERM', async () => {
             console.log('Shutting down server...');
             await db.$disconnect();

@@ -13,6 +13,13 @@ export default defineConfig({
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
-  }, assetsInclude: ['**/*.worker.js'], // allows import with ?url
+  },
+  server: {
+    host: '0.0.0.0',
+    port: 3000,
+  },
 
 })
+
+
+

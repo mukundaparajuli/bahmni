@@ -3,6 +3,7 @@ import Webcam from 'react-webcam';
 import jsPDF from 'jspdf';
 import { useLocation } from 'react-router-dom';
 import axios from 'axios';
+import axiosInstance from '@/api/axios-instance';
 
 const Rescan = () => {
     const { state } = useLocation();
@@ -47,7 +48,7 @@ const Rescan = () => {
         formData.append('file', fileToUpload);
         formData.append('status', status); // append status
         try {
-            await axios.post('http://localhost:5555/api/v1/clerk/updateDoc', formData);
+            await axiosInstance.post('/clerk/updateDoc', formData);
             alert('Document updated successfully!');
             setCapturedImages([]);
             setFile(null);

@@ -3,3 +3,5 @@ documents
 .env
 uploads
 /generated/prisma
+cert.pem
+key.pem
