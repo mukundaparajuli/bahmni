@@ -53,6 +53,6 @@ router.get('/deleteDoc/:id', authenticateToken, restrictTo('ScannerClerk'), dele
 router.post('/uploadDoc', authenticateToken, upload.single('file'), scanDocument);
 router.post('/updateDoc', upload.single('file'), updateDocument);
 router.get('/search', authenticateToken, restrictTo('Approver'), getSearchResult);
-router.get('/updateStatus', authenticateToken, restrictTo('ScannerClerk'), submitDocument);
+router.post('/updateStatus', authenticateToken, restrictTo('ScannerClerk'), submitDocument);
 
 module.exports = router;
