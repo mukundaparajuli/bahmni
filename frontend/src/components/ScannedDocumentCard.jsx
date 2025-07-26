@@ -11,7 +11,7 @@ import Preview from "./Preview";
 
 // Set the worker source for react-pdf
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-    "pdfjs-dist/build/pdf.worker.min.mjs",
+    "pdfjs-dist/build/pdf.worker.min.js",
     import.meta.url
 ).toString();
 
@@ -72,7 +72,10 @@ const ScannedDocumentCard = ({ document, deleteButton, onDelete }) => {
                 <div className="space-y-2">
                     {isPdf ? (
                         <div className="w-full h-48 overflow-hidden rounded mb-2">
-                            <Document file={getStaticUrl(filePath)}>
+                            <Document 
+                                file={getStaticUrl(filePath)}
+                                onLoadError={(error) => console.error('PDF load error in card:', error)}
+                            >
                                 <Page
                                     pageNumber={1}
                                     width={300}

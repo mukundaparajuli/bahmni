@@ -4,7 +4,10 @@ import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
 
 // Set the worker source for react-pdf
-pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
+pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+    "pdfjs-dist/build/pdf.worker.min.js",
+    import.meta.url
+).toString();
 
 const PDFPreviewer = ({ filePath }) => {
     const [numPages, setNumPages] = useState(null);
@@ -25,7 +28,13 @@ const PDFPreviewer = ({ filePath }) => {
 
     // Handle document load success
     const onDocumentLoadSuccess = ({ numPages }) => {
+        console.log('PDF loaded successfully with', numPages, 'pages');
         setNumPages(numPages);
+    };
+
+    // Handle document load error
+    const onDocumentLoadError = (error) => {
+        console.error('PDF load error:', error);
     };
     console.log("PDF file path:", filePath);
     return (
@@ -37,6 +46,7 @@ const PDFPreviewer = ({ filePath }) => {
                 <Document
                     file={filePath}
                     onLoadSuccess={onDocumentLoadSuccess}
+                    onLoadError={onDocumentLoadError}
                     className="flex flex-col items-center"
                 >
                     {Array.from(new Array(numPages || 0), (_, index) => (
