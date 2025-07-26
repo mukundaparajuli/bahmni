@@ -3,17 +3,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { FileText, Trash2 } from "lucide-react";
 import { getStaticUrl } from "@/utils/get-static-url";
-import { Document, Page, pdfjs } from "react-pdf";
+import { Document, Page } from "react-pdf";
 import PDFPreviewerIframe from "./pdf_show/Document";
 import { useNavigate } from "react-router-dom";
 import { updateStatus } from "@/api/scanner-api";
 import Preview from "./Preview";
 
-// Set the worker source for react-pdf
-pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-    "pdfjs-dist/build/pdf.worker.min.js",
-    import.meta.url
-).toString();
+// Import centralized PDF configuration
+import '@/utils/pdf-config';
 
 const ScannedDocumentCard = ({ document, deleteButton, onDelete }) => {
     const {

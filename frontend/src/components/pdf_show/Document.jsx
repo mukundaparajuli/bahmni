@@ -1,13 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { pdfjs, Document, Page } from 'react-pdf';
+import { Document, Page } from 'react-pdf';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
 
-// Set the worker source for react-pdf
-pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-    "pdfjs-dist/build/pdf.worker.min.js",
-    import.meta.url
-).toString();
+// Import centralized PDF configuration
+import '@/utils/pdf-config';
 
 const PDFPreviewer = ({ filePath }) => {
     const [numPages, setNumPages] = useState(null);
