@@ -2,12 +2,13 @@ import React, { useRef, useState, useCallback } from 'react';
 import Webcam from 'react-webcam';
 import Cropper from 'react-cropper';
 import 'cropperjs/dist/cropper.css';
-import { Document, Page, pdfjs } from 'react-pdf';
+import { Document, Page } from 'react-pdf';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import jsPDF from 'jspdf';
 import axiosInstance from '@/api/axios-instance';
 
-pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.js`;
+// Import centralized PDF configuration
+import '@/utils/pdf-config';
 
 const DocumentScanner = () => {
     const [image, setImage] = useState(null);

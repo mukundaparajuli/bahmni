@@ -3,17 +3,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { FileText, Trash2 } from "lucide-react";
 import { getStaticUrl } from "@/utils/get-static-url";
-import { Document, Page, pdfjs } from "react-pdf";
+import { Document, Page } from "react-pdf";
 import PDFPreviewerIframe from "./pdf_show/Document";
 import { useNavigate } from "react-router-dom";
 import { updateStatus } from "@/api/scanner-api";
 import Preview from "./Preview";
 
-// Set the worker source for react-pdf
-pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-    "pdfjs-dist/build/pdf.worker.min.mjs",
-    import.meta.url
-).toString();
+// Import centralized PDF configuration
+import '@/utils/pdf-config';
 
 const ScannedDocumentCard = ({ document, deleteButton, onDelete }) => {
     const {
@@ -72,7 +69,10 @@ const ScannedDocumentCard = ({ document, deleteButton, onDelete }) => {
                 <div className="space-y-2">
                     {isPdf ? (
                         <div className="w-full h-48 overflow-hidden rounded mb-2">
-                            <Document file={getStaticUrl(filePath)}>
+                            <Document 
+                                file={getStaticUrl(filePath)}
+                                onLoadError={(error) => console.error('PDF load error in card:', error)}
+                            >
                                 <Page
                                     pageNumber={1}
                                     width={300}
