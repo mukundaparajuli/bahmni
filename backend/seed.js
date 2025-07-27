@@ -13,7 +13,7 @@ const seedAdmin = async () => {
         }
 
         // Hash the admin password
-        const hashedPassword = await bcrypt.hash('AdminPass123', 10);
+        const hashedPassword = await bcrypt.hash('password', 10);
 
         // Create admin user
         await db.user.create({
@@ -21,7 +21,7 @@ const seedAdmin = async () => {
                 employeeId: 'EMP001',
                 fullName: 'Super Admin',
                 department: 'IT',
-                email: 'admin@example.com',
+                email: 'admin@admin.com',
                 education: 'M.Tech',
                 profession: 'System Administrator',
                 password: hashedPassword,

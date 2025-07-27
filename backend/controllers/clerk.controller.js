@@ -51,6 +51,19 @@ exports.scanDocument = asyncHandler(async (req, res) => {
         throw error;
     }
 
+    //check if the file from the patient with this mrn number has already been uploaded by other scanner clerk
+    const existingDocument = await db.document.findFirst({
+        where: {
+            patientMRN: patientMRN,
+        },
+    });
+
+    if (existingDocument && existingDocument.scannerId !== req.user.id) {
+        const error = new Error('Document with this patient MRN has already been scanned by another clerk');
+        error.statusCode = 400;
+        throw error;
+    }
+
     const fileName = file.originalname;
     const filePath = `/uploads/documents/${file.filename}`;
     const scannerId = req.user.id; // Changed from req.user._id to req.user.id

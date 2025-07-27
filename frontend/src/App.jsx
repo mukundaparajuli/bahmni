@@ -18,6 +18,7 @@ import ReviewSection from './components/ReviewSection';
 import RejectedSection from './components/RejectedSection';
 import ApprovedSection from './components/ApprovedSection';
 import Rescan from './components/Rescan';
+import PDFTest from './components/PDFTest';
 
 const App = () => (
   <Router>
@@ -46,7 +47,7 @@ const App = () => (
         <Route path="approved" element={<ApprovedSection />} />
         <Route path="rejected" element={<RejectedSection />} />
       </Route>
-
+      <Route path="/test" element={<PDFTest />} />
 
     </Routes>
     <Toaster />

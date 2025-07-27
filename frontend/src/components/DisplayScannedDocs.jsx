@@ -146,6 +146,7 @@ const DisplayScannedDocs = () => {
                                     document={doc}
                                     deleteButton={doc.status === 'draft'}
                                     onDelete={() => handleDelete(doc.id)}
+                                    isScanner
                                 />
                             ))
                         ) : (

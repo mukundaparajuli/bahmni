@@ -51,7 +51,7 @@ model User {
   roles              Role[]             @default([ScannerClerk])
   isActive           Boolean            @default(true)
   isSelfRegistered   Boolean            @default(false)
-  registrationStatus RegistrationStatus @default(Approved)
+  registrationStatus RegistrationStatus @default(Pending)
   rejectionReason    String?
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt
@@ -90,7 +90,6 @@ model Document {
   reviewedAt DateTime?
   uploadedAt DateTime?
 
-  @@unique([scannerId, patientMRN])
   @@index([scannerId])
   @@index([approverId])
   @@index([uploaderId])

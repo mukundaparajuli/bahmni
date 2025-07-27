@@ -295,9 +295,9 @@ exports.updateUser = asyncHandler(async (req, res) => {
 
     // check if email already exists
     const emailExists = await db.user.findUnique({
-        where: { email, id: { not: parseInt(userId) } },
+        where: { email },
     });
-    if (emailExists) {
+    if (emailExists && emailExists.id !== parseInt(userId)) {
         const error = new Error('Email already exists');
         error.statusCode = 400;
         throw error;
@@ -305,9 +305,11 @@ exports.updateUser = asyncHandler(async (req, res) => {
 
     // check if employeeId already exists
     const employeeIdExists = await db.user.findUnique({
-        where: { employeeId, id: { not: parseInt(userId) } },
+        where: {
+            employeeId
+        },
     });
-    if (employeeIdExists) {
+    if (employeeIdExists && employeeIdExists.id !== parseInt(userId)) {
         const error = new Error('Employee ID already exists');
         error.statusCode = 400;
         throw error;
