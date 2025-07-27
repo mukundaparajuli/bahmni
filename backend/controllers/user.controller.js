@@ -66,7 +66,7 @@ exports.selfRegister = asyncHandler(async (req, res) => {
     });
 
     if (employeeIdExists) {
-        const error = new Error('Employee ID already exists');
+        const error = new Error('This Employee ID or email is already in use. Please log in or use a different Employee ID or email address');
         error.statusCode = 400;
         throw error;
     }
@@ -76,7 +76,7 @@ exports.selfRegister = asyncHandler(async (req, res) => {
     });
 
     if (emailExists) {
-        const error = new Error('Email already exists');
+        const error = new Error('This Employee ID or email is already in use. Please log in or use a different Employee ID or email address');
         error.statusCode = 400;
         throw error;
     }
