@@ -26,6 +26,7 @@ const STATUS_CONFIG = {
     rejected: { bg: "bg-red-100", text: "text-red-800", dot: "bg-red-500" },
     submitted: { bg: "bg-green-100", text: "text-green-800", dot: "bg-green-500" },
     approved: { bg: "bg-blue-100", text: "text-blue-800", dot: "bg-blue-500" },
+    're-scanned approved': { bg: "bg-purple-100", text: "text-purple-800", dot: "bg-purple-500" },
     default: { bg: "bg-gray-200", text: "text-gray-800", dot: "bg-gray-500" },
 };
 

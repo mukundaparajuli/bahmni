@@ -1,4 +1,4 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { AuthContext } from '@/contexts/auth-context';
 import { useContext, useState } from 'react';
@@ -12,6 +12,7 @@ import { getStaticUrl } from '@/utils/get-static-url';
 const Navbar = () => {
     const { user, logout } = useContext(AuthContext);
     const navigate = useNavigate();
+    const location = useLocation();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     const handleLogout = () => {
@@ -21,13 +22,22 @@ const Navbar = () => {
         setIsMobileMenuOpen(false);
     };
 
+    // Get active module name based on current route
+    const getActiveModule = () => {
+        const path = location.pathname;
+        if (path.startsWith('/scanner')) return '- Scanner';
+        if (path.startsWith('/approver')) return '- Approver';
+        if (path.startsWith('/admin')) return '- Admin';
+        if (path === '/') return '- Dashboard';
+        return '';
+    };
 
     return (
         <nav className="bg-gray-800 text-white p-4 sticky top-0 z-50 shadow-md">
             <div className="container mx-auto flex justify-between items-center">
                 <Link to="/" className="text-xl font-bold flex items-center gap-2">
                     <Home className="h-5 w-5" />
-                    Bahmni
+                    Bahmni {getActiveModule()}
                 </Link>
                 <div className="hidden md:flex items-center gap-4">
                     {user ? (
