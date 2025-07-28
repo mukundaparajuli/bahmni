@@ -25,10 +25,10 @@ const Navbar = () => {
     // Get active module name based on current route
     const getActiveModule = () => {
         const path = location.pathname;
-        if (path.startsWith('/scanner')) return '- Scanner';
-        if (path.startsWith('/approver')) return '- Approver';
-        if (path.startsWith('/admin')) return '- Admin';
-        if (path === '/') return '- Dashboard';
+        if (path.startsWith('/scanner')) return ' Scanner';
+        if (path.startsWith('/approver')) return ' Approver';
+        if (path.startsWith('/admin')) return ' Admin';
+        if (path === '/') return ' Dashboard';
         return '';
     };
 
@@ -37,7 +37,9 @@ const Navbar = () => {
             <div className="container mx-auto flex justify-between items-center">
                 <Link to="/" className="text-xl font-bold flex items-center gap-2">
                     <Home className="h-5 w-5" />
-                    Bahmni {getActiveModule()}
+                    <div className="flex items-baseline gap-2">
+                        Bahmni <span className="text-sm font-semibold text-gray-400 italic">{getActiveModule()}</span>
+                    </div>
                 </Link>
                 <div className="hidden md:flex items-center gap-4">
                     {user ? (
@@ -168,9 +170,9 @@ const Navbar = () => {
                                 </Link>
                             )}
                             <Button
+                                variant="ghost"
+                                className="w-full text-left text-sm text-gray-700 bg-gray-100 hover:text-red-600 hover:bg-gray-200"
                                 onClick={handleLogout}
-                                variant="outline"
-                                className="text-white border-white hover:bg-gray-700 hover:text-white w-full"
                             >
                                 <LogOut className="h-4 w-4 mr-2" />
                                 Logout

@@ -1,4 +1,4 @@
-import { Inbox, Scan } from "lucide-react"
+import { Users, Building2, Book, Briefcase } from "lucide-react"
 
 import {
     Sidebar,
@@ -13,15 +13,26 @@ import {
 
 const items = [
     {
-        title: "Scan Document",
-        url: "/scanner/scan",
-        icon: Scan,
+        title: "User Management",
+        url: "/admin/users",
+        icon: Users,
     },
     {
-        title: "Scanned Documents",
-        url: "/scanner/docs",
-        icon: Inbox,
-    }
+        title: "Department Management",
+        url: "/admin/departments",
+        icon: Building2,
+    },
+    {
+        title: "Education Management",
+        url: "/admin/education",
+        icon: Book,
+    },
+    {
+        title: "Profession Management",
+        url: "/admin/professions",
+        icon: Briefcase,
+    },
+
 ]
 export function AppSidebar() {
     return (

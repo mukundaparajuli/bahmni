@@ -4,84 +4,25 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Trash2, Edit, Plus } from 'lucide-react';
-import useToastError from '@/hooks/useToastError';
+import { useData } from '@/contexts/data-context';
 
 const ManageProfessions = () => {
-    const [professions, setProfessions] = useState([
-        { id: 1, value: 'doctor', label: 'Doctor' },
-        { id: 2, value: 'physician', label: 'Physician' },
-        { id: 3, value: 'nurse', label: 'Nurse' },
-        { id: 4, value: 'pharmacist', label: 'Pharmacist' },
-        { id: 5, value: 'researcher', label: 'Researcher' },
-        { id: 6, value: 'teacher', label: 'Teacher/Lecturer' },
-        { id: 7, value: 'itspecialist', label: 'IT Specialist' },
-        { id: 8, value: 'others', label: 'Others' },
-    ]);
+    const { data, addItem, editItem, deleteItem } = useData();
     const [newProfession, setNewProfession] = useState({ value: '', label: '' });
     const [editingProfession, setEditingProfession] = useState(null);
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-    const { showError, showSuccess } = useToastError();
 
-    const handleAddProfession = () => {
-        if (!newProfession.value.trim() || !newProfession.label.trim()) {
-            showError(new Error('Please fill in both value and label fields'), 'Validation Error');
-            return;
-        }
-
-        const exists = professions.some(prof => 
-            prof.value.toLowerCase() === newProfession.value.toLowerCase() || 
-            prof.label.toLowerCase() === newProfession.label.toLowerCase()
-        );
-
-        if (exists) {
-            showError(new Error('Profession already exists'), 'Validation Error');
-            return;
-        }
-
-        const newProf = {
-            id: Math.max(...professions.map(p => p.id)) + 1,
-            value: newProfession.value.toLowerCase().replace(/\s+/g, '_'),
-            label: newProfession.label
-        };
-
-        setProfessions([...professions, newProf]);
+    const handleAdd = () => {
+        addItem('professions', newProfession);
         setNewProfession({ value: '', label: '' });
         setIsAddDialogOpen(false);
-        showSuccess('Profession added successfully');
     };
 
-    const handleEditProfession = () => {
-        if (!editingProfession.value.trim() || !editingProfession.label.trim()) {
-            showError(new Error('Please fill in both value and label fields'), 'Validation Error');
-            return;
-        }
-
-        const exists = professions.some(prof => 
-            prof.id !== editingProfession.id && (
-                prof.value.toLowerCase() === editingProfession.value.toLowerCase() || 
-                prof.label.toLowerCase() === editingProfession.label.toLowerCase()
-            )
-        );
-
-        if (exists) {
-            showError(new Error('Profession already exists'), 'Validation Error');
-            return;
-        }
-
-        setProfessions(professions.map(prof => 
-            prof.id === editingProfession.id ? editingProfession : prof
-        ));
+    const handleEdit = () => {
+        editItem('professions', editingProfession);
         setEditingProfession(null);
         setIsEditDialogOpen(false);
-        showSuccess('Profession updated successfully');
-    };
-
-    const handleDeleteProfession = (id) => {
-        if (window.confirm('Are you sure you want to delete this profession?')) {
-            setProfessions(professions.filter(prof => prof.id !== id));
-            showSuccess('Profession deleted successfully');
-        }
     };
 
     return (
@@ -104,7 +45,7 @@ const ManageProfessions = () => {
                                 <label className="block text-sm font-medium mb-1">Value</label>
                                 <Input
                                     value={newProfession.value}
-                                    onChange={(e) => setNewProfession({...newProfession, value: e.target.value})}
+                                    onChange={(e) => setNewProfession({ ...newProfession, value: e.target.value })}
                                     placeholder="e.g., doctor"
                                 />
                             </div>
@@ -112,11 +53,11 @@ const ManageProfessions = () => {
                                 <label className="block text-sm font-medium mb-1">Label</label>
                                 <Input
                                     value={newProfession.label}
-                                    onChange={(e) => setNewProfession({...newProfession, label: e.target.value})}
+                                    onChange={(e) => setNewProfession({ ...newProfession, label: e.target.value })}
                                     placeholder="e.g., Doctor"
                                 />
                             </div>
-                            <Button onClick={handleAddProfession} className="w-full">
+                            <Button onClick={handleAdd} className="w-full">
                                 Add Profession
                             </Button>
                         </div>
@@ -125,7 +66,7 @@ const ManageProfessions = () => {
             </div>
 
             <div className="grid gap-4">
-                {professions.map((profession) => (
+                {data.professions.map((profession) => (
                     <Card key={profession.id}>
                         <CardContent className="flex justify-between items-center p-4">
                             <div>
@@ -133,16 +74,18 @@ const ManageProfessions = () => {
                                 <p className="text-sm text-gray-500">Value: {profession.value}</p>
                             </div>
                             <div className="flex gap-2">
-                                <Dialog open={isEditDialogOpen && editingProfession?.id === profession.id} 
-                                       onOpenChange={(open) => {
-                                           setIsEditDialogOpen(open);
-                                           if (!open) setEditingProfession(null);
-                                       }}>
+                                <Dialog
+                                    open={isEditDialogOpen && editingProfession?.id === profession.id}
+                                    onOpenChange={(open) => {
+                                        setIsEditDialogOpen(open);
+                                        if (!open) setEditingProfession(null);
+                                    }}
+                                >
                                     <DialogTrigger asChild>
-                                        <Button 
-                                            variant="outline" 
+                                        <Button
+                                            variant="outline"
                                             size="sm"
-                                            onClick={() => setEditingProfession({...profession})}
+                                            onClick={() => setEditingProfession({ ...profession })}
                                         >
                                             <Edit className="h-4 w-4" />
                                         </Button>
@@ -156,32 +99,30 @@ const ManageProfessions = () => {
                                                 <label className="block text-sm font-medium mb-1">Value</label>
                                                 <Input
                                                     value={editingProfession?.value || ''}
-                                                    onChange={(e) => setEditingProfession({
-                                                        ...editingProfession, 
-                                                        value: e.target.value
-                                                    })}
+                                                    onChange={(e) =>
+                                                        setEditingProfession({ ...editingProfession, value: e.target.value })
+                                                    }
                                                 />
                                             </div>
                                             <div>
                                                 <label className="block text-sm font-medium mb-1">Label</label>
                                                 <Input
                                                     value={editingProfession?.label || ''}
-                                                    onChange={(e) => setEditingProfession({
-                                                        ...editingProfession, 
-                                                        label: e.target.value
-                                                    })}
+                                                    onChange={(e) =>
+                                                        setEditingProfession({ ...editingProfession, label: e.target.value })
+                                                    }
                                                 />
                                             </div>
-                                            <Button onClick={handleEditProfession} className="w-full">
+                                            <Button onClick={handleEdit} className="w-full">
                                                 Update Profession
                                             </Button>
                                         </div>
                                     </DialogContent>
                                 </Dialog>
-                                <Button 
-                                    variant="outline" 
+                                <Button
+                                    variant="outline"
                                     size="sm"
-                                    onClick={() => handleDeleteProfession(profession.id)}
+                                    onClick={() => deleteItem('professions', profession.id)}
                                 >
                                     <Trash2 className="h-4 w-4" />
                                 </Button>

@@ -1,9 +1,12 @@
+import AuthLayout from '@/components/common/AuthLayout'
 import RegisterForm from '@/components/RegisterForm'
 import React from 'react'
 
 const Register = () => {
     return (
-        <div><RegisterForm /></div>
+        <AuthLayout title="Register">
+            <RegisterForm />
+        </AuthLayout>
     )
 }
 

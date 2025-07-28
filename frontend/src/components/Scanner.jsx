@@ -26,19 +26,25 @@ const DocumentScanner = () => {
     const capturedCropperRef = useRef(null);
     const { showError, showSuccess } = useToastError();
 
+    // A4 aspect ratio (210mm x 297mm)
+    const A4_ASPECT_RATIO = 210 / 297; // Approximately 0.7070707
+    // A4 pixel dimensions at 300 DPI
+    const A4_WIDTH_PX = 2480; // 210mm at 300 DPI
+    const A4_HEIGHT_PX = 3508; // 297mm at 300 DPI
+
     // Improved camera constraints for better document scanning
     const videoConstraints = {
         facingMode: 'environment',
         width: { ideal: 1920, max: 1920 },
         height: { ideal: 1080, max: 1080 },
-        aspectRatio: { ideal: 16/9 }
+        aspectRatio: { ideal: A4_ASPECT_RATIO }
     };
 
     const handleCapture = useCallback(() => {
         const screenshot = webcamRef.current.getScreenshot({
             width: 1920,
             height: 1080,
-            quality: 0.95
+            quality: 1.0 // Maximum quality for screenshot
         });
         if (screenshot) {
             setCurrentCapturedImage(screenshot);
@@ -52,13 +58,13 @@ const DocumentScanner = () => {
         if (!cropper) return;
 
         const canvas = cropper.getCroppedCanvas({
-            width: 1920,
-            height: 1080,
+            width: A4_WIDTH_PX, // A4 width at 300 DPI
+            height: A4_HEIGHT_PX, // A4 height at 300 DPI
             imageSmoothingEnabled: true,
             imageSmoothingQuality: 'high'
         });
 
-        const croppedImage = canvas.toDataURL('image/jpeg', 0.95);
+        const croppedImage = canvas.toDataURL('image/png', 1.0); // Use PNG for lossless quality
         setCapturedImages(prev => [...prev, croppedImage]);
         setShowCropper(false);
         setCurrentCapturedImage(null);
@@ -96,15 +102,15 @@ const DocumentScanner = () => {
         if (!cropper) return;
 
         const canvas = cropper.getCroppedCanvas({
-            width: 1920,
-            height: 1080,
+            width: A4_WIDTH_PX, // A4 width at 300 DPI
+            height: A4_HEIGHT_PX, // A4 height at 300 DPI
             imageSmoothingEnabled: true,
             imageSmoothingQuality: 'high'
         });
-        
-        const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.95));
-        const file = new File([blob], 'cropped-image.jpg', { type: 'image/jpeg' });
-        
+
+        const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png', 1.0)); // Use PNG
+        const file = new File([blob], 'cropped-image.png', { type: 'image/png' });
+
         const formData = new FormData();
         formData.append('file', file);
         formData.append('patientMRN', mrn);
@@ -129,7 +135,7 @@ const DocumentScanner = () => {
             showError(new Error('Please select a PDF file to upload'), 'Validation Error');
             return;
         }
-        
+
         const formData = new FormData();
         formData.append('file', pdfFile);
         formData.append('patientMRN', mrn);
@@ -157,7 +163,7 @@ const DocumentScanner = () => {
             return;
         }
 
-        // Create PDF with better quality settings
+        // Create PDF with high-quality settings
         const doc = new jsPDF({
             orientation: 'portrait',
             unit: 'mm',
@@ -167,20 +173,20 @@ const DocumentScanner = () => {
 
         for (let i = 0; i < capturedImages.length; i++) {
             if (i !== 0) doc.addPage();
-            
-            // Calculate proper dimensions to maintain aspect ratio
+
+            // Calculate proper dimensions to maintain A4 aspect ratio
             const imgWidth = 190; // A4 width minus margins
             const imgHeight = 270; // A4 height minus margins
-            
+
             doc.addImage(
-                capturedImages[i], 
-                'JPEG', 
-                10, 
-                10, 
-                imgWidth, 
+                capturedImages[i],
+                'PNG', // Use PNG for lossless quality
+                10,
+                10,
+                imgWidth,
                 imgHeight,
                 undefined,
-                'FAST'
+                'SLOW' // High-quality compression if JPEG is used
             );
         }
 
@@ -223,8 +229,8 @@ const DocumentScanner = () => {
                 accept="image/*,application/pdf"
                 onChange={handleFileChange}
                 className="mb-4 block w-full text-sm text-gray-700 file:mr-4 file:py-2 file:px-4
-                   file:rounded-full file:border-0 file:text-sm file:font-semibold
-                   file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+           file:rounded-full file:border-0 file:text-sm file:font-semibold
+           file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
             />
 
             {/* Camera Button */}
@@ -245,7 +251,7 @@ const DocumentScanner = () => {
                             screenshotFormat="image/jpeg"
                             className="w-full rounded-md"
                             videoConstraints={videoConstraints}
-                            screenshotQuality={0.95}
+                            screenshotQuality={1.0} // Maximum quality
                         />
                         {/* Corner guides for document alignment */}
                         <div className="absolute top-4 left-4 w-8 h-8 border-l-4 border-t-4 border-yellow-400 rounded-tl-lg"></div>
@@ -282,7 +288,7 @@ const DocumentScanner = () => {
                             src={currentCapturedImage}
                             ref={capturedCropperRef}
                             style={{ height: '100%', width: '100%' }}
-                            aspectRatio={NaN}
+                            aspectRatio={A4_ASPECT_RATIO}
                             guides={true}
                             viewMode={1}
                             dragMode="move"
@@ -371,7 +377,7 @@ const DocumentScanner = () => {
                             src={image}
                             ref={cropperRef}
                             style={{ height: '100%', width: '100%' }}
-                            aspectRatio={NaN}
+                            aspectRatio={A4_ASPECT_RATIO}
                             guides={true}
                             viewMode={1}
                             dragMode="move"

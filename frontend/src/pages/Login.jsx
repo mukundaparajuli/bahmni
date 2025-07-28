@@ -1,11 +1,12 @@
 import LoginForm from '@/components/LoginForm'
+import AuthLayout from '@/components/common/AuthLayout'
 import React from 'react'
 
 const Login = () => {
     return (
-        <div>
+        <AuthLayout title="Login">
             <LoginForm />
-        </div>
+        </AuthLayout>
     )
 }
 
