@@ -1,7 +1,12 @@
-import React, { createContext, useState, useContext } from 'react';
+import React, { createContext, useState, useContext, useEffect } from 'react';
 import useToastError from '@/hooks/useToastError';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { 
+    getAllEducations, createEducation, updateEducation, deleteEducation,
+    getAllProfessions, createProfession, updateProfession, deleteProfession,
+    getAllDepartments, createDepartment, updateDepartment, deleteDepartment 
+} from '@/api/options';
 
 const DataContext = createContext();
 
@@ -10,91 +15,176 @@ export const DataProvider = ({ children }) => {
 
     // Centralized state for all datasets
     const [data, setData] = useState({
-        departments: [
-            { id: 1, value: 'engineering', label: 'Engineering' },
-            { id: 2, value: 'hr', label: 'Human Resources' },
-            { id: 3, value: 'marketing', label: 'Marketing' },
-            { id: 4, value: 'finance', label: 'Finance' },
-            { id: 5, value: 'it', label: 'Information Technology' },
-        ],
-        education: [
-            { id: 1, value: 'highschool', label: 'High School' },
-            { id: 2, value: 'bachelor', label: "Bachelor's Degree" },
-            { id: 3, value: 'master', label: "Master's Degree" },
-            { id: 4, value: 'phd', label: 'PhD' },
-        ],
-        professions: [
-            { id: 1, value: 'doctor', label: 'Doctor' },
-            { id: 2, value: 'physician', label: 'Physician' },
-            { id: 3, value: 'nurse', label: 'Nurse' },
-            { id: 4, value: 'pharmacist', label: 'Pharmacist' },
-            { id: 5, value: 'researcher', label: 'Researcher' },
-            { id: 6, value: 'teacher', label: 'Teacher/Lecturer' },
-            { id: 7, value: 'itspecialist', label: 'IT Specialist' },
-            { id: 8, value: 'others', label: 'Others' },
-        ],
+        departments: [],
+        education: [],
+        professions: [],
+    });
+
+    // Loading states
+    const [loading, setLoading] = useState({
+        departments: false,
+        education: false,
+        professions: false,
     });
 
     // State for managing dialog
     const [dialogOpen, setDialogOpen] = useState(false);
     const [itemToDelete, setItemToDelete] = useState(null);
 
+    // Load data from backend on mount
+    useEffect(() => {
+        loadAllData();
+    }, []);
+
+    const loadAllData = async () => {
+        await Promise.all([
+            loadDepartments(),
+            loadEducation(),
+            loadProfessions()
+        ]);
+    };
+
+    const loadDepartments = async () => {
+        try {
+            setLoading(prev => ({ ...prev, departments: true }));
+            const departments = await getAllDepartments();
+            setData(prev => ({
+                ...prev,
+                departments: departments.map(dept => ({
+                    id: dept.id,
+                    value: dept.name.toLowerCase().replace(/\s+/g, '_'),
+                    label: dept.name,
+                    description: dept.description,
+                    isActive: dept.isActive,
+                    _count: dept._count
+                }))
+            }));
+        } catch (error) {
+            showError(error, 'Failed to load departments');
+        } finally {
+            setLoading(prev => ({ ...prev, departments: false }));
+        }
+    };
+
+    const loadEducation = async () => {
+        try {
+            setLoading(prev => ({ ...prev, education: true }));
+            const education = await getAllEducations();
+            setData(prev => ({
+                ...prev,
+                education: education.map(edu => ({
+                    id: edu.id,
+                    value: edu.name.toLowerCase().replace(/\s+/g, '_'),
+                    label: edu.name,
+                    description: edu.description,
+                    isActive: edu.isActive,
+                    _count: edu._count
+                }))
+            }));
+        } catch (error) {
+            showError(error, 'Failed to load education options');
+        } finally {
+            setLoading(prev => ({ ...prev, education: false }));
+        }
+    };
+
+    const loadProfessions = async () => {
+        try {
+            setLoading(prev => ({ ...prev, professions: true }));
+            const professions = await getAllProfessions();
+            setData(prev => ({
+                ...prev,
+                professions: professions.map(prof => ({
+                    id: prof.id,
+                    value: prof.name.toLowerCase().replace(/\s+/g, '_'),
+                    label: prof.name,
+                    description: prof.description,
+                    isActive: prof.isActive,
+                    _count: prof._count
+                }))
+            }));
+        } catch (error) {
+            showError(error, 'Failed to load professions');
+        } finally {
+            setLoading(prev => ({ ...prev, professions: false }));
+        }
+    };
+
     // Generic function to add an item to a dataset
-    const addItem = (type, newItem) => {
-        if (!newItem.value.trim() || !newItem.label.trim()) {
-            showError(new Error('Please fill in both value and label fields'), 'Validation Error');
+    const addItem = async (type, newItem) => {
+        if (!newItem.label.trim()) {
+            showError(new Error('Please fill in the name field'), 'Validation Error');
             return;
         }
 
-        const exists = data[type].some(
-            (item) =>
-                item.value.toLowerCase() === newItem.value.toLowerCase() ||
-                item.label.toLowerCase() === newItem.label.toLowerCase()
-        );
+        try {
+            const apiData = {
+                name: newItem.label,
+                description: newItem.description || null
+            };
 
-        if (exists) {
-            showError(new Error(`${type} already exists`), 'Validation Error');
-            return;
+            let createdItem;
+            switch (type) {
+                case 'departments':
+                    createdItem = await createDepartment(apiData);
+                    await loadDepartments();
+                    break;
+                case 'education':
+                    createdItem = await createEducation(apiData);
+                    await loadEducation();
+                    break;
+                case 'professions':
+                    createdItem = await createProfession(apiData);
+                    await loadProfessions();
+                    break;
+                default:
+                    throw new Error(`Unknown type: ${type}`);
+            }
+
+            showSuccess(`${type.slice(0, -1)} added successfully`);
+            return createdItem;
+        } catch (error) {
+            showError(error, `Failed to add ${type.slice(0, -1)}`);
         }
-
-        const newId = Math.max(...data[type].map((item) => item.id), 0) + 1;
-        const formattedItem = {
-            id: newId,
-            value: newItem.value.toLowerCase().replace(/\s+/g, '_'),
-            label: newItem.label,
-        };
-
-        setData((prev) => ({
-            ...prev,
-            [type]: [...prev[type], formattedItem],
-        }));
-        showSuccess(`${type} added successfully`);
     };
 
     // Generic function to edit an item
-    const editItem = (type, updatedItem) => {
-        if (!updatedItem.value.trim() || !updatedItem.label.trim()) {
-            showError(new Error('Please fill in both value and label fields'), 'Validation Error');
+    const editItem = async (type, updatedItem) => {
+        if (!updatedItem.label.trim()) {
+            showError(new Error('Please fill in the name field'), 'Validation Error');
             return;
         }
 
-        const exists = data[type].some(
-            (item) =>
-                item.id !== updatedItem.id &&
-                (item.value.toLowerCase() === updatedItem.value.toLowerCase() ||
-                    item.label.toLowerCase() === updatedItem.label.toLowerCase())
-        );
+        try {
+            const apiData = {
+                name: updatedItem.label,
+                description: updatedItem.description || null,
+                isActive: updatedItem.isActive !== undefined ? updatedItem.isActive : true
+            };
 
-        if (exists) {
-            showError(new Error(`${type} already exists`), 'Validation Error');
-            return;
+            let updated;
+            switch (type) {
+                case 'departments':
+                    updated = await updateDepartment(updatedItem.id, apiData);
+                    await loadDepartments();
+                    break;
+                case 'education':
+                    updated = await updateEducation(updatedItem.id, apiData);
+                    await loadEducation();
+                    break;
+                case 'professions':
+                    updated = await updateProfession(updatedItem.id, apiData);
+                    await loadProfessions();
+                    break;
+                default:
+                    throw new Error(`Unknown type: ${type}`);
+            }
+
+            showSuccess(`${type.slice(0, -1)} updated successfully`);
+            return updated;
+        } catch (error) {
+            showError(error, `Failed to update ${type.slice(0, -1)}`);
         }
-
-        setData((prev) => ({
-            ...prev,
-            [type]: prev[type].map((item) => (item.id === updatedItem.id ? updatedItem : item)),
-        }));
-        showSuccess(`${type} updated successfully`);
     };
 
     // Generic function to delete an item
@@ -105,17 +195,36 @@ export const DataProvider = ({ children }) => {
     };
 
     // Handle deletion confirmation
-    const confirmDelete = () => {
+    const confirmDelete = async () => {
         if (!itemToDelete) return;
 
         const { type, id } = itemToDelete;
-        setData((prev) => ({
-            ...prev,
-            [type]: prev[type].filter((item) => item.id !== id),
-        }));
-        showSuccess(`${type} deleted successfully`);
-        setDialogOpen(false);
-        setItemToDelete(null);
+        
+        try {
+            switch (type) {
+                case 'departments':
+                    await deleteDepartment(id);
+                    await loadDepartments();
+                    break;
+                case 'education':
+                    await deleteEducation(id);
+                    await loadEducation();
+                    break;
+                case 'professions':
+                    await deleteProfession(id);
+                    await loadProfessions();
+                    break;
+                default:
+                    throw new Error(`Unknown type: ${type}`);
+            }
+
+            showSuccess(`${type.slice(0, -1)} deleted successfully`);
+        } catch (error) {
+            showError(error, `Failed to delete ${type.slice(0, -1)}`);
+        } finally {
+            setDialogOpen(false);
+            setItemToDelete(null);
+        }
     };
 
     // Handle dialog cancel
@@ -125,7 +234,17 @@ export const DataProvider = ({ children }) => {
     };
 
     return (
-        <DataContext.Provider value={{ data, addItem, editItem, deleteItem }}>
+        <DataContext.Provider value={{ 
+            data, 
+            loading, 
+            addItem, 
+            editItem, 
+            deleteItem, 
+            loadAllData,
+            loadDepartments,
+            loadEducation,
+            loadProfessions 
+        }}>
             {children}
 
             {/* Shadcn UI Dialog for Deletion Confirmation */}

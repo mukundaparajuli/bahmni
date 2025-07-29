@@ -8,16 +8,18 @@ import useForm from '@/hooks/useForm';
 import useToastError from '@/hooks/useToastError';
 import FormField from '@/components/common/form-field';
 import { ROLES } from '@/utils/constants';
+import { useOptions } from '@/hooks/useOptions';
 
 const RegisterUserForm = ({ onClose }) => {
     const { showError, showSuccess } = useToastError();
+    const { options, loading: optionsLoading } = useOptions();
     const { formData, handleChange } = useForm({
         employeeId: '',
         fullName: '',
         email: '',
-        department: '',
-        education: '',
-        profession: '',
+        departmentId: '',
+        educationId: '',
+        professionId: '',
         password: '',
     });
     const [selectedRoles, setSelectedRoles] = useState([]);
@@ -53,21 +55,16 @@ const RegisterUserForm = ({ onClose }) => {
         { id: 'employeeId', label: 'Employee ID', type: 'text', placeholder: 'Enter your employee ID' },
         { id: 'fullName', label: 'Full Name', type: 'text', placeholder: 'Enter your full name' },
         {
-            id: 'department',
+            id: 'departmentId',
             label: 'Department',
             type: 'select',
-            placeholder: 'Select your department',
-            options: [
-                { value: 'engineering', label: 'Engineering' },
-                { value: 'hr', label: 'Human Resources' },
-                { value: 'marketing', label: 'Marketing' },
-                { value: 'finance', label: 'Finance' },
-                { value: 'it', label: 'Information Technology' },
-            ],
+            placeholder: optionsLoading ? 'Loading departments...' : 'Select your department',
+            options: options.departments,
+            disabled: optionsLoading,
         },
         { id: 'email', label: 'Email', type: 'email', placeholder: 'Enter your email' },
         {
-            id: 'education',
+            id: 'educationId',
             label: 'Education',
             type: 'select',
             placeholder: 'Select your education level',
@@ -79,7 +76,7 @@ const RegisterUserForm = ({ onClose }) => {
             ],
         },
         {
-            id: 'profession',
+            id: 'professionId',
             label: 'Profession',
             type: 'select',
             placeholder: 'Select your profession',

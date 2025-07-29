@@ -3,11 +3,13 @@ const authRoutes = require("../routes/auth.route");
 const userRoutes = require("../routes/user.route");
 const clerkRoutes = require("../routes/clerk.route");
 const approverRoutes = require("../routes/approver.route");
+const optionsRoutes = require("../routes/options.route");
 
 const router = Router();
 router.use('/clerk', clerkRoutes);
 router.use('/auth', authRoutes)
 router.use('/user', userRoutes)
 router.use('/approver', approverRoutes)
+router.use('/options', optionsRoutes)
 
 module.exports = router;

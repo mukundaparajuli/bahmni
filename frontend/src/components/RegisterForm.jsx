@@ -6,18 +6,18 @@ import useForm from '@/hooks/useForm';
 import useToastError from '@/hooks/useToastError';
 import FormField from '@/components/common/form-field';
 import { useState } from 'react';
-import { useData } from '@/contexts/data-context';
+import { useOptions } from '@/hooks/useOptions';
 
 const RegisterForm = () => {
     const { showError, showSuccess } = useToastError();
-    const { data } = useData();
+    const { options, loading: optionsLoading } = useOptions();
     const { formData, handleChange } = useForm({
         employeeId: '',
         fullName: '',
-        department: '',
+        departmentId: '',
         email: '',
-        education: '',
-        profession: '',
+        educationId: '',
+        professionId: '',
         password: '',
         employeeImage: null, // Added for image
     });
@@ -67,26 +67,29 @@ const RegisterForm = () => {
         { id: 'employeeId', label: 'Employee ID', type: 'text', placeholder: 'Enter your employee ID' },
         { id: 'fullName', label: 'Full Name', type: 'text', placeholder: 'Enter your full name' },
         {
-            id: 'department',
+            id: 'departmentId',
             label: 'Department',
             type: 'select',
-            placeholder: 'Select your department',
-            options: data.departments,
+            placeholder: optionsLoading ? 'Loading departments...' : 'Select your department',
+            options: options.departments,
+            disabled: optionsLoading,
         },
         { id: 'email', label: 'Email', type: 'email', placeholder: 'Enter your email' },
         {
-            id: 'education',
+            id: 'educationId',
             label: 'Education',
             type: 'select',
-            placeholder: 'Select your education level',
-            options: data.educationLevels,
+            placeholder: optionsLoading ? 'Loading education options...' : 'Select your education level',
+            options: options.educations,
+            disabled: optionsLoading,
         },
         {
-            id: 'profession',
+            id: 'professionId',
             label: 'Profession',
             type: 'select',
-            placeholder: 'Select your profession',
-            options: data.professions,
+            placeholder: optionsLoading ? 'Loading professions...' : 'Select your profession',
+            options: options.professions,
+            disabled: optionsLoading,
         },
         { id: 'password', label: 'Password', type: 'password', placeholder: 'Enter your password' },
     ];

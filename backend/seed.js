@@ -1,8 +1,12 @@
 const bcrypt = require('bcrypt');
 const db = require('./config/db');
+const seedOptions = require('./utils/seed-options');
 
 const seedAdmin = async () => {
     try {
+        // First seed the options data
+        await seedOptions();
+
         const existingAdmin = await db.user.findFirst({
             where: { roles: { has: 'Admin' } },
         });
@@ -12,6 +16,11 @@ const seedAdmin = async () => {
             return;
         }
 
+        // Get default options for admin user
+        const itDepartment = await db.department.findFirst({ where: { name: 'IT Department' } });
+        const mastersDegree = await db.education.findFirst({ where: { name: 'Master\'s Degree' } });
+        const itSpecialist = await db.profession.findFirst({ where: { name: 'IT Specialist' } });
+
         // Hash the admin password
         const hashedPassword = await bcrypt.hash('password', 10);
 
@@ -20,10 +29,10 @@ const seedAdmin = async () => {
             data: {
                 employeeId: 'EMP001',
                 fullName: 'Super Admin',
-                department: 'IT',
+                departmentId: itDepartment?.id,
                 email: 'admin@admin.com',
-                education: 'M.Tech',
-                profession: 'System Administrator',
+                educationId: mastersDegree?.id,
+                professionId: itSpecialist?.id,
                 password: hashedPassword,
                 roles: ['Admin', 'ScannerClerk', 'Approver', 'Uploader'],
                 isActive: true,
