@@ -65,10 +65,10 @@ exports.scanDocument = asyncHandler(async (req, res) => {
     }
 
     const fileName = file.originalname;
-    const filePath = `/uploads/documents/${file.filename}`;
+    const filePath = `/uploads/documents/compressed/${file.filename}`;
     const scannerId = req.user.id; // Changed from req.user._id to req.user.id
 
-    // Create new document
+    // Create new document with compression info
     const document = await db.document.create({
         data: {
             scannerId,
@@ -78,6 +78,12 @@ exports.scanDocument = asyncHandler(async (req, res) => {
             filePath,
             status: 'draft', // Default status as per schema
             scannedAt: new Date(), // Explicitly set for clarity
+            // Store compression metadata if available
+            ...(file.compressionResult && {
+                originalSize: file.originalSize,
+                compressedSize: file.compressedSize,
+                compressionRatio: file.compressionRatio
+            })
         },
     });
 

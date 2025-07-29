@@ -43,13 +43,16 @@ const PDFPreviewer = ({ filePath }) => {
                     className="flex flex-col items-center"
                 >
                     {Array.from(new Array(numPages || 0), (_, index) => (
-                        <div key={index} className="mb-4 shadow-lg">
+                        <div key={index} className="mb-6 shadow-lg relative">
+                            <div className="bg-gray-100 px-3 py-2 text-sm font-medium text-gray-700 border-b rounded-t-lg">
+                                Page {index + 1} of {numPages}
+                            </div>
                             <Page
                                 pageNumber={index + 1}
                                 width={width}
                                 renderTextLayer={false}
                                 renderAnnotationLayer={false}
-                                className="border rounded"
+                                className="border rounded-b-lg"
                             />
                         </div>
                     ))}

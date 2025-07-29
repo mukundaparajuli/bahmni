@@ -11,9 +11,12 @@
     "mailersend": "^2.6.0",
     "mongoose": "^8.16.4",
     "multer": "^2.0.2",
+    "multer-sharp-resizer": "^1.0.5",
     "nodemailer": "^7.0.5",
+    "pdf-lib": "^1.17.1",
     "react-webcam": "^7.2.0",
     "resend": "^4.6.0",
+    "sharp": "^0.34.3",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1",
     "uuid": "^11.1.0"

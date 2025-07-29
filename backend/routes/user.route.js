@@ -15,7 +15,7 @@ const { authenticateToken } = require('../middleware/auth-middleware');
 const { restrictTo } = require('../middleware/rbac-handler');
 
 const uploadDir = path.join(__dirname, '..', 'uploads', 'profile-photos');
-const upload = configureMulter(uploadDir);
+const { upload, compressMiddleware } = configureMulter(uploadDir);
 
 
 /**
@@ -364,6 +364,6 @@ router.post('/review-registration', authenticateToken, restrictTo('Admin'), revi
 router.put('/status/:userId', authenticateToken, restrictTo('Admin'), toggleUserStatus);
 router.put('/roles/:userId', authenticateToken, restrictTo('Admin'), updateUserRoles);
 router.get('/', authenticateToken, getUsers);
-router.put('/:userId', authenticateToken, upload.single('photo'), updateUser);
+router.put('/:userId', authenticateToken, upload.single('photo'), compressMiddleware, updateUser);
 
 module.exports = router;
