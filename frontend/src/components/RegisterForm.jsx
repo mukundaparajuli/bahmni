@@ -19,7 +19,7 @@ const RegisterForm = () => {
         educationId: '',
         professionId: '',
         password: '',
-        employeeImage: null, // Added for image
+        employeeIdPhoto: null, // Added for image
     });
 
     const [previewImage, setPreviewImage] = useState(null);
@@ -42,7 +42,7 @@ const RegisterForm = () => {
                 showError('Only JPEG and PNG images are allowed');
                 return;
             }
-            handleChange({ target: { name: 'employeeImage', value: file } });
+            handleChange({ target: { name: 'employeeIdPhoto', value: file } });
             setPreviewImage(URL.createObjectURL(file));
         }
     };
@@ -58,7 +58,7 @@ const RegisterForm = () => {
 
     const fields = [
         {
-            id: 'employeeImage',
+            id: 'employeeIdPhoto',
             label: 'Employee Image',
             type: 'file',
             accept: 'image/jpeg,image/png',
@@ -95,7 +95,7 @@ const RegisterForm = () => {
     ];
 
     return (
-        <form onSubmit={handleSubmit} encType="multipart/form-data">
+        <form onSubmit={handleSubmit}>
             {fields.map((field) => (
                 <div key={field.id} className="mb-4">
                     <FormField
@@ -110,7 +110,7 @@ const RegisterForm = () => {
                         options={field.options}
                         accept={field.accept}
                     />
-                    {field.id === 'employeeImage' && previewImage && (
+                    {field.id === 'employeeIdPhoto' && previewImage && (
                         <div className="mt-2">
                             <img
                                 src={previewImage}

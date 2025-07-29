@@ -5,3 +5,4 @@ uploads
 /generated/prisma
 cert.pem
 key.pem
+dist

@@ -2,10 +2,13 @@ import React, { createContext, useState, useContext, useEffect } from 'react';
 import useToastError from '@/hooks/useToastError';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { 
+import {
     getAllEducations, createEducation, updateEducation, deleteEducation,
     getAllProfessions, createProfession, updateProfession, deleteProfession,
-    getAllDepartments, createDepartment, updateDepartment, deleteDepartment 
+    getAllDepartments, createDepartment, updateDepartment, deleteDepartment,
+    getDepartments,
+    getEducations,
+    getProfessions
 } from '@/api/options';
 
 const DataContext = createContext();
@@ -47,7 +50,7 @@ export const DataProvider = ({ children }) => {
     const loadDepartments = async () => {
         try {
             setLoading(prev => ({ ...prev, departments: true }));
-            const departments = await getAllDepartments();
+            const departments = await getDepartments();
             setData(prev => ({
                 ...prev,
                 departments: departments.map(dept => ({
@@ -69,7 +72,7 @@ export const DataProvider = ({ children }) => {
     const loadEducation = async () => {
         try {
             setLoading(prev => ({ ...prev, education: true }));
-            const education = await getAllEducations();
+            const education = await getEducations();
             setData(prev => ({
                 ...prev,
                 education: education.map(edu => ({
@@ -91,7 +94,7 @@ export const DataProvider = ({ children }) => {
     const loadProfessions = async () => {
         try {
             setLoading(prev => ({ ...prev, professions: true }));
-            const professions = await getAllProfessions();
+            const professions = await getProfessions();
             setData(prev => ({
                 ...prev,
                 professions: professions.map(prof => ({
@@ -199,7 +202,7 @@ export const DataProvider = ({ children }) => {
         if (!itemToDelete) return;
 
         const { type, id } = itemToDelete;
-        
+
         try {
             switch (type) {
                 case 'departments':
@@ -234,16 +237,16 @@ export const DataProvider = ({ children }) => {
     };
 
     return (
-        <DataContext.Provider value={{ 
-            data, 
-            loading, 
-            addItem, 
-            editItem, 
-            deleteItem, 
+        <DataContext.Provider value={{
+            data,
+            loading,
+            addItem,
+            editItem,
+            deleteItem,
             loadAllData,
             loadDepartments,
             loadEducation,
-            loadProfessions 
+            loadProfessions
         }}>
             {children}
 

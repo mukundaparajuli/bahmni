@@ -79,14 +79,14 @@ const DocumentScanner = () => {
         // Validate file
         const validation = validateFile(file);
         if (!validation.isValid) {
-            showError(new Error(validation.errors.join(', ')), 'File Validation Error');
+            showError(`${new Error(validation.errors.join(', '))}`, 'File Validation Error');
             return;
         }
 
         try {
             // Show loading state
             console.log(`Processing file: ${file.name} (${formatFileSize(file.size)})`);
-            
+
             // Compress file
             const compressedFile = await compressFile(file, {
                 maxSizeMB: 2,
@@ -111,8 +111,8 @@ const DocumentScanner = () => {
                 setPdfSize((compressedFile.size / (1024 * 1024)).toFixed(2)); // Convert to MB
             }
 
-            showSuccess(`File processed successfully! ${file.size !== compressedFile.size ? 
-                `Compressed from ${formatFileSize(file.size)} to ${formatFileSize(compressedFile.size)}` : 
+            showSuccess(`File processed successfully! ${file.size !== compressedFile.size ?
+                `Compressed from ${formatFileSize(file.size)} to ${formatFileSize(compressedFile.size)}` :
                 'No compression needed'}`);
         } catch (error) {
             console.error('File processing error:', error);
@@ -152,8 +152,8 @@ const DocumentScanner = () => {
             formData.append('employeeId', '12345');
 
             await axiosInstance.post('/clerk/uploadDoc', formData);
-            showSuccess(`Image uploaded successfully! ${originalFile.size !== compressedFile.size ? 
-                `Compressed from ${formatFileSize(originalFile.size)} to ${formatFileSize(compressedFile.size)}` : 
+            showSuccess(`Image uploaded successfully! ${originalFile.size !== compressedFile.size ?
+                `Compressed from ${formatFileSize(originalFile.size)} to ${formatFileSize(compressedFile.size)}` :
                 ''}`);
             setImage(null);
         } catch (err) {
@@ -241,8 +241,8 @@ const DocumentScanner = () => {
             formData.append('employeeId', '1234');
 
             await axiosInstance.post(`/clerk/uploadDoc`, formData);
-            showSuccess(`Scanned PDF uploaded successfully! ${originalFile.size !== compressedFile.size ? 
-                `Compressed from ${formatFileSize(originalFile.size)} to ${formatFileSize(compressedFile.size)}` : 
+            showSuccess(`Scanned PDF uploaded successfully! ${originalFile.size !== compressedFile.size ?
+                `Compressed from ${formatFileSize(originalFile.size)} to ${formatFileSize(compressedFile.size)}` :
                 ''}`);
             setCapturedImages([]);
         } catch (err) {

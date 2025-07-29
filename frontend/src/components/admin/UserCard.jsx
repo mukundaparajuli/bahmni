@@ -22,11 +22,11 @@ const UserCard = ({ user, handleReview, handleStatusToggle, handleRoleUpdate, re
                     <p className="text-sm"><strong>Email:</strong> {user.email}</p>
                     <p className="text-sm"><strong>Employee ID:</strong> {user.employeeId || 'N/A'}</p>
                     {user.employeeIdPhoto && (
-                        <img src={user.employeeIdPhoto} alt="Employee ID" className="w-32 h-20 rounded border object-cover" />
+                        <img src={getStaticUrl(user.employeeIdPhoto)} alt="Employee ID" className="w-32 h-20 rounded border object-cover" />
                     )}
-                    <p className="text-sm"><strong>Department:</strong> {user.department || 'N/A'}</p>
-                    <p className="text-sm"><strong>Profession:</strong> {user.profession || 'N/A'}</p>
-                    <p className="text-sm"><strong>Education:</strong> {user.education || 'N/A'}</p>
+                    <p className="text-sm"><strong>Department:</strong> {user.department?.name || 'N/A'}</p>
+                    <p className="text-sm"><strong>Profession:</strong> {user.profession?.name || 'N/A'}</p>
+                    <p className="text-sm"><strong>Education:</strong> {user.education?.name || 'N/A'}</p>
                     <p className="text-sm"><strong>Status:</strong> {user.isActive ? 'Active' : 'Inactive'}</p>
                     <p className="text-sm"><strong>Registration:</strong> {user.registrationStatus}</p>
                     <p className="text-sm"><strong>Account Created:</strong> {new Date(user.createdAt).toLocaleString()}</p>

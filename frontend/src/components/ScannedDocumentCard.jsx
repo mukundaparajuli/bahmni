@@ -19,6 +19,7 @@ import useToastError from "@/hooks/useToastError";
 
 // Import centralized PDF configuration
 import "@/utils/pdf-config";
+import { getFileSizeFromUrl } from "@/utils/get-file-size";
 
 // Status configuration for reusability
 const STATUS_CONFIG = {
@@ -29,6 +30,7 @@ const STATUS_CONFIG = {
     're-scanned approved': { bg: "bg-purple-100", text: "text-purple-800", dot: "bg-purple-500" },
     default: { bg: "bg-gray-200", text: "text-gray-800", dot: "bg-gray-500" },
 };
+
 
 const ScannedDocumentCard = React.memo(
     ({ document, deleteButton, onDelete, isScanner, isApprover }) => {
@@ -55,6 +57,18 @@ const ScannedDocumentCard = React.memo(
         const [isSubmitting, setIsSubmitting] = useState(false);
         const navigate = useNavigate();
         const isPdf = filePath?.toLowerCase().endsWith(".pdf");
+
+        const [fileSize, setFileSize] = useState(null);
+
+        useEffect(() => {
+            const fetchFileSize = async () => {
+                if (!filePath) return;
+                const size = await getFileSizeFromUrl(getStaticUrl(filePath));
+                setFileSize(size);
+            };
+            fetchFileSize();
+        }, [filePath]);
+
 
         // Handle status update with loading state and toast notifications
         const handleStatus = useCallback(async () => {
@@ -154,6 +168,11 @@ const ScannedDocumentCard = React.memo(
                                 />
                             )}
                         </div>
+                        <p className="text-sm text-gray-600">
+                            <span className="font-medium">File Size:</span>{" "}
+                            {fileSize !== null ? `${(fileSize / 1024).toFixed(2)} KB` : "Loading..."}
+                        </p>
+
 
                         {/* Basic Document Info */}
                         <div className="space-y-1.5 text-sm text-gray-600">

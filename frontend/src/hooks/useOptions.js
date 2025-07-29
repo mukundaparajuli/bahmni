@@ -7,7 +7,7 @@ export const useOptions = () => {
         professions: [],
         departments: []
     });
-    
+
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 

@@ -1,7 +1,7 @@
 const { PrismaClient } = require('@prisma/client');
 const db = new PrismaClient();
 const { ApiResponse } = require('../utils/api-response');
-const asyncHandler = require('../utils/async-handler');
+const asyncHandler = require('../middleware/async-handler');
 
 // =============== EDUCATION CONTROLLERS ===============
 

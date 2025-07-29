@@ -14,8 +14,10 @@ const {
 const { authenticateToken } = require('../middleware/auth-middleware');
 const { restrictTo } = require('../middleware/rbac-handler');
 
-const uploadDir = path.join(__dirname, '..', 'uploads', 'profile-photos');
-const upload = configureMulter(uploadDir);
+const uploadProfilePhotoDir = path.join(__dirname, '..', 'uploads', 'profile-photos');
+const uploadEmployeeIdPhotoDir = path.join(__dirname, '..', 'uploads', 'employee-id-photos');
+const uploadProfilePhoto = configureMulter(uploadProfilePhotoDir);
+const uploadEmployeeIdPhoto = configureMulter(uploadEmployeeIdPhotoDir);
 
 
 /**
@@ -358,12 +360,12 @@ const upload = configureMulter(uploadDir);
  */
 
 // ...existing code...
-router.post('/register', authenticateToken, restrictTo('Admin'), registerUser);
-router.post('/self-register', selfRegister);
+router.post('/register', uploadEmployeeIdPhoto.single('employeeIdPhoto'), authenticateToken, restrictTo('Admin'), registerUser);
+router.post('/self-register', uploadEmployeeIdPhoto.single('employeeIdPhoto'), selfRegister);
 router.post('/review-registration', authenticateToken, restrictTo('Admin'), reviewSelfRegistration);
 router.put('/status/:userId', authenticateToken, restrictTo('Admin'), toggleUserStatus);
 router.put('/roles/:userId', authenticateToken, restrictTo('Admin'), updateUserRoles);
 router.get('/', authenticateToken, getUsers);
-router.put('/:userId', authenticateToken, upload.single('photo'), updateUser);
+router.put('/:userId', authenticateToken, uploadProfilePhoto.single('photo'), updateUser);
 
 module.exports = router;

@@ -6,14 +6,14 @@ const {
     createEducation,
     updateEducation,
     deleteEducation,
-    
+
     // Profession controllers
     getProfessions,
     getAllProfessions,
     createProfession,
     updateProfession,
     deleteProfession,
-    
+
     // Department controllers
     getDepartments,
     getAllDepartments,
@@ -78,7 +78,7 @@ router.get('/educations', getEducations);
  *       200:
  *         description: List of all education options with user count
  */
-router.get('/educations/all', authenticateToken, restrictTo('Admin'), getAllEducations);
+router.get('/educations/all', restrictTo('Admin'), getAllEducations);
 
 /**
  * @swagger

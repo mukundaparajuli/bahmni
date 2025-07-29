@@ -11,7 +11,16 @@ const prisma = new PrismaClient();
 
 // Admin: Register a user
 exports.registerUser = asyncHandler(async (req, res) => {
-    const { employeeId, fullName, department, email, education, profession, password, employeeIdPhoto, photo, roles } = req.body;
+    const { employeeId, fullName, departmentId, email, educationId, professionId, password, employeeIdPhoto, photo, roles } = req.body;
+
+    const file = req.file;
+    if (!file) {
+        const error = new Error('Employee ID photo is required');
+        error.statusCode = 400;
+        throw error;
+    }
+
+    const employeeIdPhotoPath = `/uploads/employee-id-photos/${file.filename}`;
 
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -21,12 +30,12 @@ exports.registerUser = asyncHandler(async (req, res) => {
         data: {
             employeeId,
             fullName,
-            department,
+            departmentId: parseInt(departmentId),
             email,
-            education,
-            profession,
+            educationId: parseInt(educationId),
+            professionId: parseInt(professionId),
             password: hashedPassword,
-            employeeIdPhoto,
+            employeeIdPhoto: employeeIdPhotoPath,
             photo,
             roles: roles || ['ScannerClerk'],
             isActive: true,
@@ -58,8 +67,16 @@ exports.registerUser = asyncHandler(async (req, res) => {
 
 // Self-Registration
 exports.selfRegister = asyncHandler(async (req, res) => {
-    const { employeeId, fullName, department, email, education, profession, password, employeeIdPhoto, photo } = req.body;
+    const { employeeId, fullName, departmentId, email, educationId, professionId, password, employeeIdPhoto, photo } = req.body;
+    const file = req.file;
 
+    if (!file) {
+        const error = new Error('Employee ID photo is required');
+        error.statusCode = 400;
+        throw error;
+    }
+
+    const employeeIdPhotoPath = `/uploads/employee-id-photos/${file.filename}`;
 
     const employeeIdExists = await db.user.findUnique({
         where: { employeeId },
@@ -80,8 +97,9 @@ exports.selfRegister = asyncHandler(async (req, res) => {
         error.statusCode = 400;
         throw error;
     }
-    if (!employeeId || !fullName || !department || !email || !education || !profession || !password) {
-        const error = new Error('Required fields missing');
+    if (!employeeId || !fullName || !departmentId || !email || !educationId || !professionId || !password) {
+        console.log(employeeId, fullName, department, email, education, profession, password);
+        const error = new Error("Required fields missing");
         error.statusCode = 400;
         throw error;
     }
@@ -94,12 +112,12 @@ exports.selfRegister = asyncHandler(async (req, res) => {
         data: {
             employeeId,
             fullName,
-            department,
+            departmentId: parseInt(departmentId),
             email,
-            education,
-            profession,
+            educationId: parseInt(educationId),
+            professionId: parseInt(professionId),
             password: hashedPassword,
-            employeeIdPhoto,
+            employeeIdPhoto: employeeIdPhotoPath,
             photo,
             isActive: false,
             isSelfRegistered: true,
@@ -253,23 +271,10 @@ exports.updateUserRoles = asyncHandler(async (req, res) => {
 // Get All Users
 exports.getUsers = asyncHandler(async (req, res) => {
     const users = await db.user.findMany({
-        select: {
-            id: true,
-            employeeId: true,
-            fullName: true,
+        include: {
             department: true,
-            email: true,
             education: true,
             profession: true,
-            employeeIdPhoto: true,
-            photo: true,
-            roles: true,
-            isActive: true,
-            isSelfRegistered: true,
-            registrationStatus: true,
-            rejectionReason: true,
-            createdAt: true,
-            updatedAt: true,
         },
     });
 
