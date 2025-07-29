@@ -1,11 +1,8 @@
-const { PrismaClient } = require('@prisma/client');
-const db = new PrismaClient();
+const db = require('../config/db');
 
 const seedOptions = async () => {
     try {
         console.log('Seeding options data...');
-
-        // Seed Education options if none exist
         const educationCount = await db.education.count();
         if (educationCount === 0) {
             console.log('No education records found. Seeding education options...');

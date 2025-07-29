@@ -8,3 +8,4 @@ export const getStaticUrl = (path) => {
     const staticUrl = path.startsWith('http') ? path : `${baseUrl}${path}`;
     return staticUrl;
 };
+
