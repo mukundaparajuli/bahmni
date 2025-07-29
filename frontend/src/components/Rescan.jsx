@@ -4,6 +4,7 @@ import jsPDF from 'jspdf';
 import { useLocation } from 'react-router-dom';
 import axios from 'axios';
 import axiosInstance from '@/api/axios-instance';
+import { compressFile, formatFileSize, validateFile } from '@/utils/compression';
 
 const Rescan = () => {
     const { state } = useLocation();
@@ -28,18 +29,50 @@ const Rescan = () => {
         }
     }, []);
 
-    const handleFileChange = (e) => {
-        const file = e.target.files[0];
-        if (file) setFile(file);
+    const handleFileChange = async (e) => {
+        const originalFile = e.target.files[0];
+        if (!originalFile) return;
+
+        // Validate file
+        const validation = validateFile(originalFile);
+        if (!validation.isValid) {
+            alert(`File validation error: ${validation.errors.join(', ')}`);
+            return;
+        }
+
+        try {
+            console.log(`Processing file: ${originalFile.name} (${formatFileSize(originalFile.size)})`);
+            
+            // Compress file
+            const compressedFile = await compressFile(originalFile, {
+                maxSizeMB: 2,
+                maxWidthOrHeight: 1920,
+                quality: 0.8
+            });
+
+            setFile(compressedFile);
+            
+            if (originalFile.size !== compressedFile.size) {
+                console.log(`File compressed from ${formatFileSize(originalFile.size)} to ${formatFileSize(compressedFile.size)}`);
+            }
+        } catch (error) {
+            console.error('File processing error:', error);
+            alert(`File processing error: ${error.message}`);
+        }
     };
 
-    const generatePDFfromImages = () => {
+    const generatePDFfromImages = async () => {
         const doc = new jsPDF();
         capturedImages.forEach((img, index) => {
             if (index !== 0) doc.addPage();
             doc.addImage(img, 'JPEG', 10, 10, 190, 270);
         });
-        return doc.output('blob');
+        const pdfBlob = doc.output('blob');
+        const originalFile = new File([pdfBlob], 'scanned-document.pdf', { type: 'application/pdf' });
+        
+        // Compress the generated PDF
+        const compressedFile = await compressFile(originalFile);
+        return compressedFile;
     };
 
     const uploadUpdatedDocument = async (fileToUpload, status) => {
@@ -60,9 +93,8 @@ const Rescan = () => {
 
     const handleUpload = async (status) => {
         if (capturedImages.length > 0) {
-            const pdfBlob = generatePDFfromImages();
-            const pdfFile = new File([pdfBlob], 'rescanned-document.pdf', { type: 'application/pdf' });
-            await uploadUpdatedDocument(pdfFile, status);
+            const compressedPdf = await generatePDFfromImages();
+            await uploadUpdatedDocument(compressedPdf, status);
         } else if (file) {
             await uploadUpdatedDocument(file, status);
         } else {

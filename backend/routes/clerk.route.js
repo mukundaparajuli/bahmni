@@ -46,12 +46,12 @@ const router = Router();
  */
 
 const uploadDir = path.join(__dirname, '..', 'uploads', 'documents');
-const { upload, compressMiddleware } = configureMulter(uploadDir);
+const upload = configureMulter(uploadDir);
 
 router.get('/clerkDocs', authenticateToken, restrictTo('ScannerClerk'), getClerkDocuments);
 router.get('/deleteDoc/:id', authenticateToken, restrictTo('ScannerClerk'), deleteDocument);
-router.post('/uploadDoc', authenticateToken, upload.single('file'), compressMiddleware, scanDocument);
-router.post('/updateDoc', upload.single('file'), compressMiddleware, updateDocument);
+router.post('/uploadDoc', authenticateToken, upload.single('file'), scanDocument);
+router.post('/updateDoc', upload.single('file'), updateDocument);
 router.get('/search', authenticateToken, restrictTo('Approver'), getSearchResult);
 router.post('/updateStatus', authenticateToken, restrictTo('ScannerClerk'), submitDocument);
 

@@ -8,6 +8,7 @@ import jsPDF from 'jspdf';
 import axiosInstance from '@/api/axios-instance';
 import useToastError from '@/hooks/useToastError';
 import { Button } from '@/components/ui/button';
+import { compressFile, formatFileSize, validateFile } from '@/utils/compression';
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.js`;
 
@@ -71,25 +72,51 @@ const DocumentScanner = () => {
         showSuccess('Image captured and cropped successfully');
     }, [showSuccess]);
 
-    const handleFileChange = (e) => {
+    const handleFileChange = async (e) => {
         const file = e.target.files[0];
         if (!file) return;
 
-        const type = file.type;
-        if (type.startsWith('image/')) {
-            const reader = new FileReader();
-            reader.onload = () => {
-                setImage(reader.result);
-                setPdfFile(null);
-                setPdfName('');
-                setPdfSize(0);
-            };
-            reader.readAsDataURL(file);
-        } else if (type === 'application/pdf') {
-            setPdfFile(file);
-            setImage(null);
-            setPdfName(file.name);
-            setPdfSize((file.size / (1024 * 1024)).toFixed(2)); // Convert to MB
+        // Validate file
+        const validation = validateFile(file);
+        if (!validation.isValid) {
+            showError(new Error(validation.errors.join(', ')), 'File Validation Error');
+            return;
+        }
+
+        try {
+            // Show loading state
+            console.log(`Processing file: ${file.name} (${formatFileSize(file.size)})`);
+            
+            // Compress file
+            const compressedFile = await compressFile(file, {
+                maxSizeMB: 2,
+                maxWidthOrHeight: 1920,
+                quality: 0.8
+            });
+
+            const type = compressedFile.type;
+            if (type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = () => {
+                    setImage(reader.result);
+                    setPdfFile(null);
+                    setPdfName('');
+                    setPdfSize(0);
+                };
+                reader.readAsDataURL(compressedFile);
+            } else if (type === 'application/pdf') {
+                setPdfFile(compressedFile);
+                setImage(null);
+                setPdfName(compressedFile.name);
+                setPdfSize((compressedFile.size / (1024 * 1024)).toFixed(2)); // Convert to MB
+            }
+
+            showSuccess(`File processed successfully! ${file.size !== compressedFile.size ? 
+                `Compressed from ${formatFileSize(file.size)} to ${formatFileSize(compressedFile.size)}` : 
+                'No compression needed'}`);
+        } catch (error) {
+            console.error('File processing error:', error);
+            showError(error, 'File Processing Error');
         }
     };
 
@@ -108,17 +135,26 @@ const DocumentScanner = () => {
             imageSmoothingQuality: 'high'
         });
 
-        const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png', 1.0)); // Use PNG
-        const file = new File([blob], 'cropped-image.png', { type: 'image/png' });
-
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('patientMRN', mrn);
-        formData.append('employeeId', '12345');
+        const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.9)); // Use JPEG with 90% quality
+        const originalFile = new File([blob], 'cropped-image.jpg', { type: 'image/jpeg' });
 
         try {
+            // Compress the cropped image before upload
+            const compressedFile = await compressFile(originalFile, {
+                maxSizeMB: 1,
+                maxWidthOrHeight: 1920,
+                quality: 0.8
+            });
+
+            const formData = new FormData();
+            formData.append('file', compressedFile);
+            formData.append('patientMRN', mrn);
+            formData.append('employeeId', '12345');
+
             await axiosInstance.post('/clerk/uploadDoc', formData);
-            showSuccess('Image uploaded successfully!');
+            showSuccess(`Image uploaded successfully! ${originalFile.size !== compressedFile.size ? 
+                `Compressed from ${formatFileSize(originalFile.size)} to ${formatFileSize(compressedFile.size)}` : 
+                ''}`);
             setImage(null);
         } catch (err) {
             console.error(err);
@@ -136,6 +172,7 @@ const DocumentScanner = () => {
             return;
         }
 
+        // Note: pdfFile is already compressed from handleFileChange
         const formData = new FormData();
         formData.append('file', pdfFile);
         formData.append('patientMRN', mrn);
@@ -191,17 +228,22 @@ const DocumentScanner = () => {
         }
 
         const pdfBlob = doc.output('blob');
-        const file = new File([pdfBlob], 'scanned-document.pdf', { type: 'application/pdf' });
-
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('scannerClerk', '687903b74d2933e28308743f');
-        formData.append('patientMRN', mrn);
-        formData.append('employeeId', '1234');
+        const originalFile = new File([pdfBlob], 'scanned-document.pdf', { type: 'application/pdf' });
 
         try {
+            // Compress the PDF before upload
+            const compressedFile = await compressFile(originalFile);
+
+            const formData = new FormData();
+            formData.append('file', compressedFile);
+            formData.append('scannerClerk', '687903b74d2933e28308743f');
+            formData.append('patientMRN', mrn);
+            formData.append('employeeId', '1234');
+
             await axiosInstance.post(`/clerk/uploadDoc`, formData);
-            showSuccess('Scanned PDF uploaded successfully!');
+            showSuccess(`Scanned PDF uploaded successfully! ${originalFile.size !== compressedFile.size ? 
+                `Compressed from ${formatFileSize(originalFile.size)} to ${formatFileSize(compressedFile.size)}` : 
+                ''}`);
             setCapturedImages([]);
         } catch (err) {
             console.error(err);
