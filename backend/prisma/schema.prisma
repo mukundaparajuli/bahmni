@@ -37,14 +37,48 @@ enum DocumentStatus {
   uploaded
 }
 
+// Models for dropdown options
+model Education {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  description String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  users       User[]   @relation("UserEducation")
+}
+
+model Profession {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  description String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  users       User[]   @relation("UserProfession")
+}
+
+model Department {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  description String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  users       User[]   @relation("UserDepartment")
+}
+
 model User {
   id                 Int                @id @default(autoincrement())
   employeeId         String             @unique
   fullName           String
-  department         String
+  departmentId       Int?
+  department         Department?        @relation("UserDepartment", fields: [departmentId], references: [id])
   email              String             @unique
-  education          String
-  profession         String
+  educationId        Int?
+  education          Education?         @relation("UserEducation", fields: [educationId], references: [id])
+  professionId       Int?
+  profession         Profession?        @relation("UserProfession", fields: [professionId], references: [id])
   password           String
   employeeIdPhoto    String?
   photo              String?
@@ -59,6 +93,10 @@ model User {
   scannedDocuments   Document[]         @relation("ScannedDocuments")
   approvedDocuments  Document[]         @relation("ApprovedDocuments")
   uploadedDocuments  Document[]         @relation("UploadedDocuments")
+
+  @@index([departmentId])
+  @@index([educationId])
+  @@index([professionId])
 }
 
 model PasswordReset {
