@@ -2,15 +2,12 @@ import React, { useRef, useState, useCallback } from 'react';
 import Webcam from 'react-webcam';
 import Cropper from 'react-cropper';
 import 'cropperjs/dist/cropper.css';
-import { Document, Page, pdfjs } from 'react-pdf';
-import 'react-pdf/dist/Page/AnnotationLayer.css';
 import jsPDF from 'jspdf';
 import axiosInstance from '@/api/axios-instance';
 import useToastError from '@/hooks/useToastError';
 import { Button } from '@/components/ui/button';
 import { compressFile, formatFileSize, validateFile } from '@/utils/compression';
-
-pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.js`;
+import { FiCamera, FiUpload, FiX, FiTrash2, FiCheck, FiPaperclip } from 'react-icons/fi';
 
 const DocumentScanner = () => {
     const [image, setImage] = useState(null);
@@ -22,79 +19,118 @@ const DocumentScanner = () => {
     const [pdfSize, setPdfSize] = useState(0);
     const [showCropper, setShowCropper] = useState(false);
     const [currentCapturedImage, setCurrentCapturedImage] = useState(null);
+    const [isProcessing, setIsProcessing] = useState(false);
     const cropperRef = useRef(null);
     const webcamRef = useRef(null);
     const capturedCropperRef = useRef(null);
     const { showError, showSuccess } = useToastError();
 
-    // A4 aspect ratio (210mm x 297mm)
-    const A4_ASPECT_RATIO = 210 / 297; // Approximately 0.7070707
-    // A4 pixel dimensions at 300 DPI
-    const A4_WIDTH_PX = 2480; // 210mm at 300 DPI
-    const A4_HEIGHT_PX = 3508; // 297mm at 300 DPI
+    const MAX_IMAGES = 50;
 
-    // Improved camera constraints for better document scanning
     const videoConstraints = {
         facingMode: 'environment',
-        width: { ideal: 1920, max: 1920 },
-        height: { ideal: 1080, max: 1080 },
-        aspectRatio: { ideal: A4_ASPECT_RATIO }
+        width: { ideal: 1920 },
+        height: { ideal: 1080 },
     };
 
-    const handleCapture = useCallback(() => {
-        const screenshot = webcamRef.current.getScreenshot({
-            width: 1920,
-            height: 1080,
-            quality: 1.0 // Maximum quality for screenshot
-        });
-        if (screenshot) {
-            setCurrentCapturedImage(screenshot);
-            setShowWebcam(false);
-            setShowCropper(true);
+    const handleCapture = useCallback(async () => {
+        if (capturedImages.length >= MAX_IMAGES) {
+            showError(new Error(`Cannot capture more than ${MAX_IMAGES} images`), 'Limit Reached');
+            return;
         }
-    }, []);
 
-    const handleCropCapturedImage = useCallback(() => {
+        setIsProcessing(true);
+        try {
+            const screenshot = webcamRef.current.getScreenshot({
+                width: 1920,
+                height: 1080,
+                quality: 0.9, // Slightly reduced quality for better performance
+            });
+
+            if (!screenshot) {
+                throw new Error('Failed to capture image');
+            }
+
+            const blob = await (await fetch(screenshot)).blob();
+            const file = new File([blob], `captured-${Date.now()}.jpg`, { type: 'image/jpeg' });
+
+            // Only compress if image is larger than 2MB
+            const sizeMB = file.size / (1024 * 1024);
+            let processedFile = file;
+            if (sizeMB > 2) {
+                processedFile = await compressFile(file, {
+                    maxSizeMB: 2,
+                    maxWidthOrHeight: 1920,
+                    quality: 0.9,
+                });
+            }
+
+            const reader = new FileReader();
+            reader.onload = () => {
+                setCurrentCapturedImage(reader.result);
+                setShowWebcam(false);
+                setShowCropper(true);
+                setIsProcessing(false);
+                showSuccess(`Image captured! Size: ${formatFileSize(processedFile.size)}`);
+            };
+            reader.readAsDataURL(processedFile);
+        } catch (error) {
+            setIsProcessing(false);
+            showError(error, 'Image Processing Error');
+        }
+    }, [capturedImages.length, showError, showSuccess]);
+
+    const handleCropCapturedImage = useCallback(async () => {
         const cropper = capturedCropperRef.current?.cropper;
         if (!cropper) return;
 
-        const canvas = cropper.getCroppedCanvas({
-            width: A4_WIDTH_PX, // A4 width at 300 DPI
-            height: A4_HEIGHT_PX, // A4 height at 300 DPI
-            imageSmoothingEnabled: true,
-            imageSmoothingQuality: 'high'
-        });
+        setIsProcessing(true);
+        try {
+            const canvas = cropper.getCroppedCanvas({
+                imageSmoothingEnabled: true,
+                imageSmoothingQuality: 'high',
+            });
 
-        const croppedImage = canvas.toDataURL('image/png', 1.0); // Use PNG for lossless quality
-        setCapturedImages(prev => [...prev, croppedImage]);
-        setShowCropper(false);
-        setCurrentCapturedImage(null);
-        showSuccess('Image captured and cropped successfully');
-    }, [showSuccess]);
+            const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.9));
+            const file = new File([blob], `cropped-${Date.now()}.jpg`, { type: 'image/jpeg' });
+
+            const reader = new FileReader();
+            reader.onload = () => {
+                setCapturedImages((prev) => [...prev, reader.result]);
+                setShowCropper(false);
+                setCurrentCapturedImage(null);
+                setIsProcessing(false);
+                showSuccess('Image cropped and saved!');
+            };
+            reader.readAsDataURL(file);
+        } catch (error) {
+            setIsProcessing(false);
+            showError(error, 'Crop Processing Error');
+        }
+    }, [showSuccess, showError]);
 
     const handleFileChange = async (e) => {
         const file = e.target.files[0];
         if (!file) return;
 
-        // Validate file
-        const validation = validateFile(file);
-        if (!validation.isValid) {
-            showError(`${new Error(validation.errors.join(', '))}`, 'File Validation Error');
-            return;
-        }
-
+        setIsProcessing(true);
         try {
-            // Show loading state
-            console.log(`Processing file: ${file.name} (${formatFileSize(file.size)})`);
+            const validation = validateFile(file, { maxSize: 30 * 1024 * 1024 });
+            if (!validation.isValid) {
+                throw new Error(validation.errors.join(', '));
+            }
 
-            // Compress file
-            const compressedFile = await compressFile(file, {
-                maxSizeMB: 2,
-                maxWidthOrHeight: 1920,
-                quality: 0.8
-            });
+            const sizeMB = file.size / (1024 * 1024);
+            let processedFile = file;
+            if (sizeMB > 2) {
+                processedFile = await compressFile(file, {
+                    maxSizeMB: 2,
+                    maxWidthOrHeight: 1920,
+                    quality: 0.9,
+                });
+            }
 
-            const type = compressedFile.type;
+            const type = processedFile.type;
             if (type.startsWith('image/')) {
                 const reader = new FileReader();
                 reader.onload = () => {
@@ -102,20 +138,20 @@ const DocumentScanner = () => {
                     setPdfFile(null);
                     setPdfName('');
                     setPdfSize(0);
+                    setIsProcessing(false);
+                    showSuccess(`Image processed! Size: ${formatFileSize(processedFile.size)}`);
                 };
-                reader.readAsDataURL(compressedFile);
+                reader.readAsDataURL(processedFile);
             } else if (type === 'application/pdf') {
-                setPdfFile(compressedFile);
+                setPdfFile(processedFile);
                 setImage(null);
-                setPdfName(compressedFile.name);
-                setPdfSize((compressedFile.size / (1024 * 1024)).toFixed(2)); // Convert to MB
+                setPdfName(processedFile.name);
+                setPdfSize((processedFile.size / (1024 * 1024)).toFixed(2));
+                setIsProcessing(false);
+                showSuccess(`PDF processed! Size: ${formatFileSize(processedFile.size)}`);
             }
-
-            showSuccess(`File processed successfully! ${file.size !== compressedFile.size ?
-                `Compressed from ${formatFileSize(file.size)} to ${formatFileSize(compressedFile.size)}` :
-                'No compression needed'}`);
         } catch (error) {
-            console.error('File processing error:', error);
+            setIsProcessing(false);
             showError(error, 'File Processing Error');
         }
     };
@@ -128,36 +164,27 @@ const DocumentScanner = () => {
         const cropper = cropperRef.current?.cropper;
         if (!cropper) return;
 
-        const canvas = cropper.getCroppedCanvas({
-            width: A4_WIDTH_PX, // A4 width at 300 DPI
-            height: A4_HEIGHT_PX, // A4 height at 300 DPI
-            imageSmoothingEnabled: true,
-            imageSmoothingQuality: 'high'
-        });
-
-        const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.9)); // Use JPEG with 90% quality
-        const originalFile = new File([blob], 'cropped-image.jpg', { type: 'image/jpeg' });
-
+        setIsProcessing(true);
         try {
-            // Compress the cropped image before upload
-            const compressedFile = await compressFile(originalFile, {
-                maxSizeMB: 1,
-                maxWidthOrHeight: 1920,
-                quality: 0.8
+            const canvas = cropper.getCroppedCanvas({
+                imageSmoothingEnabled: true,
+                imageSmoothingQuality: 'high',
             });
 
+            const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.9));
+            const file = new File([blob], 'cropped-image.jpg', { type: 'image/jpeg' });
+
             const formData = new FormData();
-            formData.append('file', compressedFile);
+            formData.append('file', file);
             formData.append('patientMRN', mrn);
             formData.append('employeeId', '12345');
 
             await axiosInstance.post('/clerk/uploadDoc', formData);
-            showSuccess(`Image uploaded successfully! ${originalFile.size !== compressedFile.size ?
-                `Compressed from ${formatFileSize(originalFile.size)} to ${formatFileSize(compressedFile.size)}` :
-                ''}`);
+            setIsProcessing(false);
+            showSuccess('Image uploaded successfully!');
             setImage(null);
         } catch (err) {
-            console.error(err);
+            setIsProcessing(false);
             showError(err, 'Upload failed');
         }
     };
@@ -172,20 +199,21 @@ const DocumentScanner = () => {
             return;
         }
 
-        // Note: pdfFile is already compressed from handleFileChange
-        const formData = new FormData();
-        formData.append('file', pdfFile);
-        formData.append('patientMRN', mrn);
-        formData.append('employeeId', '1234');
-
+        setIsProcessing(true);
         try {
-            const res = await axiosInstance.post('/clerk/uploadDoc', formData);
+            const formData = new FormData();
+            formData.append('file', pdfFile);
+            formData.append('patientMRN', mrn);
+            formData.append('employeeId', '12345');
+
+            await axiosInstance.post('/clerk/uploadDoc', formData);
+            setIsProcessing(false);
             showSuccess('PDF uploaded successfully!');
             setPdfFile(null);
             setPdfName('');
             setPdfSize(0);
         } catch (err) {
-            console.error(err);
+            setIsProcessing(false);
             showError(err, 'Upload failed');
         }
     };
@@ -200,258 +228,320 @@ const DocumentScanner = () => {
             return;
         }
 
-        // Create PDF with high-quality settings
-        const doc = new jsPDF({
-            orientation: 'portrait',
-            unit: 'mm',
-            format: 'a4',
-            compress: false
-        });
-
-        for (let i = 0; i < capturedImages.length; i++) {
-            if (i !== 0) doc.addPage();
-
-            // Calculate proper dimensions to maintain A4 aspect ratio
-            const imgWidth = 190; // A4 width minus margins
-            const imgHeight = 270; // A4 height minus margins
-
-            doc.addImage(
-                capturedImages[i],
-                'PNG', // Use PNG for lossless quality
-                10,
-                10,
-                imgWidth,
-                imgHeight,
-                undefined,
-                'SLOW' // High-quality compression if JPEG is used
-            );
-        }
-
-        const pdfBlob = doc.output('blob');
-        const originalFile = new File([pdfBlob], 'scanned-document.pdf', { type: 'application/pdf' });
-
+        setIsProcessing(true);
         try {
-            // Compress the PDF before upload
-            const compressedFile = await compressFile(originalFile);
+            const doc = new jsPDF({
+                orientation: 'portrait',
+                unit: 'mm',
+                compress: true,
+            });
+
+            for (let i = 0; i < capturedImages.length; i++) {
+                if (i !== 0) doc.addPage();
+
+                const imgProps = await new Promise((resolve) => {
+                    const img = new Image();
+                    img.src = capturedImages[i];
+                    img.onload = () => resolve({ width: img.width, height: img.height });
+                });
+
+                // Calculate dimensions to fit the PDF page while maintaining aspect ratio
+                const pageWidth = doc.internal.pageSize.getWidth() - 20; // 10mm margins on each side
+                const pageHeight = doc.internal.pageSize.getHeight() - 20;
+                const imgRatio = imgProps.width / imgProps.height;
+                const pageRatio = pageWidth / pageHeight;
+
+                let width = pageWidth;
+                let height = pageHeight;
+
+                if (imgRatio > pageRatio) {
+                    height = width / imgRatio;
+                } else {
+                    width = height * imgRatio;
+                }
+
+                doc.addImage(
+                    capturedImages[i],
+                    'JPEG',
+                    10,
+                    10 + (pageHeight - height) / 2, // Center vertically
+                    width,
+                    height
+                );
+            }
+
+            const pdfBlob = doc.output('blob');
+            const pdfFile = new File([pdfBlob], 'scanned-document.pdf', { type: 'application/pdf' });
 
             const formData = new FormData();
-            formData.append('file', compressedFile);
-            formData.append('scannerClerk', '687903b74d2933e28308743f');
+            formData.append('file', pdfFile);
             formData.append('patientMRN', mrn);
-            formData.append('employeeId', '1234');
+            formData.append('employeeId', '12345');
 
-            await axiosInstance.post(`/clerk/uploadDoc`, formData);
-            showSuccess(`Scanned PDF uploaded successfully! ${originalFile.size !== compressedFile.size ?
-                `Compressed from ${formatFileSize(originalFile.size)} to ${formatFileSize(compressedFile.size)}` :
-                ''}`);
+            await axiosInstance.post('/clerk/uploadDoc', formData);
+            setIsProcessing(false);
+            showSuccess('Scanned PDF uploaded successfully!');
             setCapturedImages([]);
         } catch (err) {
-            console.error(err);
+            setIsProcessing(false);
             showError(err, 'Upload failed');
         }
     };
 
     return (
-        <div className="max-w-3xl mx-auto p-4">
-            <h1 className="text-xl font-semibold mb-4">Document Scanner</h1>
+        <div className="max-w-3xl mx-auto p-4 md:p-6">
+            <div className="bg-white rounded-lg shadow-md p-6">
+                <h1 className="text-2xl font-bold text-gray-800 mb-6">Document Scanner</h1>
 
-            {/* Patient MRN */}
-            <label className="block text-sm font-medium mb-1 text-gray-700">Enter Patient MRN</label>
-            <input
-                type="text"
-                value={mrn}
-                onChange={(e) => setMrn(e.target.value)}
-                className="w-full mb-4 px-3 py-2 border rounded-md text-sm"
-                placeholder="e.g., MRN123456"
-            />
-
-            {/* File Upload */}
-            <input
-                type="file"
-                accept="image/*,application/pdf"
-                onChange={handleFileChange}
-                className="mb-4 block w-full text-sm text-gray-700 file:mr-4 file:py-2 file:px-4
-           file:rounded-full file:border-0 file:text-sm file:font-semibold
-           file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-            />
-
-            {/* Camera Button */}
-            <button
-                onClick={() => setShowWebcam(true)}
-                className="mb-4 bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition"
-            >
-                Open Camera
-            </button>
-
-            {/* Webcam Component with improved settings */}
-            {showWebcam && (
-                <div className="mb-4 relative">
-                    <div className="relative border-4 border-dashed border-blue-500 rounded-lg p-2">
-                        <Webcam
-                            audio={false}
-                            ref={webcamRef}
-                            screenshotFormat="image/jpeg"
-                            className="w-full rounded-md"
-                            videoConstraints={videoConstraints}
-                            screenshotQuality={1.0} // Maximum quality
-                        />
-                        {/* Corner guides for document alignment */}
-                        <div className="absolute top-4 left-4 w-8 h-8 border-l-4 border-t-4 border-yellow-400 rounded-tl-lg"></div>
-                        <div className="absolute top-4 right-4 w-8 h-8 border-r-4 border-t-4 border-yellow-400 rounded-tr-lg"></div>
-                        <div className="absolute bottom-4 left-4 w-8 h-8 border-l-4 border-b-4 border-yellow-400 rounded-bl-lg"></div>
-                        <div className="absolute bottom-4 right-4 w-8 h-8 border-r-4 border-b-4 border-yellow-400 rounded-br-lg"></div>
-                    </div>
-                    <p className="text-sm text-gray-600 mt-2 text-center">
-                        Align the document corners with the yellow guides for best results
-                    </p>
-                    <div className="flex gap-2 mt-2">
-                        <button
-                            onClick={handleCapture}
-                            className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition"
-                        >
-                            Capture Image
-                        </button>
-                        <button
-                            onClick={() => setShowWebcam(false)}
-                            className="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition"
-                        >
-                            Cancel
-                        </button>
-                    </div>
+                {/* MRN Input */}
+                <div className="mb-6">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Patient MRN</label>
+                    <input
+                        type="text"
+                        value={mrn}
+                        onChange={(e) => setMrn(e.target.value)}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                        placeholder="e.g., MRN123456"
+                        disabled={isProcessing}
+                    />
                 </div>
-            )}
 
-            {/* Image Cropper for Captured Images */}
-            {showCropper && currentCapturedImage && (
-                <div className="mb-4">
-                    <h3 className="text-lg font-medium mb-2">Crop Captured Image</h3>
-                    <div className="w-full h-[60vh] mb-4">
-                        <Cropper
-                            src={currentCapturedImage}
-                            ref={capturedCropperRef}
-                            style={{ height: '100%', width: '100%' }}
-                            aspectRatio={A4_ASPECT_RATIO}
-                            guides={true}
-                            viewMode={1}
-                            dragMode="move"
-                            autoCropArea={0.9}
-                            background={false}
-                            cropBoxResizable={true}
-                            cropBoxMovable={true}
-                            toggleDragModeOnDblclick={false}
+                {/* Action Buttons */}
+                <div className="flex flex-col sm:flex-row gap-4 mb-6">
+                    <label className="flex-1 cursor-pointer">
+                        <input
+                            type="file"
+                            accept="image/*,application/pdf"
+                            onChange={handleFileChange}
+                            className="hidden"
+                            disabled={isProcessing}
                         />
-                    </div>
-                    <div className="flex gap-2">
-                        <Button
-                            onClick={handleCropCapturedImage}
-                            className="bg-green-600 hover:bg-green-700 text-white"
-                        >
-                            Save Cropped Image
-                        </Button>
-                        <Button
-                            variant="outline"
-                            onClick={() => {
-                                setShowCropper(false);
-                                setCurrentCapturedImage(null);
-                            }}
-                        >
-                            Cancel
-                        </Button>
-                        <Button
-                            variant="outline"
-                            onClick={() => {
-                                setCapturedImages(prev => [...prev, currentCapturedImage]);
-                                setShowCropper(false);
-                                setCurrentCapturedImage(null);
-                                showSuccess('Image saved without cropping');
-                            }}
-                        >
-                            Skip Cropping
-                        </Button>
-                    </div>
-                </div>
-            )}
+                        <div className="flex items-center justify-center gap-2 w-full px-4 py-3 bg-white border-2 border-dashed border-blue-400 rounded-lg hover:bg-blue-50 transition">
+                            <FiUpload className="text-blue-600" />
+                            <span className="text-sm font-medium text-gray-700">Upload File</span>
+                        </div>
+                    </label>
 
-            {/* Captured Image Gallery */}
-            {capturedImages.length > 0 && (
-                <div className="mb-4">
-                    <h2 className="text-lg font-medium mb-2">Captured Images ({capturedImages.length})</h2>
-                    <div className="grid grid-cols-2 gap-2">
-                        {capturedImages.map((img, index) => (
-                            <div key={index} className="relative">
-                                <img src={img} alt={`Captured ${index + 1}`} className="w-full rounded shadow" />
-                                <button
-                                    onClick={() => {
-                                        const updated = [...capturedImages];
-                                        updated.splice(index, 1);
-                                        setCapturedImages(updated);
-                                    }}
-                                    className="absolute top-1 right-1 bg-red-600 text-white text-xs px-2 py-1 rounded hover:bg-red-700"
-                                >
-                                    Delete
-                                </button>
-                            </div>
-                        ))}
+                    <button
+                        onClick={() => setShowWebcam(true)}
+                        className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:bg-gray-400"
+                        disabled={isProcessing}
+                    >
+                        <FiCamera />
+                        <span>Open Camera</span>
+                    </button>
+                </div>
+
+                {isProcessing && (
+                    <div className="flex items-center justify-center p-4 mb-6 bg-blue-50 rounded-lg">
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mr-3"></div>
+                        <span className="text-sm text-blue-700">Processing, please wait...</span>
                     </div>
-                    <div className="flex gap-2 mt-4">
+                )}
+
+                {/* Webcam View */}
+                {showWebcam && (
+                    <div className="mb-6">
+                        <div className="relative aspect-video bg-gray-100 rounded-lg overflow-hidden">
+                            <Webcam
+                                audio={false}
+                                ref={webcamRef}
+                                screenshotFormat="image/jpeg"
+                                className="w-full h-full object-cover"
+                                videoConstraints={videoConstraints}
+                                screenshotQuality={0.9}
+                            />
+                            <div className="absolute inset-0 border-4 border-dashed border-blue-300 rounded-lg pointer-events-none"></div>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-2 text-center">
+                            Position your document within the frame
+                        </p>
+                        <div className="flex gap-3 mt-4">
+                            <button
+                                onClick={handleCapture}
+                                className="flex-1 flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 transition disabled:bg-gray-400"
+                                disabled={isProcessing}
+                            >
+                                <FiCamera />
+                                {isProcessing ? 'Capturing...' : 'Capture Image'}
+                            </button>
+                            <button
+                                onClick={() => setShowWebcam(false)}
+                                className="flex items-center justify-center gap-2 px-4 py-3 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition"
+                                disabled={isProcessing}
+                            >
+                                <FiX />
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+                {/* Image Cropper */}
+                {showCropper && currentCapturedImage && (
+                    <div className="mb-6">
+                        <h3 className="text-lg font-semibold text-gray-800 mb-3">Crop Your Image</h3>
+                        <div className="h-96 w-full bg-gray-100 rounded-lg overflow-hidden">
+                            <Cropper
+                                src={currentCapturedImage}
+                                ref={capturedCropperRef}
+                                style={{ height: '100%', width: '100%' }}
+                                viewMode={1}
+                                dragMode="move"
+                                autoCropArea={0.8}
+                                background={false}
+                                cropBoxResizable={true}
+                                cropBoxMovable={true}
+                                responsive={true}
+                                checkOrientation={true}
+                                guides={true}
+                            />
+                        </div>
+                        <div className="flex flex-wrap gap-3 mt-4">
+                            <Button
+                                onClick={handleCropCapturedImage}
+                                className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white"
+                                disabled={isProcessing}
+                            >
+                                <FiCheck />
+                                {isProcessing ? 'Processing...' : 'Save Cropped Image'}
+                            </Button>
+                            <Button
+                                variant="outline"
+                                onClick={() => {
+                                    setShowCropper(false);
+                                    setCurrentCapturedImage(null);
+                                }}
+                                disabled={isProcessing}
+                            >
+                                <FiX />
+                                Cancel
+                            </Button>
+                            <Button
+                                variant="outline"
+                                onClick={() => {
+                                    setCapturedImages((prev) => [...prev, currentCapturedImage]);
+                                    setShowCropper(false);
+                                    setCurrentCapturedImage(null);
+                                    showSuccess('Image saved without cropping');
+                                }}
+                                disabled={isProcessing}
+                            >
+                                <FiPaperclip />
+                                Skip Cropping
+                            </Button>
+                        </div>
+                    </div>
+                )}
+
+                {/* Captured Images Gallery */}
+                {capturedImages.length > 0 && (
+                    <div className="mb-6">
+                        <div className="flex justify-between items-center mb-3">
+                            <h2 className="text-lg font-semibold text-gray-800">
+                                Captured Images ({capturedImages.length})
+                            </h2>
+                            <button
+                                onClick={() => setCapturedImages([])}
+                                className="flex items-center gap-1 text-sm text-red-600 hover:text-red-800"
+                                disabled={isProcessing}
+                            >
+                                <FiTrash2 size={14} />
+                                Clear All
+                            </button>
+                        </div>
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                            {capturedImages.map((img, index) => (
+                                <div key={index} className="relative group rounded-lg overflow-hidden shadow-sm border border-gray-200">
+                                    <img
+                                        src={img}
+                                        alt={`Captured ${index + 1}`}
+                                        className="w-full h-32 object-cover"
+                                    />
+                                    <button
+                                        onClick={() => {
+                                            const updated = [...capturedImages];
+                                            updated.splice(index, 1);
+                                            setCapturedImages(updated);
+                                        }}
+                                        className="absolute top-2 right-2 p-1 bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition"
+                                        disabled={isProcessing}
+                                    >
+                                        <FiX size={14} />
+                                    </button>
+                                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2">
+                                        <p className="text-xs text-white truncate">Image {index + 1}</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
                         <button
                             onClick={generateAndUploadPdf}
-                            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition"
+                            className="w-full mt-4 flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 transition disabled:bg-gray-400"
+                            disabled={isProcessing}
                         >
-                            Upload All as PDF ({capturedImages.length} images)
+                            <FiUpload />
+                            {isProcessing
+                                ? 'Processing...'
+                                : `Upload as PDF (${capturedImages.length} images)`}
                         </button>
+                    </div>
+                )}
+
+                {/* Uploaded Image Cropper */}
+                {image && (
+                    <div className="mb-6">
+                        <h3 className="text-lg font-semibold text-gray-800 mb-3">Crop Uploaded Image</h3>
+                        <div className="h-96 w-full bg-gray-100 rounded-lg overflow-hidden">
+                            <Cropper
+                                src={image}
+                                ref={cropperRef}
+                                style={{ height: '100%', width: '100%' }}
+                                viewMode={1}
+                                dragMode="move"
+                                autoCropArea={0.8}
+                                background={false}
+                                cropBoxResizable={true}
+                                cropBoxMovable={true}
+                                responsive={true}
+                                checkOrientation={true}
+                                guides={true}
+                            />
+                        </div>
                         <button
-                            onClick={() => setCapturedImages([])}
-                            className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition"
+                            onClick={uploadCroppedImage}
+                            className="w-full mt-4 flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 transition disabled:bg-gray-400"
+                            disabled={isProcessing}
                         >
-                            Clear All Images
+                            <FiUpload />
+                            {isProcessing ? 'Uploading...' : 'Upload Cropped Image'}
                         </button>
                     </div>
-                </div>
-            )}
+                )}
 
-            {/* Cropper Component for File Upload */}
-            {image && (
-                <>
-                    <h3 className="text-lg font-medium mb-2">Crop Uploaded Image</h3>
-                    <div className="w-full h-[60vh] mb-4">
-                        <Cropper
-                            src={image}
-                            ref={cropperRef}
-                            style={{ height: '100%', width: '100%' }}
-                            aspectRatio={A4_ASPECT_RATIO}
-                            guides={true}
-                            viewMode={1}
-                            dragMode="move"
-                            autoCropArea={0.9}
-                            background={false}
-                            cropBoxResizable={true}
-                            cropBoxMovable={true}
-                        />
+                {/* PDF Upload */}
+                {pdfFile && (
+                    <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                        <div className="flex items-start gap-3">
+                            <div className="bg-blue-100 p-2 rounded-full">
+                                <FiPaperclip className="text-blue-600" />
+                            </div>
+                            <div className="flex-1">
+                                <p className="font-medium text-gray-800">{pdfName}</p>
+                                <p className="text-sm text-gray-600">{pdfSize} MB</p>
+                            </div>
+                        </div>
+                        <button
+                            onClick={uploadPdf}
+                            className="w-full mt-4 flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 transition disabled:bg-gray-400"
+                            disabled={isProcessing}
+                        >
+                            <FiUpload />
+                            {isProcessing ? 'Uploading...' : 'Upload PDF'}
+                        </button>
                     </div>
-                    <button
-                        onClick={uploadCroppedImage}
-                        className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition"
-                    >
-                        Upload Cropped Image
-                    </button>
-                </>
-            )}
-
-            {/* PDF Preview and Upload */}
-            {pdfFile && (
-                <div className="mt-4">
-                    <p className="text-sm mb-2 text-gray-600">
-                        PDF selected: {pdfName} ({pdfSize} MB)
-                    </p>
-                    <button
-                        onClick={uploadPdf}
-                        className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition"
-                    >
-                        Upload PDF
-                    </button>
-                </div>
-            )}
+                )}
+            </div>
         </div>
     );
 };
