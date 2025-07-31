@@ -2,25 +2,7 @@
 # Stage 1: Build frontend
 # -------------------------
 FROM node:20-alpine AS frontend-builder
-
-# Install build dependencies for canvas and node-gyp
-RUN apk add --no-cache \
-    python3 \
-    py3-pip \
-    make \
-    g++ \
-    pkgconfig \
-    pixman-dev \
-    cairo-dev \
-    pango-dev \
-    libjpeg-turbo-dev \
-    giflib-dev \
-    librsvg-dev
-
-
 WORKDIR /app/frontend
-
-
 
 # Install frontend dependencies (cached unless package.json changes)
 COPY frontend/package*.json ./
