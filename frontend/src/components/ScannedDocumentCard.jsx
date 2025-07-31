@@ -126,7 +126,7 @@ const ScannedDocumentCard = React.memo(
         return (
             <Card className="w-full max-w-md relative shadow-md hover:shadow-lg transition-shadow duration-200">
                 <CardHeader className="pb-2">
-                    <CardTitle className="flex items-center gap-2 text-lg">
+                    <CardTitle className="flex items-center gap-2 text-lg overflow-hidden">
                         <FileText className="h-5 w-5 text-blue-500" aria-hidden="true" />
                         <span className="truncate" title={fileName}>
                             {fileName}

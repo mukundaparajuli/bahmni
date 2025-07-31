@@ -26,13 +26,17 @@ const DocumentScanner = () => {
     const { showError, showSuccess } = useToastError();
 
     const MAX_IMAGES = 50;
+    const A4_RATIO = 210 / 297; // A4 aspect ratio (width/height)
 
+    // Optimized video constraints for document scanning
     const videoConstraints = {
         facingMode: 'environment',
-        width: { ideal: 1920 },
-        height: { ideal: 1080 },
+        width: { ideal: 1280 },
+        height: { ideal: 720 },
+        aspectRatio: A4_RATIO,
     };
 
+    // Optimized capture function with A4 preparation
     const handleCapture = useCallback(async () => {
         if (capturedImages.length >= MAX_IMAGES) {
             showError(new Error(`Cannot capture more than ${MAX_IMAGES} images`), 'Limit Reached');
@@ -42,9 +46,9 @@ const DocumentScanner = () => {
         setIsProcessing(true);
         try {
             const screenshot = webcamRef.current.getScreenshot({
-                width: 1920,
-                height: 1080,
-                quality: 0.9, // Slightly reduced quality for better performance
+                width: 1280, // Fixed width for consistency
+                height: Math.round(1280 * (297 / 210)), // Maintain A4 ratio
+                quality: 0.85, // Slightly reduced quality for better performance
             });
 
             if (!screenshot) {
@@ -54,14 +58,14 @@ const DocumentScanner = () => {
             const blob = await (await fetch(screenshot)).blob();
             const file = new File([blob], `captured-${Date.now()}.jpg`, { type: 'image/jpeg' });
 
-            // Only compress if image is larger than 2MB
+            // Only compress if image is larger than 1.5MB (reduced from 2MB)
             const sizeMB = file.size / (1024 * 1024);
             let processedFile = file;
-            if (sizeMB > 2) {
+            if (sizeMB > 1.5) {
                 processedFile = await compressFile(file, {
-                    maxSizeMB: 2,
-                    maxWidthOrHeight: 1920,
-                    quality: 0.9,
+                    maxSizeMB: 1.5,
+                    maxWidthOrHeight: 1280,
+                    quality: 0.85,
                 });
             }
 
@@ -80,6 +84,7 @@ const DocumentScanner = () => {
         }
     }, [capturedImages.length, showError, showSuccess]);
 
+    // Optimized crop handler with A4 constraints
     const handleCropCapturedImage = useCallback(async () => {
         const cropper = capturedCropperRef.current?.cropper;
         if (!cropper) return;
@@ -87,11 +92,13 @@ const DocumentScanner = () => {
         setIsProcessing(true);
         try {
             const canvas = cropper.getCroppedCanvas({
+                width: 1280, // Fixed output size
+                height: Math.round(1280 * (297 / 210)),
                 imageSmoothingEnabled: true,
-                imageSmoothingQuality: 'high',
+                imageSmoothingQuality: 'medium', // Changed from 'high' to 'medium'
             });
 
-            const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.9));
+            const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.85));
             const file = new File([blob], `cropped-${Date.now()}.jpg`, { type: 'image/jpeg' });
 
             const reader = new FileReader();
@@ -109,24 +116,28 @@ const DocumentScanner = () => {
         }
     }, [showSuccess, showError]);
 
+    // Optimized file handler
     const handleFileChange = async (e) => {
         const file = e.target.files[0];
         if (!file) return;
 
         setIsProcessing(true);
         try {
-            const validation = validateFile(file, { maxSize: 30 * 1024 * 1024 });
+            const validation = validateFile(file, {
+                maxSize: 20 * 1024 * 1024, // Reduced from 30MB
+                allowedTypes: ['image/jpeg', 'image/png', 'application/pdf']
+            });
             if (!validation.isValid) {
                 throw new Error(validation.errors.join(', '));
             }
 
             const sizeMB = file.size / (1024 * 1024);
             let processedFile = file;
-            if (sizeMB > 2) {
+            if (sizeMB > 1.5) {
                 processedFile = await compressFile(file, {
-                    maxSizeMB: 2,
-                    maxWidthOrHeight: 1920,
-                    quality: 0.9,
+                    maxSizeMB: 1.5,
+                    maxWidthOrHeight: 1280,
+                    quality: 0.85,
                 });
             }
 
@@ -167,11 +178,13 @@ const DocumentScanner = () => {
         setIsProcessing(true);
         try {
             const canvas = cropper.getCroppedCanvas({
+                width: 1280, // Consistent with A4 width
+                height: Math.round(1280 * (297 / 210)), // Maintain A4 ratio
                 imageSmoothingEnabled: true,
-                imageSmoothingQuality: 'high',
+                imageSmoothingQuality: 'medium',
             });
 
-            const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.9));
+            const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.85));
             const file = new File([blob], 'cropped-image.jpg', { type: 'image/jpeg' });
 
             const formData = new FormData();
@@ -181,7 +194,7 @@ const DocumentScanner = () => {
 
             await axiosInstance.post('/clerk/uploadDoc', formData);
             setIsProcessing(false);
-            showSuccess('Image uploaded successfully!');
+            showSuccess('Cropped image uploaded successfully!');
             setImage(null);
         } catch (err) {
             setIsProcessing(false);
@@ -218,6 +231,7 @@ const DocumentScanner = () => {
         }
     };
 
+    // Optimized PDF generation with parallel processing
     const generateAndUploadPdf = async () => {
         if (!mrn.trim()) {
             showError(new Error('Please enter the patient MRN to proceed'), 'Validation Error');
@@ -233,45 +247,64 @@ const DocumentScanner = () => {
             const doc = new jsPDF({
                 orientation: 'portrait',
                 unit: 'mm',
+                format: 'a4',
                 compress: true,
             });
 
-            for (let i = 0; i < capturedImages.length; i++) {
-                if (i !== 0) doc.addPage();
+            // Pre-process all images in parallel
+            const imageDimensions = await Promise.all(
+                capturedImages.map(imgSrc => {
+                    return new Promise((resolve) => {
+                        const img = new Image();
+                        img.onload = () => {
+                            const imgRatio = img.width / img.height;
+                            const usableWidth = 190; // 210mm - 20mm margins
+                            const usableHeight = 277; // 297mm - 20mm margins
 
-                const imgProps = await new Promise((resolve) => {
-                    const img = new Image();
-                    img.src = capturedImages[i];
-                    img.onload = () => resolve({ width: img.width, height: img.height });
-                });
+                            let width, height;
+                            if (imgRatio > (usableWidth / usableHeight)) {
+                                width = usableWidth;
+                                height = width / imgRatio;
+                            } else {
+                                height = usableHeight;
+                                width = height * imgRatio;
+                            }
 
-                // Calculate dimensions to fit the PDF page while maintaining aspect ratio
-                const pageWidth = doc.internal.pageSize.getWidth() - 20; // 10mm margins on each side
-                const pageHeight = doc.internal.pageSize.getHeight() - 20;
-                const imgRatio = imgProps.width / imgProps.height;
-                const pageRatio = pageWidth / pageHeight;
+                            resolve({
+                                imgSrc,
+                                width,
+                                height,
+                                x: (210 - width) / 2,
+                                y: (297 - height) / 2
+                            });
+                        };
+                        img.src = imgSrc;
+                    });
+                })
+            );
 
-                let width = pageWidth;
-                let height = pageHeight;
-
-                if (imgRatio > pageRatio) {
-                    height = width / imgRatio;
-                } else {
-                    width = height * imgRatio;
-                }
-
+            // Add pages with pre-processed images
+            imageDimensions.forEach((img, index) => {
+                if (index > 0) doc.addPage();
                 doc.addImage(
-                    capturedImages[i],
+                    img.imgSrc,
                     'JPEG',
-                    10,
-                    10 + (pageHeight - height) / 2, // Center vertically
-                    width,
-                    height
+                    img.x,
+                    img.y,
+                    img.width,
+                    img.height,
+                    null,
+                    'MEDIUM' // Balanced quality/speed
                 );
-            }
+            });
 
-            const pdfBlob = doc.output('blob');
-            const pdfFile = new File([pdfBlob], 'scanned-document.pdf', { type: 'application/pdf' });
+            // Use arraybuffer for faster PDF generation
+            const pdfArrayBuffer = doc.output('arraybuffer');
+            const pdfFile = new File(
+                [pdfArrayBuffer],
+                `scanned-a4-document-${Date.now()}.pdf`,
+                { type: 'application/pdf' }
+            );
 
             const formData = new FormData();
             formData.append('file', pdfFile);
@@ -280,14 +313,15 @@ const DocumentScanner = () => {
 
             await axiosInstance.post('/clerk/uploadDoc', formData);
             setIsProcessing(false);
-            showSuccess('Scanned PDF uploaded successfully!');
+            showSuccess('A4 PDF uploaded successfully!');
             setCapturedImages([]);
         } catch (err) {
             setIsProcessing(false);
-            showError(err, 'Upload failed');
+            showError(err, 'PDF Upload Failed');
         }
     };
 
+    // Rest of your component remains the same, just use the optimized functions above
     return (
         <div className="max-w-3xl mx-auto p-4 md:p-6">
             <div className="bg-white rounded-lg shadow-md p-6">
@@ -339,23 +373,26 @@ const DocumentScanner = () => {
                     </div>
                 )}
 
-                {/* Webcam View */}
+                {/* Webcam View with A4 overlay */}
                 {showWebcam && (
                     <div className="mb-6">
-                        <div className="relative aspect-video bg-gray-100 rounded-lg overflow-hidden">
+                        <div className="relative aspect-[297/210] bg-gray-100 rounded-lg overflow-hidden">
                             <Webcam
                                 audio={false}
                                 ref={webcamRef}
                                 screenshotFormat="image/jpeg"
                                 className="w-full h-full object-cover"
                                 videoConstraints={videoConstraints}
-                                screenshotQuality={0.9}
+                                screenshotQuality={0.85}
+                                forceScreenshotSourceSize={true}
                             />
-                            <div className="absolute inset-0 border-4 border-dashed border-blue-300 rounded-lg pointer-events-none"></div>
+                            <div className="absolute inset-0 border-4 border-dashed border-blue-300 rounded-lg pointer-events-none">
+                                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[85%] h-[90%] border-2 border-white/50"></div>
+                            </div>
+                            <div className="absolute bottom-4 left-0 right-0 text-center text-white text-sm bg-black/50 py-1">
+                                Align document within A4 boundaries
+                            </div>
                         </div>
-                        <p className="text-xs text-gray-500 mt-2 text-center">
-                            Position your document within the frame
-                        </p>
                         <div className="flex gap-3 mt-4">
                             <button
                                 onClick={handleCapture}
@@ -377,7 +414,7 @@ const DocumentScanner = () => {
                     </div>
                 )}
 
-                {/* Image Cropper */}
+                {/* Image Cropper with A4 constraints */}
                 {showCropper && currentCapturedImage && (
                     <div className="mb-6">
                         <h3 className="text-lg font-semibold text-gray-800 mb-3">Crop Your Image</h3>
@@ -386,6 +423,7 @@ const DocumentScanner = () => {
                                 src={currentCapturedImage}
                                 ref={capturedCropperRef}
                                 style={{ height: '100%', width: '100%' }}
+                                aspectRatio={A4_RATIO}
                                 viewMode={1}
                                 dragMode="move"
                                 autoCropArea={0.8}
@@ -395,6 +433,10 @@ const DocumentScanner = () => {
                                 responsive={true}
                                 checkOrientation={true}
                                 guides={true}
+                                data={{
+                                    width: 210,
+                                    height: 297
+                                }}
                             />
                         </div>
                         <div className="flex flex-wrap gap-3 mt-4">
@@ -483,7 +525,7 @@ const DocumentScanner = () => {
                             <FiUpload />
                             {isProcessing
                                 ? 'Processing...'
-                                : `Upload as PDF (${capturedImages.length} images)`}
+                                : `Upload as A4 PDF (${capturedImages.length} images)`}
                         </button>
                     </div>
                 )}
@@ -497,6 +539,7 @@ const DocumentScanner = () => {
                                 src={image}
                                 ref={cropperRef}
                                 style={{ height: '100%', width: '100%' }}
+                                aspectRatio={A4_RATIO}
                                 viewMode={1}
                                 dragMode="move"
                                 autoCropArea={0.8}
