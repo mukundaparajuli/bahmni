@@ -7,10 +7,13 @@ import useToastError from '@/hooks/useToastError';
 import FormField from '@/components/common/form-field';
 import { useState } from 'react';
 import { useOptions } from '@/hooks/useOptions';
+import { useNavigate } from 'react-router-dom';
+
 
 const RegisterForm = () => {
     const { showError, showSuccess } = useToastError();
     const { options, loading: optionsLoading } = useOptions();
+    const navigate = useNavigate();
     const { formData, handleChange } = useForm({
         employeeId: '',
         fullName: '',
@@ -30,11 +33,10 @@ const RegisterForm = () => {
         onError: (error) => showError(error, 'Registration failed'),
     });
 
-
     const handleImageChange = (e) => {
         const file = e.target.files[0];
         if (file) {
-            if (file.size > 5 * 1024 * 1024) { // 5MB limit
+            if (file.size > 5 * 1024 * 1024) {
                 showError('File size should not exceed 5MB');
                 return;
             }
@@ -54,7 +56,18 @@ const RegisterForm = () => {
             formDataToSend.append(key, value);
         });
         mutation.mutate(formDataToSend);
+        navigate('/welcome');
     };
+
+    const requiredFieldIds = new Set([
+        'employeeIdPhoto',
+        'employeeId',
+        'fullName',
+        'departmentId',
+        'email',
+        'educationId',
+        'password',
+    ]);
 
     const fields = [
         {
@@ -96,31 +109,38 @@ const RegisterForm = () => {
 
     return (
         <form onSubmit={handleSubmit}>
-            {fields.map((field) => (
-                <div key={field.id} className="mb-4">
-                    <FormField
-                        label={field.label}
-                        id={field.id}
-                        type={field.type}
-                        name={field.id}
-                        value={field.type === 'file' ? undefined : formData[field.id]}
-                        onChange={field.type === 'file' ? field.onChange : handleChange}
-                        required
-                        placeholder={field.placeholder}
-                        options={field.options}
-                        accept={field.accept}
-                    />
-                    {field.id === 'employeeIdPhoto' && previewImage && (
-                        <div className="mt-2">
-                            <img
-                                src={previewImage}
-                                alt="Employee preview"
-                                className="w-32 h-32 object-cover rounded"
-                            />
-                        </div>
-                    )}
-                </div>
-            ))}
+            <p className="text-sm text-gray-500 mb-4">* denotes required fields</p>
+            {fields.map((field) => {
+                const isRequired = requiredFieldIds.has(field.id);
+                const label = isRequired ? `${field.label} *` : field.label;
+
+                return (
+                    <div key={field.id} className="mb-4">
+                        <FormField
+                            label={label}
+                            id={field.id}
+                            type={field.type}
+                            name={field.id}
+                            value={field.type === 'file' ? undefined : formData[field.id]}
+                            onChange={field.type === 'file' ? field.onChange : handleChange}
+                            required={isRequired}
+                            placeholder={field.placeholder}
+                            options={field.options}
+                            accept={field.accept}
+                            disabled={field.disabled}
+                        />
+                        {field.id === 'employeeIdPhoto' && previewImage && (
+                            <div className="mt-2">
+                                <img
+                                    src={previewImage}
+                                    alt="Employee preview"
+                                    className="w-32 h-32 object-cover rounded"
+                                />
+                            </div>
+                        )}
+                    </div>
+                );
+            })}
             <Button type="submit" disabled={mutation.isLoading} className="w-full">
                 {mutation.isLoading ? 'Submitting...' : 'Submit'}
             </Button>

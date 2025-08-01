@@ -207,8 +207,12 @@ exports.updateDocument = asyncHandler(async (req, res) => {
         where: { id: parseInt(id) },
     });
 
+
     if (!document) {
         return ApiResponse(res, 404, null, 'Document not found');
+    }
+    if (document.status == 'rejected') {
+        let status = 'rescanned'
     }
     const oldFilePath = path.join(__dirname, '..', document.filePath);
     console.log(`Deleting old file at: ${oldFilePath}`);

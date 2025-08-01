@@ -170,7 +170,7 @@ const ScannedDocumentCard = React.memo(
                         </div>
                         <p className="text-sm text-gray-600">
                             <span className="font-medium">File Size:</span>{" "}
-                            {fileSize !== null ? `${(fileSize / 1024).toFixed(2)} KB` : "Loading..."}
+                            {fileSize !== null ? `${(fileSize / 1024).toFixed(2)} MB` : "Loading..."}
                         </p>
 
 

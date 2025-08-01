@@ -24,6 +24,7 @@ import ManageDepartments from './pages/ManageDepartments';
 import ManageEducation from './pages/ManageEducation';
 import ManageProfessions from './pages/ManageProfessions';
 import UsersSection from './components/admin/UsersSection';
+import Welcome from './components/Welcome';
 
 const App = () => (
   <>
@@ -34,6 +35,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/welcome" element={<Welcome />} />
             <Route path="/register" element={<Register />} />
             <Route path="/registration-success" element={<RegistrationSuccess />} />
             <Route path="/reset-password" element={<PasswordResetRequest />} />

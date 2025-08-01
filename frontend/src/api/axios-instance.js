@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // Proper fallback for baseURL
-const base = import.meta.env.VITE_API_URL || 'https://192.168.168.118:5555'; // fallback IP
+const base = import.meta.env.VITE_API_URL || 'https://10.3.231.35:5555'; // fallback IP
 const axiosInstance = axios.create({
     baseURL: `${base}/api/v1`,
 });
