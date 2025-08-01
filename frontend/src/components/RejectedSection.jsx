@@ -13,7 +13,7 @@ const RejectedSection = () => {
             <h1 className='text-2xl font-bold mb-4'>Rejected Documents</h1>
             <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'>
                 {data?.data?.data?.data?.map((doc) => (
-                    <ScannedDocumentCard key={doc.id} document={doc} />
+                    <ScannedDocumentCard key={doc.id} document={doc} isApprover />
                 ))}
             </div>
         </div>

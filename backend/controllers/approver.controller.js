@@ -15,16 +15,20 @@ exports.approveDocument = asyncHandler(async (req, res) => {
         throw error;
     }
 
-    if (document.status !== 'draft' && document.status !== 'submitted') {
+    if (document.status !== 'rescanned' && document.status !== 'submitted') {
         const error = new Error('Document already processed');
         error.statusCode = 400;
         throw error;
     }
 
+    //if the document is rescanned, we change the status to rescanned_approved, otherwise to approved
+    let status;
+    document.status === 'rescanned' ? status = 'rescanned_approved' : status = 'approved';
+
     const updatedDocument = await db.document.update({
         where: { id: parseInt(id) },
         data: {
-            status: 'approved',
+            status: status,
             approverId: req.user.id,
             reviewedAt: new Date(),
             filePath: document.filePath,
@@ -66,7 +70,7 @@ exports.rejectDocument = asyncHandler(async (req, res) => {
         throw error;
     }
 
-    if (document.status !== 'draft' && document.status !== 'submitted') {
+    if (document.status !== 'rescanned' && document.status !== 'submitted') {
         const error = new Error('Document already processed');
         error.statusCode = 400;
         throw error;
@@ -101,7 +105,7 @@ exports.getScannedDocuments = asyncHandler(async (req, res) => {
     const total = await db.document.count({
         where: {
             status: {
-                in: ['submitted'],
+                in: ['submitted', 'rescanned'],
             }
         },
     });
@@ -109,7 +113,7 @@ exports.getScannedDocuments = asyncHandler(async (req, res) => {
     const scannedDocs = await db.document.findMany({
         where: {
             status: {
-                in: ['submitted'],
+                in: ['submitted', 'rescanned'],
             }
         },
         skip,

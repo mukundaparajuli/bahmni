@@ -21,6 +21,7 @@ import useToastError from '@/hooks/useToastError';
 
 // Import centralized PDF configuration
 import '@/utils/pdf-config';
+import { getFileSizeFromUrl } from '@/utils/get-file-size';
 
 // Status configuration for reusability
 const STATUS_CONFIG = {
@@ -57,6 +58,16 @@ const ReviewDocumentCard = React.memo(({ document, refetch }) => {
     const { showError, showSuccess } = useToastError();
     const queryClient = useQueryClient();
     const isPdf = filePath?.toLowerCase().endsWith('.pdf');
+    const [fileSize, setFileSize] = useState(null);
+
+    useEffect(() => {
+        const fetchFileSize = async () => {
+            if (!filePath) return;
+            const size = await getFileSizeFromUrl(getStaticUrl(filePath));
+            setFileSize(size);
+        };
+        fetchFileSize();
+    }, [filePath]);
 
     // Handle overlay click to close preview
     const handleOverlayClick = useCallback((e) => {
@@ -186,6 +197,11 @@ const ReviewDocumentCard = React.memo(({ document, refetch }) => {
                             />
                         )}
                     </div>
+                    <p className="text-sm text-gray-600">
+                        <span className="font-medium">File Size:</span>{" "}
+                        {fileSize !== null ? `${(fileSize).toFixed(2)} MB` : "Loading..."}
+                    </p>
+
 
                     {/* Document Info */}
                     <div className="space-y-1.5 text-sm text-gray-600">
@@ -371,7 +387,7 @@ const ReviewDocumentCard = React.memo(({ document, refetch }) => {
                     </div>
 
                     {/* Approve/Reject Buttons */}
-                    {status === 'submitted' && (
+                    {(status === 'submitted' || status === 'rescanned') && (
                         <div className="grid grid-cols-2 gap-2 mt-4">
                             <Button
                                 onClick={handleApprove}

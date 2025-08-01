@@ -37,6 +37,7 @@ enum DocumentStatus {
   uploaded
   rescanned
   rescanned_approved
+  rescanned_draft
 }
 
 // Models for dropdown options

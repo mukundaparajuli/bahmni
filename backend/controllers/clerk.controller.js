@@ -194,11 +194,19 @@ exports.submitDocument = asyncHandler(async (req, res) => {
 })
 
 exports.updateDocument = asyncHandler(async (req, res) => {
+    console.log(req.body);
     const { id, status } = req.body;
     const file = req.file;
 
-    if (!id || !file) {
-        const error = new Error('Document ID and file are required');
+    if (!id) {
+        const error = new Error('Document ID is required');
+        error.statusCode = 400;
+        throw error;
+    }
+
+    // If a file is provided, status is mandatory
+    if (file && !status) {
+        const error = new Error('Status is required when updating the file');
         error.statusCode = 400;
         throw error;
     }
@@ -207,32 +215,39 @@ exports.updateDocument = asyncHandler(async (req, res) => {
         where: { id: parseInt(id) },
     });
 
-
     if (!document) {
         return ApiResponse(res, 404, null, 'Document not found');
     }
-    if (document.status == 'rejected') {
-        let status = 'rescanned'
-    }
-    const oldFilePath = path.join(__dirname, '..', document.filePath);
-    console.log(`Deleting old file at: ${oldFilePath}`);
-    await fs.unlink(oldFilePath, (err) => {
-        if (err) {
-            console.error(`Error deleting old file: ${err.message}`);
-        } else {
-            console.log('Old file deleted successfully');
-        }
-    });
 
-    const filePath = `/uploads/documents/${file.filename}`;
+    let newFilePath = document.filePath;
+    let newFileName = document.fileName;
+
+    // If a file is uploaded, delete the old file and update filePath and fileName
+    if (file) {
+        const oldFilePath = path.join(__dirname, '..', document.filePath);
+        try {
+            await fs.unlink(oldFilePath);
+            console.log('Old file deleted successfully');
+        } catch (err) {
+            console.error(`Error deleting old file: ${err.message}`);
+        }
+        newFilePath = `/uploads/documents/${file.filename}`;
+        newFileName = file.originalname;
+    }
+
+    // Handle special case: if existing status is 'rejected' and a file is uploaded
+    let newStatus = status || document.status;
+    if (file && document.status === 'rejected' && !status) {
+        newStatus = 'rescanned';
+    }
 
     const updatedDocument = await db.document.update({
         where: { id: parseInt(id) },
         data: {
-            fileName: file.originalname,
-            filePath: filePath,
-            status: status,
-            uploadedAt: new Date(),
+            fileName: newFileName,
+            filePath: newFilePath,
+            status: newStatus,
+            uploadedAt: file ? new Date() : document.uploadedAt,
         },
         include: {
             scanner: true,
@@ -240,6 +255,7 @@ exports.updateDocument = asyncHandler(async (req, res) => {
             uploader: true,
         },
     });
+
     return ApiResponse(res, 200, updatedDocument, 'Document updated successfully');
 });
 

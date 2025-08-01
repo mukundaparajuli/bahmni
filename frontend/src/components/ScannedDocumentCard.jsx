@@ -74,7 +74,7 @@ const ScannedDocumentCard = React.memo(
         const handleStatus = useCallback(async () => {
             setIsSubmitting(true);
             try {
-                await updateStatus(id);
+                status === "draft" ? await updateStatus({ id, status: "submitted" }) : await updateStatus({ id, status: "rescanned" });
                 showSuccess("Document submitted successfully");
             } catch (error) {
                 console.error(error);
@@ -86,7 +86,7 @@ const ScannedDocumentCard = React.memo(
 
         // Handle rescan/resubmit navigation
         const handleRescanOrResubmit = useCallback(() => {
-            navigate("/rescan", { state: { id, fileName, filePath, uploadedAt } });
+            navigate("/rescan", { state: { id, fileName, filePath, uploadedAt, status } });
         }, [id, fileName, filePath, uploadedAt, navigate]);
 
         // Handle preview overlay click
@@ -170,7 +170,7 @@ const ScannedDocumentCard = React.memo(
                         </div>
                         <p className="text-sm text-gray-600">
                             <span className="font-medium">File Size:</span>{" "}
-                            {fileSize !== null ? `${(fileSize / 1024).toFixed(2)} MB` : "Loading..."}
+                            {fileSize !== null ? `${(fileSize).toFixed(2)} MB` : "Loading..."}
                         </p>
 
 
@@ -192,7 +192,7 @@ const ScannedDocumentCard = React.memo(
                                     <span className={cn("w-2 h-2 rounded-full", statusStyles.dot)}></span>
                                     {status}
                                 </span>
-                                {(status === "draft" || status === "rejected") && (
+                                {isScanner && (status === "draft" || status === "rejected") && (
                                     <button
                                         className="underline text-blue-600 hover:text-blue-800 text-sm ml-2 transition-colors"
                                         onClick={handleRescanOrResubmit}
@@ -361,7 +361,7 @@ const ScannedDocumentCard = React.memo(
                             </Dialog>
                         </div>
 
-                        {isScanner && status === "draft" && (
+                        {isScanner && (status === "draft" || status === "rescanned_draft") && (
                             <Button
                                 onClick={handleStatus}
                                 className="w-full mt-4 bg-blue-600 hover:bg-blue-700 text-white h-10"
