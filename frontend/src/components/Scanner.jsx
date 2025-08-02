@@ -14,6 +14,7 @@ const DocumentScanner = () => {
     const [capturedImages, setCapturedImages] = useState([]);
     const [pdfFile, setPdfFile] = useState(null);
     const [mrn, setMrn] = useState('');
+    const [fileName, setFileName] = useState('');
     const [showWebcam, setShowWebcam] = useState(false);
     const [pdfName, setPdfName] = useState('');
     const [pdfSize, setPdfSize] = useState(0);
@@ -190,7 +191,7 @@ const DocumentScanner = () => {
             const formData = new FormData();
             formData.append('file', file);
             formData.append('patientMRN', mrn);
-            formData.append('employeeId', '12345');
+            formData.append('fileName', fileName);
 
             await axiosInstance.post('/clerk/uploadDoc', formData);
             setIsProcessing(false);
@@ -217,7 +218,7 @@ const DocumentScanner = () => {
             const formData = new FormData();
             formData.append('file', pdfFile);
             formData.append('patientMRN', mrn);
-            formData.append('employeeId', '12345');
+            formData.append('fileName', fileName);
 
             await axiosInstance.post('/clerk/uploadDoc', formData);
             setIsProcessing(false);
@@ -309,7 +310,7 @@ const DocumentScanner = () => {
             const formData = new FormData();
             formData.append('file', pdfFile);
             formData.append('patientMRN', mrn);
-            formData.append('employeeId', '12345');
+            formData.append('fileName', fileName);
 
             await axiosInstance.post('/clerk/uploadDoc', formData);
             setIsProcessing(false);
@@ -336,6 +337,18 @@ const DocumentScanner = () => {
                         onChange={(e) => setMrn(e.target.value)}
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
                         placeholder="e.g., MRN123456"
+                        disabled={isProcessing}
+                    />
+                </div>
+                {/* File name Input */}
+                <div className="mb-6">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">File Name</label>
+                    <input
+                        type="text"
+                        value={fileName}
+                        onChange={(e) => setFileName(e.target.value)}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                        placeholder="Name of the file"
                         disabled={isProcessing}
                     />
                 </div>

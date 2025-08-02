@@ -197,17 +197,22 @@ const ReviewDocumentCard = React.memo(({ document, refetch }) => {
                             />
                         )}
                     </div>
-                    <p className="text-sm text-gray-600">
-                        <span className="font-medium">File Size:</span>{" "}
-                        {fileSize !== null ? `${(fileSize).toFixed(2)} MB` : "Loading..."}
-                    </p>
 
 
                     {/* Document Info */}
                     <div className="space-y-1.5 text-sm text-gray-600">
+                        <p className="text-sm text-gray-600">
+                            <span className="font-medium">File Size:</span>{" "}
+                            {fileSize !== null ? `${(fileSize).toFixed(2)} MB` : "Loading..."}
+                        </p>
+
                         <p>
                             <span className="font-medium">Patient MRN:</span>{' '}
                             <span className="font-mono">{patientMRN}</span>
+                        </p>
+                        <p>
+                            <span className="font-medium">File Name:</span>{' '}
+                            <span className="font-mono">{fileName}</span>
                         </p>
                         <p className="flex items-center gap-2">
                             <span className="font-medium">Status:</span>

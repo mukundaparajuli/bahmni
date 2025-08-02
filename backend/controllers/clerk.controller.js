@@ -43,7 +43,7 @@ exports.getClerkDocuments = asyncHandler(async (req, res) => {
 exports.scanDocument = asyncHandler(async (req, res) => {
     // Get the file and other details from the request
     const file = req.file;
-    const { patientMRN, employeeId } = req.body;
+    const { patientMRN, fileName } = req.body;
 
     if (!file) {
         const error = new Error('No file uploaded');
@@ -58,13 +58,16 @@ exports.scanDocument = asyncHandler(async (req, res) => {
         },
     });
 
+    const { user } = req;
+    const employeeId = user.employeeId;
+
     if (existingDocument && existingDocument.scannerId !== req.user.id) {
         const error = new Error('Document with this patient MRN has already been scanned by another clerk');
         error.statusCode = 400;
         throw error;
     }
 
-    const fileName = file.originalname;
+    !fileName && (fileName = file.originalname);
     const filePath = `/uploads/documents/${file.filename}`;
     const scannerId = req.user.id; // Changed from req.user._id to req.user.id
 
