@@ -29,9 +29,18 @@ const RegisterForm = () => {
 
     const mutation = useMutation({
         mutationFn: selfRegister,
-        onSuccess: () => showSuccess('Registration submitted, pending approval'),
-        onError: (error) => showError(error, 'Registration failed'),
-    });
+        onSuccess: () => {
+            showSuccess('Registration submitted, pending approval');
+            navigate('/welcome');
+        },
+        onError: (error) => {
+            if (error?.response?.data?.message) {
+                showError(error.response.data.message);
+            } else {
+                showError(error, 'Registration failed');
+            }
+        },
+    });;
 
     const handleImageChange = (e) => {
         const file = e.target.files[0];
@@ -56,7 +65,6 @@ const RegisterForm = () => {
             formDataToSend.append(key, value);
         });
         mutation.mutate(formDataToSend);
-        navigate('/welcome');
     };
 
     const requiredFieldIds = new Set([
