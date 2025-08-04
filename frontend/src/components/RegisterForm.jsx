@@ -34,13 +34,13 @@ const RegisterForm = () => {
             navigate('/welcome');
         },
         onError: (error) => {
-            if (error?.response?.data?.message) {
-                showError(error.response.data.message);
-            } else {
-                showError(error, 'Registration failed');
-            }
+            console.log('Registration error:', error); // For debugging
+            console.log(error.response);
+            console.log("he");
+            showError(error, 'Registration failed');
         },
-    });;
+    });
+
 
     const handleImageChange = (e) => {
         const file = e.target.files[0];
@@ -80,7 +80,7 @@ const RegisterForm = () => {
     const fields = [
         {
             id: 'employeeIdPhoto',
-            label: 'Employee Image',
+            label: 'Employee ID photo',
             type: 'file',
             accept: 'image/jpeg,image/png',
             onChange: handleImageChange,
@@ -95,7 +95,7 @@ const RegisterForm = () => {
             options: options.departments,
             disabled: optionsLoading,
         },
-        { id: 'email', label: 'Email', type: 'email', placeholder: 'Enter your email' },
+        { id: 'email', label: 'Email\n\n(Make sure to enter a valid email address. You won’t receive registration notifications if your email is incorrect)', type: 'email', placeholder: 'Enter your email' },
         {
             id: 'educationId',
             label: 'Education',
