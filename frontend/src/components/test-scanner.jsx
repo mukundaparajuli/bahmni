@@ -512,7 +512,6 @@ const UniversalDocumentScanner = () => {
 
     // Performance-optimized capture
     const handleCapture = useCallback(async () => {
-        console.log("new code")
         if (capturedImages.length >= MAX_IMAGES) {
             showError(new Error(`Cannot capture more than ${MAX_IMAGES} images`), 'Limit Reached');
             return;
