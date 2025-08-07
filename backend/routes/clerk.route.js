@@ -1,5 +1,5 @@
 const Router = require('express');
-const { getClerkDocuments, scanDocument, deleteDocument, getSearchResult, updateDocument, submitDocument } = require('../controllers/clerk.controller');
+const { getClerkDocuments, scanDocument, deleteDocument, getSearchResult, updateDocument, submitDocument, getRejectedDocuments } = require('../controllers/clerk.controller');
 const { authenticateToken } = require('../middleware/auth-middleware');
 const { restrictTo } = require('../middleware/rbac-handler');
 const configureMulter = require('../middleware/multer-config');
@@ -54,5 +54,6 @@ router.post('/uploadDoc', authenticateToken, upload.single('file'), scanDocument
 router.post('/updateDoc', authenticateToken, upload.single('file'), restrictTo('ScannerClerk'), updateDocument);
 router.get('/search', authenticateToken, restrictTo('Approver'), getSearchResult);
 router.post('/updateStatus', authenticateToken, restrictTo('ScannerClerk'), submitDocument);
+router.get('/rejectedDocs', authenticateToken, restrictTo('ScannerClerk'), getRejectedDocuments);
 
 module.exports = router;

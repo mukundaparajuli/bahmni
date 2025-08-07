@@ -290,9 +290,9 @@ exports.getUsers = asyncHandler(async (req, res) => {
 // Update User
 exports.updateUser = asyncHandler(async (req, res) => {
     const { userId } = req.params;
-    const { fullName, email, department, employeeId, password } = req.body;
+    const { fullName, email, departmentId, professionId, educationId, employeeId, password } = req.body;
 
-    if (!fullName || !email || !department || !employeeId) {
+    if (!fullName || !email || !departmentId || !professionId || !educationId || !employeeId) {
         const error = new Error('Required fields missing');
         error.statusCode = 400;
         throw error;
@@ -331,24 +331,56 @@ exports.updateUser = asyncHandler(async (req, res) => {
         throw error;
     }
 
-    // Delete old photo if it exists and a new file is uploaded
-    if (user.photo && req.file) {
-        const oldPhotoPath = path.join(__dirname, '..', user.photo);
-        if (fs.existsSync(oldPhotoPath)) {
-            fs.unlink(oldPhotoPath, (err) => {
-                if (err) {
-                    console.error('Failed to delete file:', err);
-                } else {
-                    console.log('Old photo deleted successfully');
-                }
-            });
-        }
+    // Prepare updates object
+    const updates = {
+        fullName,
+        email,
+        departmentId: parseInt(departmentId),
+        professionId: parseInt(professionId),
+        educationId: parseInt(educationId),
+        employeeId
+    };
+
+    // Handle password update
+    if (password) {
+        updates.password = await bcrypt.hash(password, 10);
     }
 
-    // Prepare updates
-    const updates = { fullName, email, department, employeeId };
-    if (password) updates.password = await bcrypt.hash(password, 10);
-    if (req.file) updates.photo = `/uploads/profile-photos/${req.file.filename}`;
+    // Handle profile photo update
+    if (req.files && req.files.photo && req.files.photo[0]) {
+        // Delete old photo if it exists
+        if (user.photo) {
+            const oldPhotoPath = path.join(__dirname, '..', user.photo);
+            if (fs.existsSync(oldPhotoPath)) {
+                fs.unlink(oldPhotoPath, (err) => {
+                    if (err) {
+                        console.error('Failed to delete old photo:', err);
+                    } else {
+                        console.log('Old photo deleted successfully');
+                    }
+                });
+            }
+        }
+        updates.photo = `/uploads/profile-photos/${req.files.photo[0].filename}`;
+    }
+
+    // Handle employee ID photo update
+    if (req.files && req.files.employeeIdPhoto && req.files.employeeIdPhoto[0]) {
+        // Delete old employeeId photo if it exists
+        if (user.employeeIdPhoto) {
+            const oldEmployeeIdPhotoPath = path.join(__dirname, '..', user.employeeIdPhoto);
+            if (fs.existsSync(oldEmployeeIdPhotoPath)) {
+                fs.unlink(oldEmployeeIdPhotoPath, (err) => {
+                    if (err) {
+                        console.error('Failed to delete old employeeId photo:', err);
+                    } else {
+                        console.log('Old employeeId photo deleted successfully');
+                    }
+                });
+            }
+        }
+        updates.employeeIdPhoto = `/uploads/employee-id-photos/${req.files.employeeIdPhoto[0].filename}`;
+    }
 
     // Update user
     const updatedUser = await db.user.update({
@@ -358,10 +390,10 @@ exports.updateUser = asyncHandler(async (req, res) => {
             id: true,
             employeeId: true,
             fullName: true,
-            department: true,
+            departmentId: true,
             email: true,
-            education: true,
-            profession: true,
+            educationId: true,
+            professionId: true,
             employeeIdPhoto: true,
             photo: true,
             roles: true,

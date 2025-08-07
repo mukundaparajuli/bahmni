@@ -366,6 +366,7 @@ router.post('/review-registration', authenticateToken, restrictTo('Admin'), revi
 router.put('/status/:userId', authenticateToken, restrictTo('Admin'), toggleUserStatus);
 router.put('/roles/:userId', authenticateToken, restrictTo('Admin'), updateUserRoles);
 router.get('/', authenticateToken, getUsers);
-router.put('/:userId', authenticateToken, uploadProfilePhoto.single('photo'), updateUser);
+
+router.put('/:userId', authenticateToken, uploadProfilePhoto.fields([{ name: 'photo', maxCount: 1 }, { name: 'employeeIdPhoto', maxCount: 1 }]), updateUser);
 
 module.exports = router;

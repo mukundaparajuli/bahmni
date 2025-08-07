@@ -235,7 +235,6 @@ exports.updateDocument = asyncHandler(async (req, res) => {
             console.error(`Error deleting old file: ${err.message}`);
         }
         newFilePath = `/uploads/documents/${file.filename}`;
-        newFileName = file.originalname;
     }
 
     // Handle special case: if existing status is 'rejected' and a file is uploaded
@@ -262,3 +261,19 @@ exports.updateDocument = asyncHandler(async (req, res) => {
     return ApiResponse(res, 200, updatedDocument, 'Document updated successfully');
 });
 
+exports.getRejectedDocuments = asyncHandler(async (req, res) => {
+    const { user } = req;
+    const scannerClerkId = user.id;
+    const documents = await db.document.findMany({
+        where: {
+            scannerId: scannerClerkId,
+            status: 'rejected'
+        },
+        include: {
+            scanner: true,
+            approver: true,
+            uploader: true,
+        },
+    });
+    return ApiResponse(res, 200, documents, 'Rejected documents retrieved successfully');
+});

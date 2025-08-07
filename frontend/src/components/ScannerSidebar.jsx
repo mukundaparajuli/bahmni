@@ -1,4 +1,4 @@
-import { Inbox, Scan } from "lucide-react"
+import { Ban, Inbox, Scan } from "lucide-react"
 
 import {
     Sidebar,
@@ -21,6 +21,10 @@ const items = [
         title: "Scanned Documents",
         url: "/scanner/docs",
         icon: Inbox,
+    }, {
+        title: "Rejected Documents",
+        url: "/scanner/rejected",
+        icon: Ban,
     }
 ]
 export function AppSidebar() {

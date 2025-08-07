@@ -15,6 +15,8 @@ const UniversalDocumentScanner = () => {
         image,
         capturedImages,
         pdfFile,
+        pdfName,
+        pdfSize,
         mrn,
         fileName,
         showWebcam,

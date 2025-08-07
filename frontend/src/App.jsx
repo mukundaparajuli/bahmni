@@ -24,6 +24,7 @@ import ManageEducation from './pages/ManageEducation';
 import ManageProfessions from './pages/ManageProfessions';
 import UsersSection from './components/admin/UsersSection';
 import Welcome from './components/Welcome';
+import RejectedDocs from './components/scanner/RejectedDocs';
 
 const App = () => (
   <>
@@ -55,6 +56,7 @@ const App = () => (
             <Route index element={<DocumentScanner />} />
             <Route path="scan" element={<DocumentScanner />} />
             <Route path="docs" element={<DisplayScannedDocs />} />
+            <Route path="rejected" element={<RejectedDocs />} />
           </Route>
 
           <Route path="/rescan" element={<Rescan />} />
