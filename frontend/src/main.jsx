@@ -6,15 +6,21 @@ import queryClient from '@/utils/queryClient';
 import App from '@/App';
 import '@/index.css';
 import { DataProvider } from '@/contexts/data-context';
+import { Toaster } from './components/ui/sonner';
+import { BrowserRouter } from 'react-router-dom';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <DataProvider>
-        <AuthProvider>
-          <App />
-        </AuthProvider>
-      </DataProvider>
-    </QueryClientProvider>
+    <BrowserRouter>
+
+      <QueryClientProvider client={queryClient}>
+        <DataProvider>
+          <AuthProvider>
+            <App />
+          </AuthProvider>
+          <Toaster />
+        </DataProvider>
+      </QueryClientProvider>
+    </BrowserRouter>
   </React.StrictMode>
 );

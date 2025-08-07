@@ -1,11 +1,15 @@
 import { createContext, useState, useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { login } from '@/api';
+import { useNavigate } from 'react-router-dom';
+import useToastError from '@/hooks/useToastError';
 
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
+    const navigate = useNavigate();
     const queryClient = useQueryClient();
+    const { showError } = useToastError();
     const [user, setUser] = useState(JSON.parse(localStorage.getItem('user')) || null);
 
     const loginMutation = useMutation({
@@ -14,7 +18,9 @@ export const AuthProvider = ({ children }) => {
             localStorage.setItem('token', data.data.token);
             localStorage.setItem('user', JSON.stringify(data.data.user));
             setUser(data.data.user);
+            navigate('/');
         },
+        onError: (error) => showError(error, 'Login failed'),
     });
 
     const logoutMutation = useMutation({

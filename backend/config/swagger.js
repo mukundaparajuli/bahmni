@@ -11,7 +11,7 @@ const swaggerOptions = {
         },
         servers: [
             {
-                url: `${env.backendUrl}/api/v1` || 'http://192.168.0.6:5555/api/v1',
+                url: `${env.backendUrl}/api/v1` || 'http://192.168.0.2:5555/api/v1',
                 description: 'Development server',
             },
         ],

@@ -1,23 +1,18 @@
-import { Link, useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { useContext } from 'react';
 import { AuthContext } from '@/contexts/auth-context';
 import useForm from '@/hooks/useForm';
-import useToastError from '@/hooks/useToastError';
 import FormField from '@/components/common/form-field';
+import { useContext } from 'react';
+import { Link } from 'react-router-dom';
+import { Button } from './ui/button';
+
 
 const LoginForm = () => {
     const { login, isLoading } = useContext(AuthContext);
-    const { showError } = useToastError();
-    const navigate = useNavigate();
     const { formData, handleChange } = useForm({ email: '', password: '' });
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        login(formData, {
-            onSuccess: () => navigate('/'),
-            onError: (error) => showError(error, 'Login failed'),
-        });
+        login(formData);
     };
 
     return (
