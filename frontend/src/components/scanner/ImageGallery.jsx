@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { FiTrash2, FiX, FiUpload } from 'react-icons/fi';
 
 const ImageGallery = ({
@@ -9,6 +9,7 @@ const ImageGallery = ({
     onGeneratePdf,
     showDraftOption = false
 }) => {
+    const isAndroid = useMemo(() => /Android/i.test(navigator.userAgent), []);
     return (
         <div className="mb-6">
             <div className="flex justify-between items-center mb-3">

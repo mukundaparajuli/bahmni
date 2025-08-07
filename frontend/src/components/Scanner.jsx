@@ -164,6 +164,7 @@ const UniversalDocumentScanner = () => {
                 )}
 
                 {/* PDF Upload */}
+                {/*
                 <PdfUploader
                     pdfFile={pdfFile}
                     pdfName={pdfName}
@@ -171,6 +172,7 @@ const UniversalDocumentScanner = () => {
                     isProcessing={isProcessing}
                     onUploadPdf={uploadPdf}
                 />
+                */}
 
                 {/* Device Information and Tips */}
                 <DeviceInfo

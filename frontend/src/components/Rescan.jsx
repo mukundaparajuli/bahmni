@@ -177,6 +177,7 @@ const Rescan = () => {
                 )}
 
                 {/* PDF Upload */}
+                {/*
                 <PdfUploader
                     pdfFile={file}
                     pdfName={pdfName}
@@ -185,6 +186,7 @@ const Rescan = () => {
                     onUploadPdf={(isDraft) => uploadPdf(getUploadStatus(isDraft))}
                     showDraftOption={true}
                 />
+                */}
 
                 {/* Device Information and Tips */}
                 <DeviceInfo

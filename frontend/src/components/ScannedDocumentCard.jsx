@@ -129,7 +129,7 @@ const ScannedDocumentCard = React.memo(
                     <CardTitle className="flex items-center gap-2 text-lg overflow-hidden">
                         <FileText className="h-5 w-5 text-blue-500" aria-hidden="true" />
                         <span className="truncate" title={fileName}>
-                            {fileName}
+                            {fileName} <span className="ml-2 text-xs text-gray-500">(MRN: {patientMRN})</span>
                         </span>
                     </CardTitle>
                 </CardHeader>
@@ -182,7 +182,7 @@ const ScannedDocumentCard = React.memo(
                             </p>
                             <p>
                                 <span className="font-medium">File Name:</span>{" "}
-                                <span className="font-mono">{fileName}</span>
+                                <span className="font-mono">{fileName} <span className="ml-2 text-xs text-gray-500">(MRN: {patientMRN})</span></span>
                             </p>
                             <p className="flex items-center gap-2">
                                 <span className="font-medium">Status:</span>
