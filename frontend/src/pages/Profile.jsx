@@ -18,6 +18,7 @@ const Profile = () => {
     const { showError, showSuccess } = useToastError();
     const { options, loading: optionsLoading } = useOptions();
     const [previewImage, setPreviewImage] = useState(null);
+    const [profilePreviewImage, setProfilePreviewImage] = useState(null);
 
     const { formData, handleChange, handleFileChange, errors, setErrors } = useForm({
         fullName: user?.fullName || '',
@@ -60,6 +61,22 @@ const Profile = () => {
             }
             handleFileChange(e, 'employeeIdPhoto');
             setPreviewImage(URL.createObjectURL(file));
+        }
+    };
+
+    const handleProfilePhotoChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            if (file.size > 5 * 1024 * 1024) {
+                showError('File size should not exceed 5MB');
+                return;
+            }
+            if (!['image/jpeg', 'image/png'].includes(file.type)) {
+                showError('Only JPEG and PNG images are allowed');
+                return;
+            }
+            handleFileChange(e, 'photo');
+            setProfilePreviewImage(URL.createObjectURL(file));
         }
     };
 
@@ -112,7 +129,7 @@ const Profile = () => {
             <form onSubmit={onSubmit} className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 bg-white p-6 rounded-lg shadow-md">
                 <div className="col-span-2 flex justify-center mb-4">
                     <Avatar className="h-24 w-24">
-                        <AvatarImage src={formData.photo || getStaticUrl(user.photo)} alt={user.fullName} />
+                        <AvatarImage src={profilePreviewImage || getStaticUrl(user.photo)} alt={user.fullName} />
                         <AvatarFallback className="bg-gray-600 text-white text-2xl">
                             {user.fullName.charAt(0).toUpperCase()}
                         </AvatarFallback>
@@ -223,7 +240,7 @@ const Profile = () => {
                         id="photo"
                         type="file"
                         name="photo"
-                        onChange={(e) => handleFileChange(e, 'photo')}
+                        onChange={handleProfilePhotoChange}
                         accept="image/jpeg,image/png"
                         className="mt-1"
                     />

@@ -2,6 +2,7 @@ import axios from 'axios';
 
 // Proper fallback for baseURL
 const base = import.meta.env.VITE_API_URL || 'https://192.168.0.2:5555'; // fallback IP
+
 const axiosInstance = axios.create({
     baseURL: `${base}/api/v1`,
 });
@@ -30,9 +31,16 @@ axiosInstance.interceptors.response.use(
     (response) => response,
     (error) => {
         if (error.response?.status === 401) {
+
+            const currentPath = window.location.pathname;
+            const isLoginPage = currentPath === '/login' || currentPath === '/';
+
+
             localStorage.removeItem('token');
             localStorage.removeItem('user');
-            window.location.href = '/login';
+            if (!isLoginPage) {
+                (window.location.href = '/login');
+            }
         }
         return Promise.reject(error);
     }
