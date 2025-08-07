@@ -45,8 +45,7 @@ const router = Router();
  *         description: Invalid input
  */
 
-const uploadDir = path.join(__dirname, '..', 'uploads', 'documents');
-const upload = configureMulter(uploadDir);
+const upload = configureMulter();
 
 router.get('/clerkDocs', authenticateToken, restrictTo('ScannerClerk'), getClerkDocuments);
 router.get('/deleteDoc/:id', authenticateToken, restrictTo('ScannerClerk'), deleteDocument);

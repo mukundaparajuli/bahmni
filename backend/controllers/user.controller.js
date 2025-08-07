@@ -330,7 +330,7 @@ exports.updateUser = asyncHandler(async (req, res) => {
         error.statusCode = 404;
         throw error;
     }
-
+    console.log(req.files);
     // Prepare updates object
     const updates = {
         fullName,
@@ -338,7 +338,7 @@ exports.updateUser = asyncHandler(async (req, res) => {
         departmentId: parseInt(departmentId),
         professionId: parseInt(professionId),
         educationId: parseInt(educationId),
-        employeeId
+        employeeId,
     };
 
     // Handle password update
