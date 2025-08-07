@@ -19,7 +19,7 @@ const UsersSection = () => {
             showSuccess('Registration reviewed');
             refetch();
         },
-        onError: (error) => showError(error, 'Review failed'),
+        onError: (error) => showError(error, 'Unable to review registration. Please try again.'),
     });
 
     const statusMutation = useMutation({
@@ -28,7 +28,7 @@ const UsersSection = () => {
             showSuccess('User status updated');
             refetch();
         },
-        onError: (error) => showError(error, 'Status update failed'),
+        onError: (error) => showError(error, 'Unable to update user status. Please try again.'),
     });
 
     const rolesMutation = useMutation({
@@ -37,7 +37,7 @@ const UsersSection = () => {
             showSuccess('User roles updated');
             refetch();
         },
-        onError: (error) => showError(error, 'Roles update failed'),
+        onError: (error) => showError(error, 'Unable to update user roles. Please try again.'),
     });
 
     const handleReview = (userId, status) => {
@@ -56,7 +56,7 @@ const UsersSection = () => {
 
     const handleRoleUpdate = (userId, selectedRoles) => {
         if (selectedRoles.length === 0) {
-            showError(null, 'At least one role is required');
+            showError(null, 'Please select at least one role for the user.');
             return;
         }
         rolesMutation.mutate({ userId, data: { roles: selectedRoles } });

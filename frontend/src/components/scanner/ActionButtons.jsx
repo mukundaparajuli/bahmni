@@ -9,6 +9,7 @@ const ActionButtons = ({
 }) => {
     return (
         <div className="flex flex-col sm:flex-row gap-4 mb-6">
+            {/*
             <label className="flex-1 cursor-pointer">
                 <input
                     type="file"
@@ -22,6 +23,7 @@ const ActionButtons = ({
                     <span className="text-sm font-medium text-gray-700">Upload File</span>
                 </div>
             </label>
+            */}
 
             <button
                 onClick={onToggleWebcam}

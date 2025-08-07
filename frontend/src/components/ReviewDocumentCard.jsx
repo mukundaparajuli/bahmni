@@ -158,7 +158,7 @@ const ReviewDocumentCard = React.memo(({ document, refetch }) => {
                 <CardTitle className="flex items-center gap-2 text-lg">
                     <FileText className="h-5 w-5 text-blue-500" aria-hidden="true" />
                     <span className="truncate" title={fileName}>
-                        {fileName} <span className="ml-2 text-xs text-gray-500">(MRN: {patientMRN})</span>
+                        {patientMRN}_{fileName}
                     </span>
                 </CardTitle>
             </CardHeader>
@@ -212,7 +212,7 @@ const ReviewDocumentCard = React.memo(({ document, refetch }) => {
                         </p>
                         <p>
                             <span className="font-medium">File Name:</span>{' '}
-                            <span className="font-mono">{fileName} <span className="ml-2 text-xs text-gray-500">(MRN: {patientMRN})</span></span>
+                            <span className="font-mono">{patientMRN}_{fileName}</span>
                         </p>
                         <p className="flex items-center gap-2">
                             <span className="font-medium">Status:</span>
@@ -272,7 +272,7 @@ const ReviewDocumentCard = React.memo(({ document, refetch }) => {
                                         <p>
                                             <span className="font-medium">File Name:</span>{' '}
                                             <span className="truncate" title={fileName}>
-                                                {fileName}
+                                                {patientMRN}_{fileName}
                                             </span>
                                         </p>
                                         <p>

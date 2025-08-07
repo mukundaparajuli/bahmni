@@ -17,7 +17,7 @@ const PasswordResetForm = () => {
             showSuccess('Password reset successful');
             window.location.href = '/login';
         },
-        onError: (error) => showError(error, 'Reset failed'),
+        onError: (error) => showError(error, 'Unable to reset password. Please try again.'),
     });
 
     const handleSubmit = (e) => {

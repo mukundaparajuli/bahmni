@@ -63,7 +63,7 @@ export const DataProvider = ({ children }) => {
                 }))
             }));
         } catch (error) {
-            showError(error, 'Failed to load departments');
+            showError(error, 'Unable to load departments. Please refresh the page and try again.');
         } finally {
             setLoading(prev => ({ ...prev, departments: false }));
         }
@@ -85,7 +85,7 @@ export const DataProvider = ({ children }) => {
                 }))
             }));
         } catch (error) {
-            showError(error, 'Failed to load education options');
+            showError(error, 'Unable to load education options. Please refresh the page and try again.');
         } finally {
             setLoading(prev => ({ ...prev, education: false }));
         }
@@ -107,7 +107,7 @@ export const DataProvider = ({ children }) => {
                 }))
             }));
         } catch (error) {
-            showError(error, 'Failed to load professions');
+            showError(error, 'Unable to load professions. Please refresh the page and try again.');
         } finally {
             setLoading(prev => ({ ...prev, professions: false }));
         }
@@ -116,7 +116,7 @@ export const DataProvider = ({ children }) => {
     // Generic function to add an item to a dataset
     const addItem = async (type, newItem) => {
         if (!newItem.label.trim()) {
-            showError(new Error('Please fill in the name field'), 'Validation Error');
+            showError(new Error('Please fill in the name field'), 'Please provide a name for this item.');
             return;
         }
 
@@ -147,14 +147,14 @@ export const DataProvider = ({ children }) => {
             showSuccess(`${type.slice(0, -1)} added successfully`);
             return createdItem;
         } catch (error) {
-            showError(error, `Failed to add ${type.slice(0, -1)}`);
+            showError(error, `Unable to add ${type.slice(0, -1)}. Please try again.`);
         }
     };
 
     // Generic function to edit an item
     const editItem = async (type, updatedItem) => {
         if (!updatedItem.label.trim()) {
-            showError(new Error('Please fill in the name field'), 'Validation Error');
+            showError(new Error('Please fill in the name field'), 'Please provide a name for this item.');
             return;
         }
 
@@ -186,7 +186,7 @@ export const DataProvider = ({ children }) => {
             showSuccess(`${type.slice(0, -1)} updated successfully`);
             return updated;
         } catch (error) {
-            showError(error, `Failed to update ${type.slice(0, -1)}`);
+            showError(error, `Unable to update ${type.slice(0, -1)}. Please try again.`);
         }
     };
 
@@ -223,7 +223,7 @@ export const DataProvider = ({ children }) => {
 
             showSuccess(`${type.slice(0, -1)} deleted successfully`);
         } catch (error) {
-            showError(error, `Failed to delete ${type.slice(0, -1)}`);
+            showError(error, `Unable to delete ${type.slice(0, -1)}. Please try again.`);
         } finally {
             setDialogOpen(false);
             setItemToDelete(null);

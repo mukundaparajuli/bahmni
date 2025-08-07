@@ -1243,7 +1243,7 @@ const UniversalDocumentScanner = () => {
                                                         setCapturedImages(updated);
                                                     }
                                                 }
-                                                className={`absolute top-2 right-2 p-1 bg-red-600 text-white rounded-full transition ${isMobile ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
+                                                className="absolute top-2 right-2 p-1 bg-red-600 text-white rounded-full transition opacity-100"
                                                 disabled={isProcessing}
                                             >
                                                 <FiX size={14} />

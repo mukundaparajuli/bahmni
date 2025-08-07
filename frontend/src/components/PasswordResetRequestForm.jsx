@@ -13,7 +13,7 @@ const PasswordResetRequestForm = () => {
     const mutation = useMutation({
         mutationFn: requestPasswordReset,
         onSuccess: () => showSuccess('Password reset link sent to email'),
-        onError: (error) => showError(error, 'Request failed'),
+        onError: (error) => showError(error, 'Unable to send password reset request. Please try again.'),
     });
 
     const handleSubmit = (e) => {

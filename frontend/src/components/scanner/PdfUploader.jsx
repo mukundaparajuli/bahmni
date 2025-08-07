@@ -23,7 +23,7 @@ const PdfUploader = ({
                 </div>
             </div>
 
-            {/* {showDraftOption ? (
+            {showDraftOption ? (
                 <div className="flex flex-col sm:flex-row gap-3 mt-4">
                     <button
                         onClick={() => onUploadPdf(true)}
@@ -51,7 +51,7 @@ const PdfUploader = ({
                     <FiUpload />
                     {isProcessing ? 'Uploading...' : 'Upload PDF'}
                 </button>
-            )} */}
+            )}
         </div>
     );
 };

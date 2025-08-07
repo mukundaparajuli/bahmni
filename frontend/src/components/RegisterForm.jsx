@@ -37,7 +37,7 @@ const RegisterForm = () => {
             console.log('Registration error:', error); // For debugging
             console.log(error.response);
             console.log("he");
-            showError(error, 'Registration failed');
+            showError(error, 'Registration could not be completed. Please check your information and try again.');
         },
     });
 
@@ -46,11 +46,11 @@ const RegisterForm = () => {
         const file = e.target.files[0];
         if (file) {
             if (file.size > 5 * 1024 * 1024) {
-                showError('File size should not exceed 5MB');
+                showError('The file size exceeds the maximum allowed limit of 5MB. Please select a smaller file.');
                 return;
             }
             if (!['image/jpeg', 'image/png'].includes(file.type)) {
-                showError('Only JPEG and PNG images are allowed');
+                showError('Only JPEG and PNG image formats are supported. Please select a different file.');
                 return;
             }
             handleChange({ target: { name: 'employeeIdPhoto', value: file } });

@@ -43,18 +43,18 @@ const RegisterUserForm = ({ onClose }) => {
             showSuccess('Registration submitted');
             onClose();
         },
-        onError: (error) => showError(error, 'User registration failed'),
+        onError: (error) => showError(error, 'User registration could not be completed. Please check the information and try again.'),
     });
 
     const handleImageChange = (e) => {
         const file = e.target.files[0];
         if (file) {
             if (file.size > 5 * 1024 * 1024) {
-                showError('File size should not exceed 5MB');
+                showError('The file size exceeds the maximum allowed limit of 5MB. Please select a smaller file.');
                 return;
             }
             if (!['image/jpeg', 'image/png'].includes(file.type)) {
-                showError('Only JPEG and PNG images are allowed');
+                showError('Only JPEG and PNG image formats are supported. Please select a different file.');
                 return;
             }
             handleChange({ target: { name: 'employeeIdPhoto', value: file } });

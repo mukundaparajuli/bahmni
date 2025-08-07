@@ -20,7 +20,7 @@ export const AuthProvider = ({ children }) => {
             setUser(data.data.user);
             navigate('/');
         },
-        onError: (error) => showError(error, 'Login failed'),
+        onError: (error) => showError(error, 'Login could not be completed. Please check your credentials and try again.'),
     });
 
     const logoutMutation = useMutation({
