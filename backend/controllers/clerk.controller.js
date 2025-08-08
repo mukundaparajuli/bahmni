@@ -21,9 +21,27 @@ exports.getClerkDocuments = asyncHandler(async (req, res) => {
         skip,
         take: limit,
         include: {
-            scanner: true,
-            approver: true,
-            uploader: true,
+            scanner: {
+                include: {
+                    department: true,
+                    education: true,
+                    profession: true,
+                }
+            },
+            approver: {
+                include: {
+                    department: true,
+                    education: true,
+                    profession: true,
+                }
+            },
+            uploader: {
+                include: {
+                    department: true,
+                    education: true,
+                    profession: true,
+                }
+            }
         },
     });
 
@@ -156,9 +174,27 @@ exports.getSearchResult = asyncHandler(async (req, res) => {
         skip,
         take: limit,
         include: {
-            scanner: true,
-            approver: true,
-            uploader: true,
+            scanner: {
+                include: {
+                    department: true,
+                    education: true,
+                    profession: true,
+                }
+            },
+            approver: {
+                include: {
+                    department: true,
+                    education: true,
+                    profession: true,
+                }
+            },
+            uploader: {
+                include: {
+                    department: true,
+                    education: true,
+                    profession: true,
+                }
+            }
         },
     });
 
@@ -184,9 +220,27 @@ exports.submitDocument = asyncHandler(async (req, res) => {
             status: "submitted",
         },
         include: {
-            scanner: true,
-            approver: true,
-            uploader: true,
+            scanner: {
+                include: {
+                    department: true,
+                    education: true,
+                    profession: true,
+                }
+            },
+            approver: {
+                include: {
+                    department: true,
+                    education: true,
+                    profession: true,
+                }
+            },
+            uploader: {
+                include: {
+                    department: true,
+                    education: true,
+                    profession: true,
+                }
+            }
         },
     });
     if (!updatedDocument) {
@@ -252,9 +306,27 @@ exports.updateDocument = asyncHandler(async (req, res) => {
             uploadedAt: file ? new Date() : document.uploadedAt,
         },
         include: {
-            scanner: true,
-            approver: true,
-            uploader: true,
+            scanner: {
+                include: {
+                    department: true,
+                    education: true,
+                    profession: true,
+                }
+            },
+            approver: {
+                include: {
+                    department: true,
+                    education: true,
+                    profession: true,
+                }
+            },
+            uploader: {
+                include: {
+                    department: true,
+                    education: true,
+                    profession: true,
+                }
+            }
         },
     });
 
@@ -270,10 +342,29 @@ exports.getRejectedDocuments = asyncHandler(async (req, res) => {
             status: 'rejected'
         },
         include: {
-            scanner: true,
-            approver: true,
-            uploader: true,
+            scanner: {
+                include: {
+                    department: true,
+                    education: true,
+                    profession: true,
+                }
+            },
+            approver: {
+                include: {
+                    department: true,
+                    education: true,
+                    profession: true,
+                }
+            },
+            uploader: {
+                include: {
+                    department: true,
+                    education: true,
+                    profession: true,
+                }
+            }
         },
     });
+    console.log(documents);
     return ApiResponse(res, 200, documents, 'Rejected documents retrieved successfully');
 });

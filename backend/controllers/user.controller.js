@@ -68,15 +68,16 @@ exports.registerUser = asyncHandler(async (req, res) => {
 // Self-Registration
 exports.selfRegister = asyncHandler(async (req, res) => {
     const { employeeId, fullName, departmentId, email, educationId, professionId, password, employeeIdPhoto, photo } = req.body;
-    const file = req.file;
+    console.log(req.files.employeeIdPhoto[0]);
 
-    if (!file) {
-        const error = new Error('Employee ID photo is required');
-        error.statusCode = 400;
-        throw error;
-    }
+    // if (!file.employeeIdPhoto || !file.employeeIdPhoto[0]) {
+    //     const error = new Error('Employee ID photo is required');
+    //     error.statusCode = 400;
+    //     throw error;
+    // }
+    const fileName = req.files.employeeIdPhoto[0].filename;
 
-    const employeeIdPhotoPath = `/uploads/employee-id-photos/${file.filename}`;
+    const employeeIdPhotoPath = `/uploads/employee-id-photos/${fileName}`;
 
     const employeeIdExists = await db.user.findUnique({
         where: { employeeId },

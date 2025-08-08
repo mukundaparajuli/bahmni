@@ -50,7 +50,7 @@ const ScannedDocumentCard = React.memo(
             reviewedAt,
             approver,
         } = document;
-
+        console.log(document);
         const [isPreviewOpen, setIsPreviewOpen] = useState(false);
         const [isInfoDialogOpen, setIsInfoDialogOpen] = useState(false);
         const [isLoading, setIsLoading] = useState(true);
@@ -86,7 +86,7 @@ const ScannedDocumentCard = React.memo(
 
         // Handle rescan/resubmit navigation
         const handleRescanOrResubmit = useCallback(() => {
-            navigate("/rescan", { state: { id, fileName, filePath, uploadedAt, status } });
+            navigate("/rescan", { state: { id, fileName, filePath, uploadedAt, status, patientMRN } });
         }, [id, fileName, filePath, uploadedAt, navigate]);
 
         // Handle preview overlay click
@@ -276,7 +276,7 @@ const ScannedDocumentCard = React.memo(
                                             </p>
                                             <p>
                                                 <span className="font-medium">Department:</span>{" "}
-                                                {scanner?.department || "N/A"}
+                                                {scanner?.department?.name || "N/A"}
                                             </p>
                                             <p>
                                                 <span className="font-medium">Email:</span>{" "}
@@ -307,7 +307,7 @@ const ScannedDocumentCard = React.memo(
                                                 </p>
                                                 <p>
                                                     <span className="font-medium">Department:</span>{" "}
-                                                    {uploader.department || "N/A"}
+                                                    {uploader.department?.name || "N/A"}
                                                 </p>
                                                 <p>
                                                     <span className="font-medium">Email:</span>{" "}
@@ -341,7 +341,7 @@ const ScannedDocumentCard = React.memo(
                                                 </p>
                                                 <p>
                                                     <span className="font-medium">Department:</span>{" "}
-                                                    {approver.department || "N/A"}
+                                                    {approver.department?.name || "N/A"}
                                                 </p>
                                                 <p>
                                                     <span className="font-medium">Email:</span>{" "}
