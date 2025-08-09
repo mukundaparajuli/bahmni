@@ -15,4 +15,11 @@ module.exports = {
         gmailUser: process.env.GMAIL_USER,
         gmailAppPassword: process.env.GMAIL_APP_PASSWORD,
     },
+
+    openrms: {
+        openrmsBaseUrl: process.env.OPENRMS_BASE_URL,
+        openrmsSearchPatientUrl: process.env.OPENRMS_SEARCH_PATIENT_URL,
+        openrmsUsername: process.env.OPENRMS_USERNAME,
+        openrmsPassword: process.env.OPENRMS_PASSWORD,
+    }
 };
