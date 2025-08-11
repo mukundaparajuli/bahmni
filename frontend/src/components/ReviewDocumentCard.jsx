@@ -11,19 +11,15 @@ import {
     DialogTrigger,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { FileText, Info, Loader2 } from 'lucide-react';
 import { getStaticUrl } from '@/utils/get-static-url';
 import { Document, Page } from 'react-pdf';
 import Preview from './Preview';
 import { cn } from '@/lib/utils';
 import useToastError from '@/hooks/useToastError';
-
-// Import centralized PDF configuration
 import '@/utils/pdf-config';
 import { getFileSizeFromUrl } from '@/utils/get-file-size';
 
-// Status configuration for reusability
 const STATUS_CONFIG = {
     draft: { bg: 'bg-yellow-100', text: 'text-yellow-800', dot: 'bg-yellow-500' },
     rejected: { bg: 'bg-red-100', text: 'text-red-800', dot: 'bg-red-500' },
@@ -69,12 +65,10 @@ const ReviewDocumentCard = React.memo(({ document, refetch }) => {
         fetchFileSize();
     }, [filePath]);
 
-    // Handle overlay click to close preview
     const handleOverlayClick = useCallback((e) => {
         if (e.target === e.currentTarget) setIsPreviewOpen(false);
     }, []);
 
-    // Handle escape key for closing preview and dialogs
     useEffect(() => {
         const handleEscape = (e) => {
             if (e.key === 'Escape') {
@@ -89,12 +83,10 @@ const ReviewDocumentCard = React.memo(({ document, refetch }) => {
         return () => window.removeEventListener('keydown', handleEscape);
     }, [isPreviewOpen, isDialogOpen, isInfoDialogOpen]);
 
-    // Handle PDF/image load success
     const onLoadSuccess = useCallback(() => {
         setIsLoading(false);
     }, []);
 
-    // Handle PDF/image load error
     const onLoadError = useCallback(
         (error) => {
             setIsLoading(false);
@@ -104,7 +96,6 @@ const ReviewDocumentCard = React.memo(({ document, refetch }) => {
         [showError]
     );
 
-    // Approve mutation
     const approveMutation = useMutation({
         mutationFn: () => approveDocument(document.id),
         onSuccess: () => {
@@ -118,7 +109,6 @@ const ReviewDocumentCard = React.memo(({ document, refetch }) => {
         },
     });
 
-    // Reject mutation
     const rejectMutation = useMutation({
         mutationFn: () => rejectDocument(document.id, { rejectComment }),
         onSuccess: () => {
@@ -135,12 +125,10 @@ const ReviewDocumentCard = React.memo(({ document, refetch }) => {
         },
     });
 
-    // Handle approve action
     const handleApprove = useCallback(() => {
         approveMutation.mutate();
     }, [approveMutation]);
 
-    // Handle reject action
     const handleReject = useCallback(() => {
         if (!rejectComment.trim()) {
             showError('Please provide a reason for rejection');
@@ -149,286 +137,277 @@ const ReviewDocumentCard = React.memo(({ document, refetch }) => {
         rejectMutation.mutate();
     }, [rejectComment, rejectMutation, showError]);
 
-    // Get status styles
     const statusStyles = STATUS_CONFIG[status] || STATUS_CONFIG.default;
 
     return (
-        <Card className="w-full max-w-sm relative shadow-md hover:shadow-lg transition-shadow duration-200">
-            <CardHeader className="pb-2">
-                <CardTitle className="flex items-center gap-2 text-lg">
-                    <FileText className="h-5 w-5 text-blue-500" aria-hidden="true" />
-                    <span className="truncate" title={fileName}>
-                        {patientMRN}_{fileName}
+        <div className="w-full max-w-md bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200 p-4 overflow-hidden">
+            {/* Header */}
+            <div className="flex items-center gap-2 mb-3">
+                <FileText className="h-4 w-4 text-blue-500 flex-shrink-0" aria-hidden="true" />
+                <h2
+                    className="text-base font-semibold text-gray-900 truncate"
+                    title={`${patientMRN}_${fileName}`}
+                >
+                    {patientMRN}_{fileName}
+                </h2>
+            </div>
+
+            {/* Preview Section */}
+            <div className="relative w-full h-48 rounded-md overflow-hidden border border-gray-200 mb-4">
+                {isLoading && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-gray-50">
+                        <Loader2 className="h-6 w-6 animate-spin text-gray-500" />
+                        <span className="ml-2 text-gray-500 text-sm">Loading...</span>
+                    </div>
+                )}
+                {isPdf ? (
+                    <Document
+                        file={getStaticUrl(filePath)}
+                        onLoadSuccess={onLoadSuccess}
+                        onLoadError={onLoadError}
+                        loading={null}
+                    >
+                        <Page
+                            pageNumber={1}
+                            width={300}
+                            renderTextLayer={false}
+                            renderAnnotationLayer={false}
+                            className="w-full h-full object-cover"
+                        />
+                    </Document>
+                ) : (
+                    <img
+                        src={getStaticUrl(filePath)}
+                        alt={fileName}
+                        className="w-full h-48 object-cover rounded-md"
+                        onLoad={onLoadSuccess}
+                        onError={onLoadError}
+                    />
+                )}
+            </div>
+
+            {/* Document Info */}
+            <div className="space-y-1 text-sm text-gray-600 overflow-hidden mb-4">
+                <p className="truncate">
+                    <span className="font-medium">File Size:</span>{" "}
+                    {fileSize !== null ? `${fileSize.toFixed(2)} MB` : "Loading..."}
+                </p>
+                <p className="truncate">
+                    <span className="font-medium">Patient MRN:</span>{" "}
+                    <span className="font-mono">{patientMRN}</span>
+                </p>
+                <p className="flex items-center gap-2 flex-wrap">
+                    <span className="font-medium">Status:</span>
+                    <span
+                        className={cn(
+                            "inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium capitalize",
+                            statusStyles.bg,
+                            statusStyles.text
+                        )}
+                    >
+                        <span className={cn("w-2 h-2 rounded-full", statusStyles.dot)} />
+                        {status}
                     </span>
-                </CardTitle>
-            </CardHeader>
-            <CardContent className="pt-2">
-                <div className="space-y-3">
-                    {/* Preview Section */}
-                    <div className="relative w-full h-48 overflow-hidden rounded-lg mb-2 border border-gray-200">
-                        {isLoading && (
-                            <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
-                                <Loader2 className="h-6 w-6 animate-spin text-gray-500" />
-                                <span className="ml-2 text-gray-500">Loading...</span>
-                            </div>
-                        )}
-                        {isPdf ? (
-                            <Document
-                                file={getStaticUrl(filePath)}
-                                onLoadSuccess={onLoadSuccess}
-                                onLoadError={onLoadError}
-                                loading={null}
-                            >
-                                <Page
-                                    pageNumber={1}
-                                    width={300}
-                                    renderTextLayer={false}
-                                    renderAnnotationLayer={false}
-                                    className="w-full h-full object-cover"
-                                />
-                            </Document>
-                        ) : (
-                            <img
-                                src={getStaticUrl(filePath)}
-                                alt={fileName}
-                                className="w-full h-48 object-cover rounded-lg"
-                                onLoad={onLoadSuccess}
-                                onError={onLoadError}
-                            />
-                        )}
-                    </div>
+                </p>
+                <p className="truncate">
+                    <span className="font-medium">Scanned At:</span>{" "}
+                    {new Date(scannedAt).toLocaleString()}
+                </p>
+            </div>
 
-
-                    {/* Document Info */}
-                    <div className="space-y-1.5 text-sm text-gray-600">
-                        <p className="text-sm text-gray-600">
-                            <span className="font-medium">File Size:</span>{" "}
-                            {fileSize !== null ? `${(fileSize).toFixed(2)} MB` : "Loading..."}
-                        </p>
-
-                        <p>
-                            <span className="font-medium">Patient MRN:</span>{' '}
-                            <span className="font-mono">{patientMRN}</span>
-                        </p>
-                        <p>
-                            <span className="font-medium">File Name:</span>{' '}
-                            <span className="font-mono">{patientMRN}_{fileName}</span>
-                        </p>
-                        <p className="flex items-center gap-2">
-                            <span className="font-medium">Status:</span>
-                            <span
-                                className={cn(
-                                    'flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium capitalize',
-                                    statusStyles.bg,
-                                    statusStyles.text
-                                )}
-                            >
-                                <span className={cn('w-2 h-2 rounded-full', statusStyles.dot)}></span>
-                                {status}
-                            </span>
-                        </p>
-                        <p>
-                            <span className="font-medium">Scanned At:</span>{' '}
-                            {new Date(scannedAt).toLocaleString()}
-                        </p>
-                    </div>
-
-                    {/* Action Buttons */}
-                    <div className="grid grid-cols-2 gap-2 mt-4">
+            {/* Action Buttons */}
+            <div className="grid grid-cols-2 gap-2 mb-4">
+                <Button
+                    variant="outline"
+                    className="h-8 text-xs truncate"
+                    onClick={() => setIsPreviewOpen(true)}
+                    aria-label={`Preview ${fileName}`}
+                >
+                    Preview
+                </Button>
+                <Dialog open={isInfoDialogOpen} onOpenChange={setIsInfoDialogOpen}>
+                    <DialogTrigger asChild>
                         <Button
                             variant="outline"
-                            className="h-10"
-                            onClick={() => setIsPreviewOpen(true)}
-                            aria-label={`Preview ${fileName}`}
+                            className="h-8 text-xs truncate"
+                            aria-label={`View details for ${fileName}`}
                         >
-                            Preview
+                            <Info className="h-3 w-3 mr-1 flex-shrink-0" /> Info
                         </Button>
-
-                        <Dialog open={isInfoDialogOpen} onOpenChange={setIsInfoDialogOpen}>
-                            <DialogTrigger asChild>
-                                <Button
-                                    variant="outline"
-                                    className="h-10"
-                                    aria-label={`View details for ${fileName}`}
-                                >
-                                    <Info className="h-4 w-4 mr-2" /> Info
-                                </Button>
-                            </DialogTrigger>
-                            <DialogContent className="sm:max-w-md">
-                                <DialogHeader>
-                                    <DialogTitle className="text-lg font-semibold">
-                                        Document Details
-                                    </DialogTitle>
-                                </DialogHeader>
-                                <div className="space-y-4 text-sm text-gray-600">
-                                    <div>
-                                        <h4 className="font-medium text-gray-800 border-b pb-1 mb-2">
-                                            General
-                                        </h4>
-                                        <p>
-                                            <span className="font-medium">Document ID:</span>{' '}
-                                            <span className="font-mono">{id}</span>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-md max-h-[80vh] overflow-y-auto">
+                        <DialogHeader>
+                            <DialogTitle className="text-lg font-semibold">
+                                Document Details
+                            </DialogTitle>
+                        </DialogHeader>
+                        <div className="space-y-4 text-sm text-gray-600">
+                            <div>
+                                <h4 className="font-medium text-gray-800 border-b pb-1 mb-2">
+                                    General
+                                </h4>
+                                <p className="truncate">
+                                    <span className="font-medium">Document ID:</span>{" "}
+                                    <span className="font-mono">{id}</span>
+                                </p>
+                                <p className="truncate">
+                                    <span className="font-medium">File Name:</span>{" "}
+                                    <span className="truncate" title={fileName}>
+                                        {patientMRN}_{fileName}
+                                    </span>
+                                </p>
+                                <p className="truncate">
+                                    <span className="font-medium">Patient MRN:</span>{" "}
+                                    <span className="font-mono">{patientMRN}</span>
+                                </p>
+                            </div>
+                            {comment && (
+                                <div>
+                                    <h4 className="font-medium text-gray-800 border-b pb-1 mb-2">
+                                        Comments
+                                    </h4>
+                                    <p className="text-gray-700 break-words">{comment}</p>
+                                </div>
+                            )}
+                            <div>
+                                <h4 className="font-medium text-gray-800 border-b pb-1 mb-2">
+                                    Scanner Details
+                                </h4>
+                                <p className="truncate">
+                                    <span className="font-medium">Employee ID:</span>{" "}
+                                    <span className="font-mono">{employeeId}</span>
+                                </p>
+                                <p className="truncate">
+                                    <span className="font-medium">Name:</span>{" "}
+                                    {scanner?.fullName || 'N/A'}
+                                </p>
+                                <p className="truncate">
+                                    <span className="font-medium">Department:</span>{" "}
+                                    {scanner?.department?.name || 'N/A'}
+                                </p>
+                                <p className="truncate">
+                                    <span className="font-medium">Email:</span>{" "}
+                                    <a
+                                        href={`mailto:${scanner?.email}`}
+                                        className="text-blue-600 hover:underline truncate"
+                                    >
+                                        {scanner?.email || 'N/A'}
+                                    </a>
+                                </p>
+                                <p className="truncate">
+                                    <span className="font-medium">Scanned At:</span>{" "}
+                                    {new Date(scannedAt).toLocaleString()}
+                                </p>
+                            </div>
+                            {uploader && (
+                                <div>
+                                    <h4 className="font-medium text-gray-800 border-b pb-1 mb-2">
+                                        Uploader Details
+                                    </h4>
+                                    <p className="truncate">
+                                        <span className="font-medium">Employee ID:</span>{" "}
+                                        <span className="font-mono">{uploader.employeeId || 'N/A'}</span>
+                                    </p>
+                                    <p className="truncate">
+                                        <span className="font-medium">Name:</span>{" "}
+                                        {uploader.fullName || 'N/A'}
+                                    </p>
+                                    <p className="truncate">
+                                        <span className="font-medium">Department:</span>{" "}
+                                        {uploader.department?.name || 'N/A'}
+                                    </p>
+                                    <p className="truncate">
+                                        <span className="font-medium">Email:</span>{" "}
+                                        <a
+                                            href={`mailto:${uploader.email}`}
+                                            className="text-blue-600 hover:underline truncate"
+                                        >
+                                            {uploader.email || 'N/A'}
+                                        </a>
+                                    </p>
+                                    {uploadedAt && (
+                                        <p className="truncate">
+                                            <span className="font-medium">Uploaded At:</span>{" "}
+                                            {new Date(uploadedAt).toLocaleString()}
                                         </p>
-                                        <p>
-                                            <span className="font-medium">File Name:</span>{' '}
-                                            <span className="truncate" title={fileName}>
-                                                {patientMRN}_{fileName}
-                                            </span>
-                                        </p>
-                                        <p>
-                                            <span className="font-medium">Patient MRN:</span>{' '}
-                                            <span className="font-mono">{patientMRN}</span>
-                                        </p>
-                                    </div>
-                                    {comment && (
-                                        <div>
-                                            <h4 className="font-medium text-gray-800 border-b pb-1 mb-2">
-                                                Comments
-                                            </h4>
-                                            <p className="text-gray-700">{comment}</p>
-                                        </div>
-                                    )}
-                                    <div>
-                                        <h4 className="font-medium text-gray-800 border-b pb-1 mb-2">
-                                            Scanner Details
-                                        </h4>
-                                        <p>
-                                            <span className="font-medium">Employee ID:</span>{' '}
-                                            <span className="font-mono">{employeeId}</span>
-                                        </p>
-                                        <p>
-                                            <span className="font-medium">Name:</span>{' '}
-                                            {scanner?.fullName || 'N/A'}
-                                        </p>
-                                        <p>
-                                            <span className="font-medium">Department:</span>{' '}
-                                            {scanner?.department || 'N/A'}
-                                        </p>
-                                        <p>
-                                            <span className="font-medium">Email:</span>{' '}
-                                            <a
-                                                href={`mailto:${scanner?.email}`}
-                                                className="text-blue-600 hover:underline"
-                                            >
-                                                {scanner?.email || 'N/A'}
-                                            </a>
-                                        </p>
-                                        <p>
-                                            <span className="font-medium">Scanned At:</span>{' '}
-                                            {new Date(scannedAt).toLocaleString()}
-                                        </p>
-                                    </div>
-                                    {uploader && (
-                                        <div>
-                                            <h4 className="font-medium text-gray-800 border-b pb-1 mb-2">
-                                                Uploader Details
-                                            </h4>
-                                            <p>
-                                                <span className="font-medium">Employee ID:</span>{' '}
-                                                <span className="font-mono">{uploader.employeeId || 'N/A'}</span>
-                                            </p>
-                                            <p>
-                                                <span className="font-medium">Name:</span>{' '}
-                                                {uploader.fullName || 'N/A'}
-                                            </p>
-                                            <p>
-                                                <span className="font-medium">Department:</span>{' '}
-                                                {uploader.department || 'N/A'}
-                                            </p>
-                                            <p>
-                                                <span className="font-medium">Email:</span>{' '}
-                                                <a
-                                                    href={`mailto:${uploader.email}`}
-                                                    className="text-blue-600 hover:underline"
-                                                >
-                                                    {uploader.email || 'N/A'}
-                                                </a>
-                                            </p>
-                                            {uploadedAt && (
-                                                <p>
-                                                    <span className="font-medium">Uploaded At:</span>{' '}
-                                                    {new Date(uploadedAt).toLocaleString()}
-                                                </p>
-                                            )}
-                                        </div>
-                                    )}
-                                    {approver && (
-                                        <div>
-                                            <h4 className="font-medium text-gray-800 border-b pb-1 mb-2">
-                                                Approver Details
-                                            </h4>
-                                            <p>
-                                                <span className="font-medium">Employee ID:</span>{' '}
-                                                <span className="font-mono">{approver.employeeId || 'N/A'}</span>
-                                            </p>
-                                            <p>
-                                                <span className="font-medium">Name:</span>{' '}
-                                                {approver.fullName || 'N/A'}
-                                            </p>
-                                            <p>
-                                                <span className="font-medium">Department:</span>{' '}
-                                                {approver.department || 'N/A'}
-                                            </p>
-                                            <p>
-                                                <span className="font-medium">Email:</span>{' '}
-                                                <a
-                                                    href={`mailto:${approver.email}`}
-                                                    className="text-blue-600 hover:underline"
-                                                >
-                                                    {approver.email || 'N/A'}
-                                                </a>
-                                            </p>
-                                            {reviewedAt && (
-                                                <p>
-                                                    <span className="font-medium">Reviewed At:</span>{' '}
-                                                    {new Date(reviewedAt).toLocaleString()}
-                                                </p>
-                                            )}
-                                        </div>
                                     )}
                                 </div>
-                            </DialogContent>
-                        </Dialog>
-                    </div>
-
-                    {/* Approve/Reject Buttons */}
-                    {(status === 'submitted' || status === 'rescanned') && (
-                        <div className="grid grid-cols-2 gap-2 mt-4">
-                            <Button
-                                onClick={handleApprove}
-                                disabled={approveMutation.isPending || rejectMutation.isPending}
-                                className="h-10 bg-green-600 hover:bg-green-700 text-white"
-                                aria-label={`Approve ${fileName}`}
-                            >
-                                {approveMutation.isPending ? (
-                                    <>
-                                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                                        Approving...
-                                    </>
-                                ) : (
-                                    'Approve'
-                                )}
-                            </Button>
-                            <Button
-                                onClick={() => setIsDialogOpen(true)}
-                                disabled={approveMutation.isPending || rejectMutation.isPending}
-                                variant="destructive"
-                                className="h-10"
-                                aria-label={`Reject ${fileName}`}
-                            >
-                                {rejectMutation.isPending ? (
-                                    <>
-                                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                                        Rejecting...
-                                    </>
-                                ) : (
-                                    'Reject'
-                                )}
-                            </Button>
+                            )}
+                            {approver && (
+                                <div>
+                                    <h4 className="font-medium text-gray-800 border-b pb-1 mb-2">
+                                        Approver Details
+                                    </h4>
+                                    <p className="truncate">
+                                        <span className="font-medium">Employee ID:</span>{" "}
+                                        <span className="font-mono">{approver.employeeId || 'N/A'}</span>
+                                    </p>
+                                    <p className="truncate">
+                                        <span className="font-medium">Name:</span>{" "}
+                                        {approver.fullName || 'N/A'}
+                                    </p>
+                                    <p className="truncate">
+                                        <span className="font-medium">Department:</span>{" "}
+                                        {uploader?.department?.name || 'N/A'}
+                                    </p>
+                                    <p className="truncate">
+                                        <span className="font-medium">Email:</span>{" "}
+                                        <a
+                                            href={`mailto:${approver.email}`}
+                                            className="text-blue-600 hover:underline truncate"
+                                        >
+                                            {approver.email || 'N/A'}
+                                        </a>
+                                    </p>
+                                    {reviewedAt && (
+                                        <p className="truncate">
+                                            <span className="font-medium">Reviewed At:</span>{" "}
+                                            {new Date(reviewedAt).toLocaleString()}
+                                        </p>
+                                    )}
+                                </div>
+                            )}
                         </div>
-                    )}
+                    </DialogContent>
+                </Dialog>
+            </div>
+
+            {/* Approve/Reject Buttons */}
+            {(status === 'submitted' || status === 'rescanned') && (
+                <div className="grid grid-cols-2 gap-2">
+                    <Button
+                        onClick={handleApprove}
+                        disabled={approveMutation.isPending || rejectMutation.isPending}
+                        className="h-8 bg-green-600 hover:bg-green-700 text-white text-xs truncate"
+                        aria-label={`Approve ${fileName}`}
+                    >
+                        {approveMutation.isPending ? (
+                            <>
+                                <Loader2 className="h-3 w-3 animate-spin mr-1 flex-shrink-0" />
+                                Approving...
+                            </>
+                        ) : (
+                            'Approve'
+                        )}
+                    </Button>
+                    <Button
+                        onClick={() => setIsDialogOpen(true)}
+                        disabled={approveMutation.isPending || rejectMutation.isPending}
+                        variant="destructive"
+                        className="h-8 text-xs truncate"
+                        aria-label={`Reject ${fileName}`}
+                    >
+                        {rejectMutation.isPending ? (
+                            <>
+                                <Loader2 className="h-3 w-3 animate-spin mr-1 flex-shrink-0" />
+                                Rejecting...
+                            </>
+                        ) : (
+                            'Reject'
+                        )}
+                    </Button>
                 </div>
-            </CardContent>
+            )}
 
             {/* Preview Modal */}
             {isPreviewOpen && (
@@ -504,7 +483,7 @@ const ReviewDocumentCard = React.memo(({ document, refetch }) => {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
-        </Card>
+        </div>
     );
 });
 

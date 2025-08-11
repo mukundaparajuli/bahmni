@@ -17,7 +17,6 @@ import ReviewSection from './components/ReviewSection';
 import RejectedSection from './components/RejectedSection';
 import ApprovedSection from './components/ApprovedSection';
 import Rescan from './components/Rescan';
-import PDFTest from './components/PDFTest';
 import Footer from './components/common/Footer';
 import ManageDepartments from './pages/ManageDepartments';
 import ManageEducation from './pages/ManageEducation';
@@ -25,6 +24,12 @@ import ManageProfessions from './pages/ManageProfessions';
 import UsersSection from './components/admin/UsersSection';
 import Welcome from './components/Welcome';
 import RejectedDocs from './components/scanner/RejectedDocs';
+import UploadersTable from './components/admin/UploadersTable';
+import UploaderPage from './components/admin/UploadersInfo';
+import ScannersInfo from './components/admin/ScannersInfo';
+import ApproversInfo from './components/admin/ApproversInfo';
+import UploadersInfo from './components/admin/UploadersInfo';
+import DocumentsList from './components/admin/Documents';
 
 const App = () => (
   <>
@@ -50,6 +55,10 @@ const App = () => (
             <Route path="departments" element={<ManageDepartments />} />
             <Route path="education" element={<ManageEducation />} />
             <Route path="professions" element={<ManageProfessions />} />
+            <Route path="scanners" element={<ScannersInfo />} />
+            <Route path="approvers" element={< ApproversInfo />} />
+            <Route path="uploaders" element={<UploadersInfo />} />
+            <Route path="documents" element={<DocumentsList />} />
           </Route>
 
           <Route path="/scanner" element={<ScannerPage />} >
@@ -66,7 +75,7 @@ const App = () => (
             <Route path="approved" element={<ApprovedSection />} />
             <Route path="rejected" element={<RejectedSection />} />
           </Route>
-          <Route path="/test" element={<PDFTest />} />
+          <Route path="/test" element={<UploadersTable />} />
 
         </Routes>
       </main>

@@ -38,9 +38,6 @@ const ReviewSection = () => {
         setPage(1);
     }, []);
 
-    // Extract documents and total pages safely from API response
-    // Assuming your API response shape:
-    // { data: { data: documentsArray, page, total, totalPages } }
     const documents = data?.data?.data?.data || [];
     const totalPages = data?.data?.data?.totalPages || 1;
 
@@ -62,7 +59,7 @@ const ReviewSection = () => {
 
             <SearchBar onSearch={onSearch} placeholder="Search documents..." />
 
-            <div className="flex w-full gap-4 flex-wrap justify-center mt-6">
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {documents.length > 0 ? (
                     documents.map((doc) => (
                         <ReviewDocumentCard key={doc.id} document={doc} />
@@ -73,40 +70,42 @@ const ReviewSection = () => {
             </div>
 
             {/* Pagination */}
-            {totalPages > 1 && (
-                <Pagination className="mt-6 flex justify-center">
-                    <PaginationContent>
-                        <PaginationItem>
-                            <PaginationPrevious
-                                onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
-                                className={page === 1 ? 'pointer-events-none opacity-50' : ''}
-                            />
-                        </PaginationItem>
+            {
+                totalPages > 1 && (
+                    <Pagination className="mt-6 flex justify-center">
+                        <PaginationContent>
+                            <PaginationItem>
+                                <PaginationPrevious
+                                    onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
+                                    className={page === 1 ? 'pointer-events-none opacity-50' : ''}
+                                />
+                            </PaginationItem>
 
-                        {[...Array(totalPages)].map((_, index) => {
-                            const pageNumber = index + 1;
-                            return (
-                                <PaginationItem key={pageNumber}>
-                                    <PaginationLink
-                                        onClick={() => setPage(pageNumber)}
-                                        isActive={page === pageNumber}
-                                    >
-                                        {pageNumber}
-                                    </PaginationLink>
-                                </PaginationItem>
-                            );
-                        })}
+                            {[...Array(totalPages)].map((_, index) => {
+                                const pageNumber = index + 1;
+                                return (
+                                    <PaginationItem key={pageNumber}>
+                                        <PaginationLink
+                                            onClick={() => setPage(pageNumber)}
+                                            isActive={page === pageNumber}
+                                        >
+                                            {pageNumber}
+                                        </PaginationLink>
+                                    </PaginationItem>
+                                );
+                            })}
 
-                        <PaginationItem>
-                            <PaginationNext
-                                onClick={() => setPage((prev) => Math.min(prev + 1, totalPages))}
-                                className={page === totalPages ? 'pointer-events-none opacity-50' : ''}
-                            />
-                        </PaginationItem>
-                    </PaginationContent>
-                </Pagination>
-            )}
-        </div>
+                            <PaginationItem>
+                                <PaginationNext
+                                    onClick={() => setPage((prev) => Math.min(prev + 1, totalPages))}
+                                    className={page === totalPages ? 'pointer-events-none opacity-50' : ''}
+                                />
+                            </PaginationItem>
+                        </PaginationContent>
+                    </Pagination>
+                )
+            }
+        </div >
     );
 };
 

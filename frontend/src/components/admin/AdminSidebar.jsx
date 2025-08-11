@@ -1,4 +1,4 @@
-import { Users, Building2, Book, Briefcase } from "lucide-react"
+import { Users, Building2, Book, Briefcase, Scan, Check, Upload, Copy, BookAIcon } from "lucide-react"
 
 import {
     Sidebar,
@@ -31,6 +31,26 @@ const items = [
         title: "Profession Management",
         url: "/admin/professions",
         icon: Briefcase,
+    },
+    {
+        title: "Scanners",
+        url: "/admin/scanners",
+        icon: Scan,
+    },
+    {
+        title: "Approvers",
+        url: "/admin/approvers",
+        icon: Check,
+    },
+    {
+        title: "Uploaders",
+        url: "/admin/uploaders",
+        icon: Upload,
+    },
+    {
+        title: "Documents",
+        url: "/admin/documents",
+        icon: BookAIcon,
     },
 
 ]

@@ -138,16 +138,10 @@ const DisplayScannedDocs = () => {
                 </div>
             ) : (
                 <>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                         {documents.length > 0 ? (
                             documents.map((doc) => (
-                                <ScannedDocumentCard
-                                    key={doc.id}
-                                    document={doc}
-                                    deleteButton={doc.status === 'draft'}
-                                    onDelete={() => handleDelete(doc.id)}
-                                    isScanner
-                                />
+                                <ScannedDocumentCard key={doc.id} document={doc} />
                             ))
                         ) : (
                             <div className="text-center py-12 col-span-full">
