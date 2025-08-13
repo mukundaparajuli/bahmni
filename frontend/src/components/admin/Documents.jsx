@@ -95,8 +95,8 @@ const DocumentList = () => {
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                        <div className="space-y-1">
+                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+                        <div className="space-y-1 lg:grid-cols-1">
                             <label className="text-sm font-medium text-muted-foreground">Status</label>
                             <Select
                                 value={filters.status}
@@ -108,14 +108,18 @@ const DocumentList = () => {
                                 <SelectContent>
                                     <SelectItem value="all">All Statuses</SelectItem>
                                     <SelectItem value="draft">Draft</SelectItem>
-                                    <SelectItem value="pending">Pending</SelectItem>
+                                    <SelectItem value="submitted">Submitted</SelectItem>
                                     <SelectItem value="approved">Approved</SelectItem>
                                     <SelectItem value="rejected">Rejected</SelectItem>
+                                    <SelectItem value="uploaded">Uploaded</SelectItem>
+                                    <SelectItem value="rescanned">Rescanned</SelectItem>
+                                    <SelectItem value="rescanned_approved">Rescanned Approved</SelectItem>
+                                    <SelectItem value="rescanned_draft">Rescanned Draft</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
 
-                        <div className="space-y-1">
+                        <div className="space-y-1 lg:grid-cols-1">
                             <label className="text-sm font-medium text-muted-foreground">Patient MRN</label>
                             <Input
                                 placeholder="Enter MRN"
@@ -124,7 +128,7 @@ const DocumentList = () => {
                             />
                         </div>
 
-                        <div className="space-y-1">
+                        <div className="space-y-1 lg:grid-cols-1">
                             <label className="text-sm font-medium text-muted-foreground">Employee ID</label>
                             <Input
                                 placeholder="Enter employee ID"
@@ -133,21 +137,21 @@ const DocumentList = () => {
                             />
                         </div>
 
-                        <div className="space-y-1">
+                        <div className="space-y-1 grid ">
                             <label className="text-sm font-medium text-muted-foreground">Date Range</label>
                             <div className="flex items-center gap-2">
                                 <Input
                                     type="date"
                                     value={filters.startDate}
                                     onChange={(e) => handleFilterChange("startDate", e.target.value)}
-                                    className="w-full"
+                                    className="w-full lg:grid-cols-1"
                                 />
                                 <span className="text-muted-foreground text-sm">to</span>
                                 <Input
                                     type="date"
                                     value={filters.endDate}
                                     onChange={(e) => handleFilterChange("endDate", e.target.value)}
-                                    className="w-full"
+                                    className="w-full lg:grid-cols-1"
                                 />
                             </div>
                         </div>

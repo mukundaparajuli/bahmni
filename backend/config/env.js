@@ -16,10 +16,30 @@ module.exports = {
         gmailAppPassword: process.env.GMAIL_APP_PASSWORD,
     },
 
-    openrms: {
-        openrmsBaseUrl: process.env.OPENRMS_BASE_URL,
-        openrmsSearchPatientUrl: process.env.OPENRMS_SEARCH_PATIENT_URL,
-        openrmsUsername: process.env.OPENRMS_USERNAME,
-        openrmsPassword: process.env.OPENRMS_PASSWORD,
-    }
+    bahmni: {
+        // Authentication
+        baseUrl: process.env.BAHMNI_BASE_URL.replace(/\/$/, ''),
+        bahmniUsername: process.env.BAHMNI_USERNAME,
+        bahmniPassword: process.env.BAHMNI_PASSWORD,
+
+        // API Endpoints (relative paths)
+        endpoints: {
+            uploadDoc: '/ws/rest/v1/bahmnicore/visitDocument/uploadDocument',
+            linkDoc: '/ws/rest/v1/bahmnicore/visitDocument',
+            provider: '/ws/rest/v1/session',
+            searchPatient: '/ws/rest/v1/patient',
+            visit: '/ws/rest/v1/visit',
+            visitTypes: '/ws/rest/v1/bahmnicore/config/bahmniencounter'
+        },
+
+        // Defaults
+        defaultLocationUuid: process.env.BAHMNI_DEFAULT_LOCATION_UUID,
+        defaultVisitType: 'OPD',
+        defaultEncounterType: 'Patient Document',
+
+        // API Behavior
+        timeout: parseInt(process.env.BAHMNI_API_TIMEOUT || '10000', 10),
+        retryAttempts: parseInt(process.env.BAHMNI_RETRY_ATTEMPTS || '3', 10),
+        retryDelay: parseInt(process.env.BAHMNI_RETRY_DELAY || '1000', 10)
+    },
 };
