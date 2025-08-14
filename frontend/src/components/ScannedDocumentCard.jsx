@@ -17,6 +17,7 @@ import { cn } from "@/lib/utils";
 import useToastError from "@/hooks/useToastError";
 import "@/utils/pdf-config";
 import { getFileSizeFromUrl } from "@/utils/get-file-size";
+import { uploadToBahmni } from "@/api/uploader-api";
 
 const STATUS_CONFIG = {
     draft: { bg: "bg-yellow-100", text: "text-yellow-800", dot: "bg-yellow-500" },
@@ -32,7 +33,7 @@ const STATUS_CONFIG = {
 };
 
 const ScannedDocumentCard = React.memo(
-    ({ document, deleteButton, onDelete, isScanner, isApprover }) => {
+    ({ document, deleteButton, onDelete, isScanner, isApprover, isUploader }) => {
         const { showError, showSuccess } = useToastError();
         const {
             id,
@@ -53,6 +54,7 @@ const ScannedDocumentCard = React.memo(
         const [isInfoDialogOpen, setIsInfoDialogOpen] = useState(false);
         const [isLoading, setIsLoading] = useState(true);
         const [isSubmitting, setIsSubmitting] = useState(false);
+        const [uploading, setUploading] = useState(false);
         const navigate = useNavigate();
         const isPdf = filePath?.toLowerCase().endsWith(".pdf");
         const [fileSize, setFileSize] = useState(null);
@@ -88,6 +90,21 @@ const ScannedDocumentCard = React.memo(
         const handleOverlayClick = useCallback((e) => {
             if (e.target === e.currentTarget) setIsPreviewOpen(false);
         }, []);
+
+        const handleUploadToBahmni = useCallback(async () => {
+            setUploading(true);
+            await uploadToBahmni({ documentId: id, mrnNumber: patientMRN });
+            showSuccess("Successfully uploaded to bahmni");
+            try {
+                setUploading(true);
+                await uploadToBahmni({ documentId: id, mrnNumber: patientMRN });
+                showSuccess("Successfully uploaded to bahmni");
+            } catch (error) {
+                showError("Could not upload the document");
+            } finally {
+                setUploading(false);
+            }
+        })
 
         useEffect(() => {
             const handleEscape = (e) => {
@@ -381,6 +398,25 @@ const ScannedDocumentCard = React.memo(
                             )}
                         </Button>
                     )}
+                    {/* Submit Button */}
+                    {isUploader && (status === "approved" || status === "rescanned_approved") && (
+                        <Button
+                            onClick={handleUploadToBahmni}
+                            className="w-full h-9 text-white text-sm"
+                            aria-label="Upload to Bahmni"
+                            disabled={uploading}
+                        >
+                            {uploading ? (
+                                <>
+                                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                                    Uploading...
+                                </>
+                            ) : (
+                                "Upload Document"
+                            )}
+                        </Button>
+                    )}
+
                 </div>
 
                 {/* Preview Modal */}

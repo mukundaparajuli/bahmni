@@ -30,6 +30,8 @@ import ScannersInfo from './components/admin/ScannersInfo';
 import ApproversInfo from './components/admin/ApproversInfo';
 import UploadersInfo from './components/admin/UploadersInfo';
 import DocumentsList from './components/admin/Documents';
+import DocsToUpload from './components/uploader/DocsToUpload';
+import UploaderDashboard from './components/uploader/UploaderDashboard';
 
 const App = () => (
   <>
@@ -75,6 +77,12 @@ const App = () => (
             <Route path="approved" element={<ApprovedSection />} />
             <Route path="rejected" element={<RejectedSection />} />
           </Route>
+
+          <Route path="/uploader" element={<UploaderDashboard />} >
+            <Route index element={<DocsToUpload />} />
+            <Route path="upload" element={<DocsToUpload />} />
+          </Route>
+
           <Route path="/test" element={<UploadersTable />} />
 
         </Routes>

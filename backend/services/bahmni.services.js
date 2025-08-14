@@ -225,6 +225,7 @@ class BahmniService {
                 `${env.bahmni.baseUrl}/ws/rest/v1/bahmnicore/visitDocument`,
                 data
             );
+            console.log(response);
 
             console.log("Document linked successfully");
             return response;
@@ -278,6 +279,18 @@ class BahmniService {
         }
     }
 
+    async getVisitStartDateAndEndDate(visitUuid) {
+        try {
+            const visitInfo = await this._makeRequest('get', `${env.bahmni.baseUrl}/ws/rest/v1/visit/${visitUuid}`);
+            console.log(visitInfo);
+            const startDatetime = visitInfo.startDatetime;
+            const stopDatetime = visitInfo.stopDatetime;
+            return { startDatetime, stopDatetime };
+        } catch (error) {
+            console.log(error)
+        }
+    }
+
     async getProviderUuid() {
         try {
             console.log("Getting provider UUID from session...");
@@ -288,8 +301,8 @@ class BahmniService {
                 throw new Error("Provider UUID not found in session response");
             }
 
-            console.log(`Provider UUID: ${response.user.uuid}`);
-            return response.user.uuid;
+            console.log(`Provider UUID: ${response.currentProvider.uuid}`);
+            return response.currentProvider.uuid;
 
         } catch (error) {
             console.error("Provider lookup failed:", error);
@@ -366,9 +379,14 @@ class BahmniService {
         }
     }
 
-    async createVisit(patientUuid, visitType, locationName, startDate = new Date()) {
+    async createVisit(patientUuid, visitType, locationName, startDate) {
         try {
             console.log(`Creating visit for patient ${patientUuid}...`);
+
+            if (!startDate) {
+                startDate = new Date();
+                // startDate.setMonth(startDate.getMonth() - 1);
+            }
 
             const [visitTypeUuid, locationUuid] = await Promise.all([
                 this.getVisitTypeId(visitType),
@@ -410,6 +428,26 @@ class BahmniService {
             throw new Error(`Failed to get uuid: ${err.message}`);
         }
     }
+
+    async verifyDetails(data) {
+        try {
+            console.log("verifying document to patient...");
+
+            const response = await this._makeRequest(
+                "post",
+                `${env.bahmni.baseUrl}${env.bahmni.verifyDetails}`,
+                data
+            );
+
+            console.log("Document verified successfully", response);
+            return response;
+
+        } catch (error) {
+            console.error("Document linking failed:", error);
+            throw new Error(`Failed to link document: ${error.message}`);
+        }
+    }
+
 }
 
 const bahmniService = new BahmniService();

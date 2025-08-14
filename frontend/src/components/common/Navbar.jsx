@@ -28,6 +28,7 @@ const Navbar = () => {
         if (path.startsWith('/scanner')) return ' Scanner';
         if (path.startsWith('/approver')) return ' Approver';
         if (path.startsWith('/admin')) return ' Admin';
+        if (path.startsWith('/uploader')) return ' Uploader';
         if (path === '/') return ' Dashboard';
         return '';
     };

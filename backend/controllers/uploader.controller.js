@@ -3,6 +3,7 @@ const path = require("path");
 const db = require("../config/db");
 const { bahmniService } = require("../services/bahmni.services");
 const env = require("../config/env.js");
+const { ApiResponse } = require("../utils/api-response.js");
 
 class ApiError extends Error {
     constructor(statusCode, message) {
@@ -74,7 +75,7 @@ const uploadToBahmni = async (req, res, next) => {
 
         // Prepare document data
         const fileName = document.fileName || path.basename(filePath);
-        const fileType = document.fileType || "PATIENT_DOCUMENT";
+        const fileType = "pdf";
         // Get file extension without dot (e.g., "pdf" instead of "application/pdf")
         const format = path.extname(filePath).substring(1).toLowerCase() || "pdf";
         const base64Content = fileContent.toString("base64");
@@ -101,12 +102,15 @@ const uploadToBahmni = async (req, res, next) => {
         ]);
 
         const testUUid = await bahmniService.getTestUuid();
+        const now = new Date().toISOString();
+        const { startDatetime, stopDatetime } = await bahmniService.getVisitStartDateAndEndDate(visitUuid);
 
         // Link document to patient
         await bahmniService.linkDocumentToPatient({
             patientUuid,
             visitTypeUuid,
-            visitStartDate: new Date().toISOString(),
+            visitStartDate: startDatetime,
+            // visitEndDate: stopDatetime,
             encounterTypeUuid,
             encounterDateTime: null,
             providerUuid,
@@ -116,7 +120,7 @@ const uploadToBahmni = async (req, res, next) => {
                 {
                     testUuid: testUUid,
                     image: uploadResponse.url,
-                    obsDateTime: new Date().toISOString(),
+                    obsDateTime: null,
                 },
             ],
         });
@@ -125,8 +129,8 @@ const uploadToBahmni = async (req, res, next) => {
         await db.document.update({
             where: { id: +documentId },
             data: {
-                status: "uploaded_to_bahmni",
-                bahmniUrl: uploadResponse.url,
+                status: "uploaded",
+                // bahmniUrl: uploadResponse.url,
                 uploadedAt: new Date(),
             },
         });
@@ -158,30 +162,51 @@ const uploadToBahmni = async (req, res, next) => {
 
 const getAllApprovedDocuments = async (req, res, next) => {
     try {
+
+
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const skip = (page - 1) * limit;
+
+        // Get total count
+        const total = await db.document.count({
+            where: {
+                status: {
+                    in: ["approved", "rescanned_approved"],
+                },
+            },
+        });
+
+
         const approvedDocuments = await db.document.findMany({
             where: {
                 status: {
                     in: ["approved", "rescanned_approved"],
                 },
             },
+            skip,
+            take: limit,
             orderBy: {
-                createdAt: 'desc'
+                scannedAt: 'desc'
             }
         });
 
+        console.log(approvedDocuments)
+
         // Return empty array instead of 404 for better UX
-        return res.status(200).json({
-            success: true,
+        return ApiResponse(res, 200, {
             data: approvedDocuments,
-            message: approvedDocuments.length > 0
+            page,
+            total,
+            totalPages: Math.ceil(total / limit),
+        },
+            approvedDocuments.length > 0
                 ? "Retrieved all approved documents"
                 : "No approved documents found",
-        });
+        );
 
     } catch (error) {
         console.error("Error retrieving approved documents:", error);
-
-        // Convert to ApiError for consistency
         const apiError = new ApiError(500, "Failed to retrieve approved documents");
         next(apiError);
     }

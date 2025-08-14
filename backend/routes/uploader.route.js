@@ -6,6 +6,6 @@ const { uploadToBahmni, getAllApprovedDocuments } = require("../controllers/uplo
 const router = Router();
 
 router.post('/upload-to-bahmni', authenticateToken, restrictTo('Uploader'), uploadToBahmni);
-router.post('/approved-docs', authenticateToken, restrictTo('Uploader'), getAllApprovedDocuments);
+router.get('/approved-docs', authenticateToken, restrictTo('Uploader'), getAllApprovedDocuments);
 
 module.exports = router;

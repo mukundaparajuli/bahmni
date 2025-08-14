@@ -29,7 +29,8 @@ module.exports = {
             provider: '/ws/rest/v1/session',
             searchPatient: '/ws/rest/v1/patient',
             visit: '/ws/rest/v1/visit',
-            visitTypes: '/ws/rest/v1/bahmnicore/config/bahmniencounter'
+            visitTypes: '/ws/rest/v1/bahmnicore/config/bahmniencounter',
+            verifyDetails: 'ws/rest/v1/bahmnicore/visitDocument'
         },
 
         // Defaults
