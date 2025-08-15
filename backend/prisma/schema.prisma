@@ -127,6 +127,7 @@ model Document {
   patientMRN String
   status     DocumentStatus @default(draft)
   comment    String         @default("")
+  bahmniUrl  String?        @unique
   scannedAt  DateTime       @default(now())
   reviewedAt DateTime?
   uploadedAt DateTime?

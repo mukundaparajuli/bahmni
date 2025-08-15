@@ -1,4 +1,4 @@
-import { Users, Building2, Book, Briefcase, Scan, Check, Upload, Copy, BookAIcon } from "lucide-react"
+import { Users, Building2, Book, Briefcase, Scan, Check, Upload, Copy, BookAIcon, LayoutDashboard } from "lucide-react"
 
 import {
     Sidebar,
@@ -12,6 +12,11 @@ import {
 } from "@/components/ui/sidebar"
 
 const items = [
+    {
+        title: "Overview",
+        url: "/admin",
+        icon: LayoutDashboard,
+    },
     {
         title: "User Management",
         url: "/admin/users",

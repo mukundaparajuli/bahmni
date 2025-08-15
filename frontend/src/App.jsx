@@ -24,14 +24,17 @@ import ManageProfessions from './pages/ManageProfessions';
 import UsersSection from './components/admin/UsersSection';
 import Welcome from './components/Welcome';
 import RejectedDocs from './components/scanner/RejectedDocs';
-import UploadersTable from './components/admin/UploadersTable';
-import UploaderPage from './components/admin/UploadersInfo';
 import ScannersInfo from './components/admin/ScannersInfo';
 import ApproversInfo from './components/admin/ApproversInfo';
 import UploadersInfo from './components/admin/UploadersInfo';
 import DocumentsList from './components/admin/Documents';
 import DocsToUpload from './components/uploader/DocsToUpload';
 import UploaderDashboard from './components/uploader/UploaderDashboard';
+import ScannerInfo from './components/admin/ScannerInfo';
+import ApproverInfo from './components/admin/ApproverInfo';
+import UploaderInfo from './components/admin/UploaderInfo';
+import { Overview } from './components/admin/Overview';
+import AdminRescanner from './components/admin/AdminRescanner';
 
 const App = () => (
   <>
@@ -51,17 +54,29 @@ const App = () => (
           <Route path="/unauthorized" element={<Unauthorized />} />
 
 
-          <Route path="/admin" element={<AdminDashboardPage />} >
-            <Route index element={<UsersSection />} />
+          <Route path="/admin" element={<AdminDashboardPage />}>
+            <Route index element={<Overview />} />
             <Route path="users" element={<UsersSection />} />
             <Route path="departments" element={<ManageDepartments />} />
             <Route path="education" element={<ManageEducation />} />
             <Route path="professions" element={<ManageProfessions />} />
+
+            {/* Lists */}
             <Route path="scanners" element={<ScannersInfo />} />
-            <Route path="approvers" element={< ApproversInfo />} />
+            <Route path="approvers" element={<ApproversInfo />} />
             <Route path="uploaders" element={<UploadersInfo />} />
+
+            {/* Details */}
+            <Route path="scanner/:id" element={<ScannerInfo />} />
+            <Route path="approver/:id" element={<ApproverInfo />} />
+            <Route path="uploader/:id" element={<UploaderInfo />} />
+
             <Route path="documents" element={<DocumentsList />} />
+
+            {/* rescan uploaded docs */}
+            <Route path="rescan" element={<AdminRescanner />} />
           </Route>
+
 
           <Route path="/scanner" element={<ScannerPage />} >
             <Route index element={<DocumentScanner />} />
@@ -83,7 +98,7 @@ const App = () => (
             <Route path="upload" element={<DocsToUpload />} />
           </Route>
 
-          <Route path="/test" element={<UploadersTable />} />
+          <Route path="/test" element={<AdminRescanner />} />
 
         </Routes>
       </main>

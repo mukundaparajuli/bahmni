@@ -10,6 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { Loader2, X, Filter, FileText, AlertCircle, ChevronLeft, ChevronRight } from "lucide-react";
 import { getAllDocuments } from "@/api/admin-api";
 import ScannedDocumentCard from "../ScannedDocumentCard";
+import AdminDocumentCard from "./AdminDocumentCard";
 
 const DocumentList = () => {
     const [page, setPage] = useState(1);
@@ -186,7 +187,7 @@ const DocumentList = () => {
                         <>
                             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                                 {filteredDocuments.map((doc) => (
-                                    <ScannedDocumentCard key={doc.id} document={doc} />
+                                    <AdminDocumentCard key={doc.id} document={doc} />
                                 ))}
                             </div>
 

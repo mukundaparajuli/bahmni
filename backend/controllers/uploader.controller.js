@@ -75,9 +75,11 @@ const uploadToBahmni = async (req, res, next) => {
 
         // Prepare document data
         const fileName = document.fileName || path.basename(filePath);
-        const fileType = "pdf";
+        const ext = path.extname(filePath).substring(1).toLowerCase();
+        const fileType = ext.match(/(jpg|jpeg|png|gif)$/) ? "image" : ext;
+
         // Get file extension without dot (e.g., "pdf" instead of "application/pdf")
-        const format = path.extname(filePath).substring(1).toLowerCase() || "pdf";
+        const format = ext;
         const base64Content = fileContent.toString("base64");
 
         // Upload document to Bahmni

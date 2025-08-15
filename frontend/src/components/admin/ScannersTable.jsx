@@ -20,10 +20,12 @@ import {
 } from "@/components/ui/pagination"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { useNavigate } from 'react-router-dom'
 
 export default function ScannersTable() {
     const [page, setPage] = useState(1)
     const [pageSize, setPageSize] = useState(5)
+    const navigate = useNavigate();
 
     const { data, isLoading, error } = useQuery({
         queryKey: ['scanners', page, pageSize],
@@ -37,8 +39,7 @@ export default function ScannersTable() {
     console.log(data?.data?.data)
 
     const handleViewDetails = (scanner) => {
-        // Implement your detail view logic
-        console.log('View details:', scanner)
+        navigate('/admin/scanner/' + scanner.id)
     }
 
     if (isLoading) return <div className="text-center py-8">Loading scanners...</div>

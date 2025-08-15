@@ -30,3 +30,16 @@ export const getAllApprovers = ({ page = 1, limit = 10 } = {}) =>
 
 export const getAllUploaders = ({ page = 1, limit = 10 } = {}) =>
     axiosInstance.get('/admin/uploaders', { params: { page, limit } });
+
+export const getScannerDetails = (id) =>
+    axiosInstance.get(`/admin/scanner/${id}`);
+
+
+export const getApproverDetails = (id) =>
+    axiosInstance.get('/admin/approver/' + id);
+
+export const getUploaderDetails = (id) =>
+    axiosInstance.get('/admin/uploader/' + id);
+
+export const getOverview = () =>
+    axiosInstance.get('/admin/overview');

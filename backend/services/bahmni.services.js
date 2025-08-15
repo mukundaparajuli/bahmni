@@ -448,6 +448,19 @@ class BahmniService {
         }
     }
 
+    async deleteDocument(documentUrl) {
+        try {
+            console.log("deleting the document...");
+
+            const response = await this._makeRequest('delete', `${env.bahmni.baseUrl}/ws/rest/v1/bahmnicore/visitDocument?filename=${documentUrl}`);
+
+            console.log("Document was deleted successfully")
+            return response;
+        } catch (error) {
+            console.log(error)
+        }
+    }
+
 }
 
 const bahmniService = new BahmniService();

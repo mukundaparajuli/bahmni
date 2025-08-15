@@ -19,10 +19,12 @@ import {
 } from "@/components/ui/pagination"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { useNavigate } from 'react-router-dom'
 
 export default function UploadersTable() {
     const [page, setPage] = useState(1)
     const [pageSize, setPageSize] = useState(5)
+    const navigate = useNavigate();
 
     const { data, isLoading, error } = useQuery({
         queryKey: ['uploaders', page, pageSize],
@@ -34,8 +36,7 @@ export default function UploadersTable() {
 
 
     const handleViewDetails = (uploader) => {
-        // Implement your detail view logic
-        console.log('View details:', uploader)
+        navigate('/admin/uploader/' + uploader.id)
     }
 
     if (isLoading) return <div className="text-center py-8">Loading uploaders...</div>
