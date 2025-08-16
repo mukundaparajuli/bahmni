@@ -59,7 +59,7 @@ exports.getClerkDocuments = asyncHandler(async (req, res) => {
 
 
 exports.scanDocument = asyncHandler(async (req, res) => {
-    // Get the file and other details from the request
+
     const file = req.file;
     const { patientMRN, fileName } = req.body;
 
@@ -87,9 +87,7 @@ exports.scanDocument = asyncHandler(async (req, res) => {
 
     !fileName && (fileName = file.originalname);
     const filePath = `/uploads/documents/${file.filename}`;
-    const scannerId = req.user.id; // Changed from req.user._id to req.user.id
-
-    // Create new document
+    const scannerId = req.user.id;
     const document = await db.document.create({
         data: {
             scannerId,
@@ -115,7 +113,6 @@ exports.deleteDocument = asyncHandler(async (req, res) => {
         throw error;
     }
 
-    // Find document by ID
     const document = await db.document.findUnique({
         where: { id: parseInt(id) }, // Convert string ID to integer
     });

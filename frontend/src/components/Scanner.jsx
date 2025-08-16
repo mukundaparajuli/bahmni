@@ -3,9 +3,11 @@ import Webcam from 'react-webcam';
 import Cropper from 'react-cropper';
 import 'cropperjs/dist/cropper.css';
 import jsPDF from 'jspdf';
+import { getMRN } from '@/api/scanner-api';
 import axiosInstance from '@/api/axios-instance';
 import useToastError from '@/hooks/useToastError';
 import { Button } from '@/components/ui/button';
+
 import { compressFile, formatFileSize, validateFile } from '@/utils/compression';
 import { FiCamera, FiUpload, FiX, FiTrash2, FiCheck, FiPaperclip, FiZap, FiZapOff, FiTarget, FiRotateCw, FiSettings } from 'react-icons/fi';
 
@@ -112,6 +114,7 @@ const UniversalDocumentScanner = () => {
     const MAX_PDF_SIZE_MB = 15;
     const [patientName, setPatientName] = useState("");
     const [loadingMRN, setLoadingMRN] = useState(false);
+    const [errorMessage, setErrorMessage] = useState("");
 
     // Memoized worker creation
     const imageWorker = useMemo(() => {
@@ -972,7 +975,10 @@ const UniversalDocumentScanner = () => {
                         <input
                             type="text"
                             value={mrn}
-                            onChange={(e) => setMrn(e.target.value)}
+                            onChange={(e) => {
+                                setMrn(e.target.value);
+                                setErrorMessage(""); // Clear error when user types
+                            }}
                             className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
                             placeholder="e.g., MRN123456"
                             disabled={loadingMRN}
@@ -984,6 +990,8 @@ const UniversalDocumentScanner = () => {
 
                                 try {
                                     setLoadingMRN(true);
+                                    setErrorMessage(""); // Reset previous error
+
                                     const response = await getMRN({ mrn });
                                     const patientResults = response?.data?.data?.patientMRN?.results;
 
@@ -995,10 +1003,12 @@ const UniversalDocumentScanner = () => {
                                         setPatientName(names.join(", "));
                                     } else {
                                         setPatientName("");
+                                        setErrorMessage("The user is not registered in Bahmni. Please verify the MRN and try again.");
                                     }
                                 } catch (err) {
                                     console.error(err);
                                     setPatientName("");
+                                    setErrorMessage("An error occurred while fetching the patient details. Please try again.");
                                 } finally {
                                     setLoadingMRN(false);
                                 }
@@ -1012,10 +1022,17 @@ const UniversalDocumentScanner = () => {
 
                     {patientName && (
                         <p className="mt-2 text-green-600 font-semibold">
-                            Patient Name(s): {patientName}
+                            Patient Name: {patientName}
+                        </p>
+                    )}
+
+                    {errorMessage && (
+                        <p className="mt-2 text-red-600 font-semibold">
+                            {errorMessage}
                         </p>
                     )}
                 </div>
+
 
 
 
