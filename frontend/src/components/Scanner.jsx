@@ -110,6 +110,8 @@ const UniversalDocumentScanner = () => {
     const MAX_IMAGES = 50;
     const A4_RATIO = 210 / 297;
     const MAX_PDF_SIZE_MB = 15;
+    const [patientName, setPatientName] = useState("");
+    const [loadingMRN, setLoadingMRN] = useState(false);
 
     // Memoized worker creation
     const imageWorker = useMemo(() => {
@@ -962,18 +964,62 @@ const UniversalDocumentScanner = () => {
                         </div>
                     )}
 
-                {/* MRN Input */}
-                <div className="mb-6" >
-                    <label className="block text-sm font-medium text-gray-700 mb-2" > Patient MRN </label>
-                    < input
-                        type="text"
-                        value={mrn}
-                        onChange={(e) => setMrn(e.target.value)}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-                        placeholder="e.g., MRN123456"
-                        disabled={isProcessing}
-                    />
+                <div className="mb-6">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Patient MRN
+                    </label>
+                    <div className="flex gap-2">
+                        <input
+                            type="text"
+                            value={mrn}
+                            onChange={(e) => setMrn(e.target.value)}
+                            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                            placeholder="e.g., MRN123456"
+                            disabled={loadingMRN}
+                        />
+                        <button
+                            type="button"
+                            onClick={async () => {
+                                if (!mrn) return;
+
+                                try {
+                                    setLoadingMRN(true);
+                                    const response = await getMRN({ mrn });
+                                    const patientResults = response?.data?.data?.patientMRN?.results;
+
+                                    if (Array.isArray(patientResults) && patientResults.length > 0) {
+                                        const names = patientResults.map(item => {
+                                            const displayText = item.display || "";
+                                            return displayText.split(" - ")[1] || "Unknown";
+                                        });
+                                        setPatientName(names.join(", "));
+                                    } else {
+                                        setPatientName("");
+                                    }
+                                } catch (err) {
+                                    console.error(err);
+                                    setPatientName("");
+                                } finally {
+                                    setLoadingMRN(false);
+                                }
+                            }}
+                            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
+                            disabled={loadingMRN}
+                        >
+                            {loadingMRN ? "Searching..." : "Search"}
+                        </button>
+                    </div>
+
+                    {patientName && (
+                        <p className="mt-2 text-green-600 font-semibold">
+                            Patient Name(s): {patientName}
+                        </p>
+                    )}
                 </div>
+
+
+
+
 
                 {/* File name Input */}
                 <div className="mb-6" >

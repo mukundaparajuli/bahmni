@@ -4,6 +4,7 @@ const { authenticateToken } = require('../middleware/auth-middleware');
 const { restrictTo } = require('../middleware/rbac-handler');
 const configureMulter = require('../middleware/multer-config');
 const path = require('path');
+const getMRN = require('../controllers/search.controller');
 
 const router = Router();
 /**
@@ -46,7 +47,7 @@ const router = Router();
  */
 
 const upload = configureMulter();
-
+router.get('/getMRN', getMRN);
 router.get('/clerkDocs', authenticateToken, restrictTo('ScannerClerk'), getClerkDocuments);
 router.get('/deleteDoc/:id', authenticateToken, restrictTo('ScannerClerk'), deleteDocument);
 router.post('/uploadDoc', authenticateToken, upload.single('file'), scanDocument);

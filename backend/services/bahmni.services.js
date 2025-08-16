@@ -460,6 +460,17 @@ class BahmniService {
             console.log(error)
         }
     }
+    async getPatientMRN(mrn) {
+        try {
+            console.log('finding patient MRN')
+            const response = await this._makeRequest('get', `${env.bahmni.baseUrl}/ws/rest/v1/patient?q=${encodeURIComponent(mrn)}`);
+            return response || response.data;
+        } catch (error) {
+            console.log(error);
+            throw error;
+        }
+    }
+
 
 }
 
