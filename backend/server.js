@@ -31,11 +31,11 @@ const startServer = async () => {
     console.log(`Starting server in ${env.nodeEnv} mode...`);
     try {
         // Connect to DB
-        // await db.$connect();
-        // console.log('Connected to PostgreSQL database');
+        await db.$connect();
+        console.log('Connected to PostgreSQL database');
 
-        // // Run admin seeding
-        // await seedAdmin();
+        // Run admin seeding
+        await seedAdmin();
 
         // Read SSL cert and key
         const httpsOptions = {
