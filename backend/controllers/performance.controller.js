@@ -3,10 +3,6 @@ const asyncHandler = require('../middleware/async-handler');
 const { ApiResponse } = require('../utils/api-response');
 const ExcelJS = require('exceljs');
 
-const PENDING_STATUSES = ['submitted', 'rescanned'];
-const APPROVED_STATUSES = ['approved', 'rescanned_approved'];
-const UPLOADED_STATUSES = ['uploaded'];
-
 const parseDateRange = (startDateStr, endDateStr) => {
 	let startDate;
 	let endDate;
@@ -32,6 +28,23 @@ const buildReportingPeriodLabel = (startDate, endDate) => {
 	return `${s} to ${e}`;
 };
 
+const buildWhereClause = (startDate, endDate, statusFilter) => {
+	const whereClause = {
+		scannedAt: {
+			gte: startDate,
+			lte: endDate,
+		},
+	};
+
+	// Add status filter if provided
+	if (statusFilter) {
+		whereClause.status = statusFilter;
+	}
+
+	return whereClause;
+};
+
+// Remove the categorized status arrays since we'll use actual statuses
 const computeSummaries = (documents, reportingPeriod) => {
 	const summariesByUserId = new Map();
 
@@ -45,20 +58,25 @@ const computeSummaries = (documents, reportingPeriod) => {
 				fullName: user.fullName,
 				department: user.department?.name || 'N/A',
 				totalCharts: 0,
-				status: { pending: 0, approved: 0, uploaded: 0 },
+				status: {
+					draft: 0,
+					submitted: 0,
+					approved: 0,
+					rejected: 0,
+					uploaded: 0,
+					rescanned: 0,
+					rescanned_approved: 0,
+					rescanned_draft: 0
+				},
 				reportingPeriod,
 			});
 		}
 		const entry = summariesByUserId.get(key);
 		entry.totalCharts += 1;
-		if (PENDING_STATUSES.includes(doc.status)) {
-			entry.status.pending += 1;
-		}
-		if (APPROVED_STATUSES.includes(doc.status)) {
-			entry.status.approved += 1;
-		}
-		if (UPLOADED_STATUSES.includes(doc.status)) {
-			entry.status.uploaded += 1;
+
+		// Increment the specific status count
+		if (entry.status.hasOwnProperty(doc.status)) {
+			entry.status[doc.status] += 1;
 		}
 	});
 
@@ -66,17 +84,14 @@ const computeSummaries = (documents, reportingPeriod) => {
 };
 
 exports.getPerformanceSummaries = asyncHandler(async (req, res) => {
-	const { startDate: startDateStr, endDate: endDateStr } = req.query;
+	const { startDate: startDateStr, endDate: endDateStr, status: statusFilter } = req.query;
 	const { startDate, endDate } = parseDateRange(startDateStr, endDateStr);
 	const reportingPeriod = buildReportingPeriodLabel(startDate, endDate);
 
+	const whereClause = buildWhereClause(startDate, endDate, statusFilter);
+
 	const documents = await db.document.findMany({
-		where: {
-			scannedAt: {
-				gte: startDate,
-				lte: endDate,
-			},
-		},
+		where: whereClause,
 		select: {
 			status: true,
 			scannerId: true,
@@ -96,17 +111,14 @@ exports.getPerformanceSummaries = asyncHandler(async (req, res) => {
 });
 
 exports.exportPerformanceSummaries = asyncHandler(async (req, res) => {
-	const { startDate: startDateStr, endDate: endDateStr } = req.query;
+	const { startDate: startDateStr, endDate: endDateStr, status: statusFilter } = req.query;
 	const { startDate, endDate } = parseDateRange(startDateStr, endDateStr);
 	const reportingPeriod = buildReportingPeriodLabel(startDate, endDate);
 
+	const whereClause = buildWhereClause(startDate, endDate, statusFilter);
+
 	const documents = await db.document.findMany({
-		where: {
-			scannedAt: {
-				gte: startDate,
-				lte: endDate,
-			},
-		},
+		where: whereClause,
 		select: {
 			status: true,
 			scannerId: true,
@@ -131,9 +143,14 @@ exports.exportPerformanceSummaries = asyncHandler(async (req, res) => {
 		{ header: 'Full Name', key: 'fullName', width: 28 },
 		{ header: 'Department', key: 'department', width: 22 },
 		{ header: 'Total Charts', key: 'totalCharts', width: 16 },
-		{ header: 'Pending', key: 'pending', width: 12 },
+		{ header: 'Draft', key: 'draft', width: 12 },
+		{ header: 'Submitted', key: 'submitted', width: 12 },
 		{ header: 'Approved', key: 'approved', width: 12 },
+		{ header: 'Rejected', key: 'rejected', width: 12 },
 		{ header: 'Uploaded', key: 'uploaded', width: 12 },
+		{ header: 'Rescanned', key: 'rescanned', width: 12 },
+		{ header: 'Rescanned Approved', key: 'rescannedApproved', width: 18 },
+		{ header: 'Rescanned Draft', key: 'rescannedDraft', width: 16 },
 		{ header: 'Reporting Period', key: 'reportingPeriod', width: 28 },
 	];
 
@@ -143,17 +160,24 @@ exports.exportPerformanceSummaries = asyncHandler(async (req, res) => {
 			fullName: s.fullName,
 			department: s.department,
 			totalCharts: s.totalCharts,
-			pending: s.status.pending,
+			draft: s.status.draft,
+			submitted: s.status.submitted,
 			approved: s.status.approved,
+			rejected: s.status.rejected,
 			uploaded: s.status.uploaded,
+			rescanned: s.status.rescanned,
+			rescannedApproved: s.status.rescanned_approved,
+			rescannedDraft: s.status.rescanned_draft,
 			reportingPeriod: s.reportingPeriod,
 		});
 	});
 
 	const buffer = await workbook.xlsx.writeBuffer();
-	const fileName = `performance_${startDate.toISOString().split('T')[0]}_to_${endDate
-		.toISOString()
-		.split('T')[0]}.xlsx`;
+	let fileName = `performance_${startDate.toISOString().split('T')[0]}_to_${endDate.toISOString().split('T')[0]}`;
+	if (statusFilter) {
+		fileName += `_${statusFilter}`;
+	}
+	fileName += '.xlsx';
 
 	res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
 	res.setHeader('Content-Disposition', `attachment; filename=${fileName}`);

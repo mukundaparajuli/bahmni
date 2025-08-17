@@ -8,7 +8,6 @@ import axiosInstance from '@/api/axios-instance';
 import useToastError from '@/hooks/useToastError';
 import { Button } from '@/components/ui/button';
 
-import { compressFile, formatFileSize, validateFile } from '@/utils/compression';
 import { FiCamera, FiUpload, FiX, FiTrash2, FiCheck, FiPaperclip, FiZap, FiZapOff, FiTarget, FiRotateCw, FiSettings } from 'react-icons/fi';
 
 // Web Worker code for image processing

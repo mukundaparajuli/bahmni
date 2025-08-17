@@ -2,7 +2,19 @@ import { useEffect, useMemo, useState } from 'react';
 import axiosInstance from '@/api/axios-instance';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, PieChart, Pie, Cell } from 'recharts';
 
-const COLORS = ['#F59E0B', '#10B981', '#3B82F6'];
+const COLORS = ['#F59E0B', '#10B981', '#3B82F6', '#EF4444', '#8B5CF6', '#F97316', '#06B6D4', '#84CC16'];
+
+const STATUS_OPTIONS = [
+	{ value: '', label: 'All Statuses' },
+	{ value: 'draft', label: 'Draft' },
+	{ value: 'submitted', label: 'Submitted' },
+	{ value: 'approved', label: 'Approved' },
+	{ value: 'rejected', label: 'Rejected' },
+	{ value: 'uploaded', label: 'Uploaded' },
+	{ value: 'rescanned', label: 'Rescanned' },
+	{ value: 'rescanned_approved', label: 'Rescanned Approved' },
+	{ value: 'rescanned_draft', label: 'Rescanned Draft' },
+];
 
 const PerformanceSummary = () => {
 	const [startDate, setStartDate] = useState(() => {
@@ -11,6 +23,7 @@ const PerformanceSummary = () => {
 		return d.toISOString().split('T')[0];
 	});
 	const [endDate, setEndDate] = useState(() => new Date().toISOString().split('T')[0]);
+	const [statusFilter, setStatusFilter] = useState('');
 	const [view, setView] = useState('table');
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState('');
@@ -20,7 +33,11 @@ const PerformanceSummary = () => {
 		setLoading(true);
 		setError('');
 		try {
-			const res = await axiosInstance.get('/performance', { params: { startDate, endDate } });
+			const params = { startDate, endDate };
+			if (statusFilter) {
+				params.status = statusFilter;
+			}
+			const res = await axiosInstance.get('/performance', { params });
 			setData(res.data?.data || []);
 		} catch (e) {
 			setError(e?.response?.data?.message || 'Failed to fetch performance data');
@@ -41,28 +58,46 @@ const PerformanceSummary = () => {
 	const totals = useMemo(() => {
 		return data.reduce(
 			(acc, cur) => {
-				acc.pending += cur.status?.pending || 0;
+				acc.draft += cur.status?.draft || 0;
+				acc.submitted += cur.status?.submitted || 0;
 				acc.approved += cur.status?.approved || 0;
+				acc.rejected += cur.status?.rejected || 0;
 				acc.uploaded += cur.status?.uploaded || 0;
+				acc.rescanned += cur.status?.rescanned || 0;
+				acc.rescanned_approved += cur.status?.rescanned_approved || 0;
+				acc.rescanned_draft += cur.status?.rescanned_draft || 0;
 				return acc;
 			},
-			{ pending: 0, approved: 0, uploaded: 0 }
+			{
+				draft: 0,
+				submitted: 0,
+				approved: 0,
+				rejected: 0,
+				uploaded: 0,
+				rescanned: 0,
+				rescanned_approved: 0,
+				rescanned_draft: 0
+			}
 		);
 	}, [data]);
 
-	const pieData = useMemo(
-		() => [
-			{ name: 'Pending', value: totals.pending },
-			{ name: 'Approved', value: totals.approved },
-			{ name: 'Uploaded', value: totals.uploaded },
-		],
-		[totals]
-	);
+	const pieData = useMemo(() => {
+		return Object.entries(totals)
+			.filter(([_, value]) => value > 0)
+			.map(([name, value]) => ({
+				name: name.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+				value
+			}));
+	}, [totals]);
 
 	const onDownload = async () => {
 		try {
+			const params = { startDate, endDate };
+			if (statusFilter) {
+				params.status = statusFilter;
+			}
 			const res = await axiosInstance.get('/performance/export', {
-				params: { startDate, endDate },
+				params,
 				responseType: 'blob',
 			});
 			const blob = new Blob([res.data], { type: res.headers['content-type'] });
@@ -82,7 +117,7 @@ const PerformanceSummary = () => {
 	};
 
 	return (
-		<div className="p-4">
+		<div className="p-4 max-w-screen overflow-y-scroll">
 			<div className="flex flex-wrap items-end gap-4 mb-4">
 				<div>
 					<label className="block text-sm font-medium">Start Date</label>
@@ -91,6 +126,20 @@ const PerformanceSummary = () => {
 				<div>
 					<label className="block text-sm font-medium">End Date</label>
 					<input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="border rounded px-2 py-1" />
+				</div>
+				<div>
+					<label className="block text-sm font-medium">Status</label>
+					<select
+						value={statusFilter}
+						onChange={(e) => setStatusFilter(e.target.value)}
+						className="border rounded px-2 py-1 min-w-[150px]"
+					>
+						{STATUS_OPTIONS.map(option => (
+							<option key={option.value} value={option.value}>
+								{option.label}
+							</option>
+						))}
+					</select>
 				</div>
 				<button onClick={onApply} className="bg-blue-600 text-white px-4 py-2 rounded">
 					Apply
@@ -116,9 +165,14 @@ const PerformanceSummary = () => {
 								<th className="px-4 py-2 border">Full Name</th>
 								<th className="px-4 py-2 border">Department</th>
 								<th className="px-4 py-2 border">Total Charts Processed</th>
-								<th className="px-4 py-2 border">Pending</th>
+								<th className="px-4 py-2 border">Draft</th>
+								<th className="px-4 py-2 border">Submitted</th>
 								<th className="px-4 py-2 border">Approved</th>
+								<th className="px-4 py-2 border">Rejected</th>
 								<th className="px-4 py-2 border">Uploaded</th>
+								<th className="px-4 py-2 border">Rescanned</th>
+								<th className="px-4 py-2 border">Rescanned Approved</th>
+								<th className="px-4 py-2 border">Rescanned Draft</th>
 								<th className="px-4 py-2 border">Reporting Period</th>
 							</tr>
 						</thead>
@@ -129,9 +183,14 @@ const PerformanceSummary = () => {
 									<td className="px-4 py-2 border">{row.fullName}</td>
 									<td className="px-4 py-2 border">{row.department}</td>
 									<td className="px-4 py-2 border">{row.totalCharts}</td>
-									<td className="px-4 py-2 border">{row.status?.pending || 0}</td>
+									<td className="px-4 py-2 border">{row.status?.draft || 0}</td>
+									<td className="px-4 py-2 border">{row.status?.submitted || 0}</td>
 									<td className="px-4 py-2 border">{row.status?.approved || 0}</td>
+									<td className="px-4 py-2 border">{row.status?.rejected || 0}</td>
 									<td className="px-4 py-2 border">{row.status?.uploaded || 0}</td>
+									<td className="px-4 py-2 border">{row.status?.rescanned || 0}</td>
+									<td className="px-4 py-2 border">{row.status?.rescanned_approved || 0}</td>
+									<td className="px-4 py-2 border">{row.status?.rescanned_draft || 0}</td>
 									<td className="px-4 py-2 border">{row.reportingPeriod}</td>
 								</tr>
 							))}

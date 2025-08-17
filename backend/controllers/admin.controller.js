@@ -3,6 +3,9 @@ const db = require("../config/db");
 const asyncHandler = require("../middleware/async-handler");
 const { ApiResponse } = require("../utils/api-response");
 const { bahmniService } = require("../services/bahmni.services");
+const path = require("path");
+const env = require("../config/env");
+const fs = require("fs").promises;
 
 exports.getAllDocuments = asyncHandler(async (req, res) => {
     // Parse query parameters
@@ -320,7 +323,8 @@ exports.getOverview = asyncHandler(async (req, res) => {
 })
 
 exports.replaceDocumentInBahmni = asyncHandler(async (req, res) => {
-    const { id } = req.body;
+    console.log(req.body)
+    const { id, mrnNumber } = req.body;
 
     const file = req.file;
 
@@ -337,7 +341,6 @@ exports.replaceDocumentInBahmni = asyncHandler(async (req, res) => {
     if (!document) {
         return ApiResponse(res, 404, null, 'Document not found');
     }
-
     let newFilePath;
     let newFileName = document.fileName;
 
@@ -352,51 +355,16 @@ exports.replaceDocumentInBahmni = asyncHandler(async (req, res) => {
         newFilePath = `/uploads/documents/${file.filename}`;
     }
 
-    await db.document.update({
-        where: { id: parseInt(id) },
-        data: {
-            fileName: newFileName,
-            filePath: newFilePath,
-        }
-    });
+
 
     // get the bahmni url
     const bahmniUrl = document.bahmniUrl;
+    const visitUuid = document.visitUUid;
 
     if (!bahmniUrl) {
         const error = new Error("Bahmni url not found, document might not have been uploaded");
         error.status(404);
         throw error;
-    }
-
-    // delete that document from the bahmni
-    const deletedDoc = await bahmniService.deleteDocument(bahmniUrl);
-
-    // <-------------------------------------uploading to bahmni ---------------------------------------->
-
-
-    // Read file content
-    const baseDir = path.resolve(__dirname, "..");
-    const filePath = path.join(baseDir, document.filePath);
-    let fileContent;
-
-    // read the file
-    try {
-        await fs.access(filePath); // Check if file exists
-        const stats = await fs.stat(filePath);
-
-        // Check file size (limit to 10MB for safety)
-        const maxSize = 10 * 1024 * 1024; // 10MB
-        if (stats.size > maxSize) {
-            throw new ApiError(400, `File too large: ${(stats.size / (1024 * 1024)).toFixed(2)}MB. Maximum allowed: 10MB`);
-        }
-
-        console.log(`Reading file: ${filePath} (${(stats.size / (1024 * 1024)).toFixed(2)}MB)`);
-        fileContent = await fs.readFile(filePath);
-    } catch (err) {
-        console.error("File read error:", err);
-        if (err instanceof ApiError) throw err;
-        throw new ApiError(404, "Document file not found on server");
     }
 
 
@@ -409,13 +377,73 @@ exports.replaceDocumentInBahmni = asyncHandler(async (req, res) => {
         bahmniService.getLocationUuidByName(env.bahmni.locationName || "Bahmni Clinic"),
     ]);
 
+    // Get additional UUIDs needed for linking
+    const [visitTypeUuid, encounterTypeUuid] = await Promise.all([
+        bahmniService.getVisitTypeId(env.bahmni.visitType || "OPD"),
+        bahmniService.getEncounterTypeId("Patient Document")
+    ]);
 
-    // Create visit
-    const visitUuid = await bahmniService.createVisit(
+
+    const testUUid = await bahmniService.getTestUuid();
+    const { startDatetime, stopDatetime } = await bahmniService.getVisitStartDateAndEndDate(visitUuid);
+
+
+    // delete that document from the bahmni
+    const deletedDoc = await bahmniService.deleteDocument(bahmniUrl);
+
+    await bahmniService.linkDocumentToPatient({
         patientUuid,
-        env.bahmni.visitType || "OPD",
-        env.bahmni.locationName || "Bahmni Clinic"
-    );
+        visitTypeUuid,
+        visitStartDate: startDatetime,
+        encounterTypeUuid,
+        encounterDateTime: null,
+        providerUuid,
+        visitUuid,
+        locationUuid,
+        documents: [
+            {
+                testUuid: testUUid,
+                image: bahmniUrl,
+                obsDateTime: null,
+            },
+        ],
+    });
+
+
+    // <-------------------------------------uploading to bahmni ---------------------------------------->
+
+
+    // Read file content
+    const baseDir = path.resolve(__dirname, "..");
+    const filePath = path.join(baseDir, newFilePath);
+    let fileContent;
+
+    // read the file
+    try {
+        await fs.access(filePath); // Check if file exists
+        const stats = await fs.stat(filePath);
+
+        // Check file size (limit to 10MB for safety)
+        const maxSize = 10 * 1024 * 1024; // 10MB
+        if (stats.size > maxSize) {
+            throw new Error(`File too large: ${(stats.size / (1024 * 1024)).toFixed(2)}MB. Maximum allowed: 10MB`);
+        }
+
+        console.log(`Reading file: ${filePath} (${(stats.size / (1024 * 1024)).toFixed(2)}MB)`);
+        fileContent = await fs.readFile(filePath);
+    } catch (err) {
+        console.error("File read error:", err);
+    }
+
+
+
+
+    // // Create visit
+    // const visitUuid = await bahmniService.createVisit(
+    //     patientUuid,
+    //     env.bahmni.visitType || "OPD",
+    //     env.bahmni.locationName || "Bahmni Clinic"
+    // );
 
     // Prepare document data
     const fileName = document.fileName || path.basename(filePath);
@@ -438,18 +466,11 @@ exports.replaceDocumentInBahmni = asyncHandler(async (req, res) => {
     });
 
     if (!uploadResponse?.url) {
-        throw new ApiError(500, "Failed to upload document to Bahmni");
+        throw new Error("Failed to upload document to Bahmni");
     }
 
-    // Get additional UUIDs needed for linking
-    const [visitTypeUuid, encounterTypeUuid] = await Promise.all([
-        bahmniService.getVisitTypeId(env.bahmni.visitType || "OPD"),
-        bahmniService.getEncounterTypeId("Patient Document")
-    ]);
 
-    const testUUid = await bahmniService.getTestUuid();
-    const now = new Date().toISOString();
-    const { startDatetime, stopDatetime } = await bahmniService.getVisitStartDateAndEndDate(visitUuid);
+
 
     // Link document to patient
     await bahmniService.linkDocumentToPatient({
@@ -475,7 +496,9 @@ exports.replaceDocumentInBahmni = asyncHandler(async (req, res) => {
         where: { id: +id },
         data: {
             status: "uploaded",
-            // bahmniUrl: uploadResponse.url,
+            filePath: newFilePath,
+            fileName: newFileName,
+            bahmniUrl: uploadResponse.url,
             uploadedAt: new Date(),
         },
     });

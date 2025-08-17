@@ -112,7 +112,6 @@ const uploadToBahmni = async (req, res, next) => {
             patientUuid,
             visitTypeUuid,
             visitStartDate: startDatetime,
-            // visitEndDate: stopDatetime,
             encounterTypeUuid,
             encounterDateTime: null,
             providerUuid,
@@ -132,21 +131,21 @@ const uploadToBahmni = async (req, res, next) => {
             where: { id: +documentId },
             data: {
                 status: "uploaded",
-                // bahmniUrl: uploadResponse.url,
+                visitUUid: visitUuid,
+                bahmniUrl: uploadResponse.url,
+                uploaderId: req.user.id,
                 uploadedAt: new Date(),
             },
         });
 
-        return res.status(200).json({
-            success: true,
-            data: {
-                bahmniUrl: uploadResponse.url,
-                documentId: +documentId,
-                patientUuid,
-                visitUuid,
-            },
-            message: "Document successfully uploaded to Bahmni",
-        });
+        return ApiResponse(res, 200, {
+            bahmniUrl: uploadResponse.url,
+            documentId: +documentId,
+            patientUuid,
+            visitUuid
+        }, "Document uploaded to bahmni successfully")
+
+
 
     } catch (error) {
         console.error("Bahmni upload error:", error);

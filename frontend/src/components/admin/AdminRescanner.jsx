@@ -98,7 +98,7 @@ const AdminRescanner = () => {
     const MAX_IMAGES = 50;
     const A4_RATIO = 210 / 297;
     const MAX_PDF_SIZE_MB = 15;
-
+    console.log("here")
     const imageWorker = useMemo(() => {
         if (typeof window !== 'undefined' && 'Worker' in window && 'OffscreenCanvas' in window) {
             try {
@@ -538,6 +538,7 @@ const AdminRescanner = () => {
     }, [showSuccess, showError]);
 
     const generateAndUploadPdf = async (statusType) => {
+        console.log(id)
         if (capturedImages.length === 0) {
             showError(new Error('Please capture at least one image'), 'Validation Error');
             return;
@@ -701,10 +702,12 @@ const AdminRescanner = () => {
             );
 
             const formData = new FormData();
+            console.log(id);
             formData.append('id', id);
+            formData.append('mrnNumber', patientMRN);
             formData.append('file', pdfFile);
 
-            await axiosInstance.post('/admin/rescan', formData);
+            await axiosInstance.post('/admin/replace', formData);
             setIsProcessing(false);
             showSuccess('PDF uploaded successfully!');
             setCapturedImages([]);

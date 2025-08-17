@@ -10,7 +10,7 @@ export function Overview() {
         queryKey: ['overview'],
         queryFn: getOverview,
     })
-    data = data.data.data;
+    data = data?.data?.data;
     console.log(data);
 
     if (error) {

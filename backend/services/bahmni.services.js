@@ -29,7 +29,7 @@ class BahmniService {
     }
 
     async _makeRequest(method, url, data, headers = {}, retryCount = 0) {
-        const maxRetries = env.bahmni.retryAttempts || 3;
+        const maxRetries = env.bahmni.retryAttempts || 1;
         const retryDelay = (env.bahmni.retryDelay || 1000) * Math.pow(2, retryCount);
 
         try {

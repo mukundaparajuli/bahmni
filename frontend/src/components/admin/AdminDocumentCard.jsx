@@ -31,10 +31,7 @@ const AdminDocumentCard = ({
     onReplace,
     onRemove,
     permissions = {
-        canRescan: true,
-        canUpload: true,
         canReplace: true,
-        canRemove: true
     }
 }) => {
     const { showError, showSuccess } = useToastError();
@@ -186,7 +183,7 @@ const AdminDocumentCard = ({
                 </div>
 
                 {/* Management Actions Dropdown */}
-                <DropdownMenu>
+                {status === 'uploaded' && <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <Button
                             variant="ghost"
@@ -227,7 +224,7 @@ const AdminDocumentCard = ({
                         )}
 
                     </DropdownMenuContent>
-                </DropdownMenu>
+                </DropdownMenu>}
             </div>
 
             {/* Content */}

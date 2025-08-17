@@ -128,6 +128,7 @@ model Document {
   status     DocumentStatus @default(draft)
   comment    String         @default("")
   bahmniUrl  String?        @unique
+  visitUUid  String?
   scannedAt  DateTime       @default(now())
   reviewedAt DateTime?
   uploadedAt DateTime?

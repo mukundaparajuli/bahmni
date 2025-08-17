@@ -141,7 +141,7 @@ const DisplayScannedDocs = () => {
                     <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                         {documents.length > 0 ? (
                             documents.map((doc) => (
-                                <ScannedDocumentCard key={doc.id} document={doc} />
+                                <ScannedDocumentCard key={doc.id} document={doc} isScanner />
                             ))
                         ) : (
                             <div className="text-center py-12 col-span-full">

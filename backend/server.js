@@ -33,7 +33,6 @@ const startServer = async () => {
         // Connect to DB
         await db.$connect();
         console.log('Connected to PostgreSQL database');
-
         // Run admin seeding
         await seedAdmin();
 
