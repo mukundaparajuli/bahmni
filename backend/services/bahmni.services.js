@@ -28,56 +28,40 @@ class BahmniService {
         };
     }
 
-    async _makeRequest(method, url, data, headers = {}, retryCount = 0) {
-        const maxRetries = env.bahmni.retryAttempts || 1;
-        const retryDelay = (env.bahmni.retryDelay || 1000) * Math.pow(2, retryCount);
-
+    async _makeRequest(method, url, data, headers = {}) {
         try {
             const config = {
                 ...this.authConfig,
                 method,
                 url,
-                timeout: env.bahmni.timeout || 30000, // Increased timeout for uploads
+                timeout: env.bahmni.timeout || 30000,
                 maxContentLength: Infinity,
                 maxBodyLength: Infinity,
             };
 
-            // Handle different content types
             if (data) {
                 if (data instanceof FormData) {
-                    // For FormData, merge the FormData headers with auth headers
                     config.data = data;
-                    config.headers = {
-                        ...headers, // FormData headers from getHeaders()
-                    };
-                    // Don't override the Content-Type, let FormData handle it
+                    config.headers = { ...headers };
                 } else {
-                    // For JSON data
                     config.data = data;
-                    config.headers = {
-                        'Content-Type': 'application/json',
-                        ...headers
-                    };
+                    config.headers = { 'Content-Type': 'application/json', ...headers };
                 }
             } else {
-                config.headers = {
-                    'Content-Type': 'application/json',
-                    ...headers
-                };
+                config.headers = { 'Content-Type': 'application/json', ...headers };
             }
 
             console.log(`Making ${method.toUpperCase()} request to: ${url}`);
             console.log("Auth config:", {
                 username: this.authConfig.auth.username,
-                hasPassword: !!this.authConfig.auth.password
+                hasPassword: !!this.authConfig.auth.password,
             });
 
             if (data && method.toLowerCase() !== 'get') {
                 if (data instanceof FormData) {
                     console.log("Request with FormData - fields:", Object.keys(data.getHeaders()));
-                    // Log FormData fields without exposing content
                     const fields = [];
-                    data._streams.forEach((stream, index) => {
+                    data._streams.forEach((stream) => {
                         if (typeof stream === 'string' && stream.includes('name="')) {
                             const match = stream.match(/name="([^"]+)"/);
                             if (match) fields.push(match[1]);
@@ -95,18 +79,15 @@ class BahmniService {
             return response.data;
 
         } catch (error) {
-            console.error(`Request failed (attempt ${retryCount + 1}/${maxRetries + 1}):`, error.message);
+            console.error(`Request failed:`, error.message);
             console.error("Error code:", error.code);
             console.error("Response status:", error.response?.status);
 
-            if (retryCount < maxRetries && this._isRetryable(error)) {
-                console.log(`Retrying in ${retryDelay}ms...`);
-                await new Promise((resolve) => setTimeout(resolve, retryDelay));
-                return this._makeRequest(method, url, data, headers, retryCount + 1);
-            }
+            // ❌ No retries, just throw formatted error
             throw this._formatError(error);
         }
     }
+
 
     _isRetryable(error) {
         return (
