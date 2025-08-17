@@ -35,6 +35,7 @@ import ApproverInfo from './components/admin/ApproverInfo';
 import UploaderInfo from './components/admin/UploaderInfo';
 import { Overview } from './components/admin/Overview';
 import AdminRescanner from './components/admin/AdminRescanner';
+import PerformanceSummary from './components/admin/PerformanceSummary';
 
 const App = () => (
   <>
@@ -72,6 +73,7 @@ const App = () => (
             <Route path="uploader/:id" element={<UploaderInfo />} />
 
             <Route path="documents" element={<DocumentsList />} />
+            <Route path="performance" element={<PerformanceSummary />} />
 
             {/* rescan uploaded docs */}
             <Route path="rescan" element={<AdminRescanner />} />

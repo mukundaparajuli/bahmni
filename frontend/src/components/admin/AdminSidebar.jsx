@@ -57,6 +57,11 @@ const items = [
         url: "/admin/documents",
         icon: BookAIcon,
     },
+    {
+        title: "Performance Summary",
+        url: "/admin/performance",
+        icon: Copy,
+    },
 
 ]
 export function AppSidebar() {

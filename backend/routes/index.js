@@ -15,4 +15,5 @@ router.use('/approver', approverRoutes)
 router.use('/options', optionsRoutes)
 router.use('/admin', adminRoutes)
 router.use('/uploader', uploaderRoutes);
+router.use('/performance', require('../routes/performance.route'));
 module.exports = router;
