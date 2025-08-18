@@ -21,7 +21,8 @@ module.exports = {
         baseUrl: process.env.BAHMNI_BASE_URL.replace(/\/$/, ''),
         bahmniUsername: process.env.BAHMNI_USERNAME,
         bahmniPassword: process.env.BAHMNI_PASSWORD,
-
+        locationName: "OPD-1",
+        visitType: "OPD",
         // API Endpoints (relative paths)
         endpoints: {
             uploadDoc: '/ws/rest/v1/bahmnicore/visitDocument/uploadDocument',

@@ -165,7 +165,7 @@ class BahmniService {
                 encounterTypeName: documentData.encounterTypeName,
                 fileType: documentData.fileType,
                 fileName: documentData.fileName,
-                visitUuid: documentData.visitUuid
+
             };
 
             console.log("Sending JSON payload exactly like Postman...");
@@ -272,18 +272,26 @@ class BahmniService {
         }
     }
 
-    async getProviderUuid() {
+    async getProviderUuid(patientUuid, encounterType) {
         try {
             console.log("Getting provider UUID from session...");
 
-            const response = await this._makeRequest("get", `${env.bahmni.baseUrl}/ws/rest/v1/session`);
+            const url = `${env.bahmni.baseUrl}/ws/rest/v1/encounter?encounterType=${encounterType}&order=desc&patient=${patientUuid}&v=custom:(uuid,provider,visit:(uuid,startDatetime,stopDatetime),obs:(uuid,concept:(uuid,name),groupMembers:(id,uuid,obsDatetime,value,comment)))`;
 
-            if (!response.user?.uuid) {
-                throw new Error("Provider UUID not found in session response");
+            const response = await this._makeRequest("get", url);
+            console.log(response);
+
+            if (!response.results || response.results.length === 0) {
+                throw new Error("No encounters found for this patient and encounter type");
             }
 
-            console.log(`Provider UUID: ${response.currentProvider.uuid}`);
-            return response.currentProvider.uuid;
+            const providerUuid = response.results[0].provider?.uuid;
+            if (!providerUuid) {
+                throw new Error("Provider not found in encounter");
+            }
+
+            console.log(`Provider UUID: ${providerUuid}`);
+            return providerUuid;
 
         } catch (error) {
             console.error("Provider lookup failed:", error);
@@ -291,13 +299,14 @@ class BahmniService {
         }
     }
 
+
     async getVisitTypeId(visitType) {
         try {
-            console.log(`Looking up visit type: ${visitType}`);
+            console.log(`Looking up visit type: ${visitType} `);
 
             const response = await this._makeRequest(
                 "get",
-                `${env.bahmni.baseUrl}/ws/rest/v1/visittype?q=${encodeURIComponent(visitType)}`
+                `${env.bahmni.baseUrl}/ws/rest/v1/visittype?q=${encodeURIComponent(visitType)} `
             );
 
             if (!response.results?.length) {
@@ -305,22 +314,22 @@ class BahmniService {
             }
 
             const visitTypeUuid = response.results[0].uuid;
-            console.log(`Visit type UUID: ${visitTypeUuid}`);
+            console.log(`Visit type UUID: ${visitTypeUuid} `);
             return visitTypeUuid;
 
         } catch (error) {
             console.error("Visit type lookup failed:", error);
-            throw new Error(`Failed to get visit type UUID: ${error.message}`);
+            throw new Error(`Failed to get visit type UUID: ${error.message} `);
         }
     }
 
     async getEncounterTypeId(encounterType) {
         try {
-            console.log(`Looking up encounter type: ${encounterType}`);
+            console.log(`Looking up encounter type: ${encounterType} `);
 
             const response = await this._makeRequest(
                 "get",
-                `${env.bahmni.baseUrl}/ws/rest/v1/encountertype?q=${encodeURIComponent(encounterType)}`
+                `${env.bahmni.baseUrl}/ws/rest/v1/encountertype?q=${encodeURIComponent(encounterType)} `
             );
 
             if (!response.results?.length) {
@@ -328,22 +337,22 @@ class BahmniService {
             }
 
             const encounterTypeUuid = response.results[0].uuid;
-            console.log(`Encounter type UUID: ${encounterTypeUuid}`);
+            console.log(`Encounter type UUID: ${encounterTypeUuid} `);
             return encounterTypeUuid;
 
         } catch (error) {
             console.error("Encounter type lookup failed:", error);
-            throw new Error(`Failed to get encounter type UUID: ${error.message}`);
+            throw new Error(`Failed to get encounter type UUID: ${error.message} `);
         }
     }
 
     async getLocationUuidByName(locationName) {
         try {
-            console.log(`Looking up location: ${locationName}`);
+            console.log(`Looking up location: ${locationName} `);
 
             const response = await this._makeRequest(
                 "get",
-                `${env.bahmni.baseUrl}/ws/rest/v1/location?q=${encodeURIComponent(locationName)}`
+                `${env.bahmni.baseUrl}/ws/rest/v1/location?q=${encodeURIComponent(locationName)} `
             );
 
             if (!response.results?.length) {
@@ -351,12 +360,12 @@ class BahmniService {
             }
 
             const locationUuid = response.results[0].uuid;
-            console.log(`Location UUID: ${locationUuid}`);
+            console.log(`Location UUID: ${locationUuid} `);
             return locationUuid;
 
         } catch (error) {
             console.error("Location lookup failed:", error);
-            throw new Error(`Failed to get location UUID: ${error.message}`);
+            throw new Error(`Failed to get location UUID: ${error.message} `);
         }
     }
 
@@ -391,22 +400,22 @@ class BahmniService {
                 throw new Error("Failed to create visit - no UUID returned");
             }
 
-            console.log(`Visit created successfully - UUID: ${response.uuid}`);
+            console.log(`Visit created successfully - UUID: ${response.uuid} `);
             return response.uuid;
 
         } catch (error) {
             console.error("Visit creation failed:", error);
-            throw new Error(`Failed to create visit: ${error.message}`);
+            throw new Error(`Failed to create visit: ${error.message} `);
         }
     }
 
     async getTestUuid() {
         try {
-            const response = await this._makeRequest('get', `${env.bahmni.baseUrl}/ws/rest/v1/concept?s=byFullySpecifiedName&name=Patient+Document&v=custom:(uuid,setMembers:(uuid,name:(name)))`);
+            const response = await this._makeRequest('get', `${env.bahmni.baseUrl}/ws/rest/v1/concept?s=byFullySpecifiedName&name=Patient+Document&v=custom:(uuid,setMembers:(uuid, name: (name)))`);
             return response.results[0].setMembers[2].uuid;
         } catch (err) {
             console.log("test uuid fetch error", err);
-            throw new Error(`Failed to get uuid: ${err.message}`);
+            throw new Error(`Failed to get uuid: ${err.message} `);
         }
     }
 
@@ -416,7 +425,7 @@ class BahmniService {
 
             const response = await this._makeRequest(
                 "post",
-                `${env.bahmni.baseUrl}${env.bahmni.verifyDetails}`,
+                `${env.bahmni.baseUrl}${env.bahmni.verifyDetails} `,
                 data
             );
 
@@ -425,7 +434,7 @@ class BahmniService {
 
         } catch (error) {
             console.error("Document linking failed:", error);
-            throw new Error(`Failed to link document: ${error.message}`);
+            throw new Error(`Failed to link document: ${error.message} `);
         }
     }
 
@@ -433,7 +442,7 @@ class BahmniService {
         try {
             console.log("deleting the document...");
 
-            const response = await this._makeRequest('delete', `${env.bahmni.baseUrl}/ws/rest/v1/bahmnicore/visitDocument?filename=${documentUrl}`);
+            const response = await this._makeRequest('delete', `${env.bahmni.baseUrl}/ws/rest/v1/bahmnicore/visitDocument?filename=${documentUrl} `);
 
             console.log("Document was deleted successfully")
             return response;
@@ -444,7 +453,7 @@ class BahmniService {
     async getPatientMRN(mrn) {
         try {
             console.log('finding patient MRN')
-            const response = await this._makeRequest('get', `${env.bahmni.baseUrl}/ws/rest/v1/patient?q=${encodeURIComponent(mrn)}`);
+            const response = await this._makeRequest('get', `${env.bahmni.baseUrl}/ws/rest/v1/patient?q=${encodeURIComponent(mrn)} `);
             return response || response.data;
         } catch (error) {
             console.log(error);

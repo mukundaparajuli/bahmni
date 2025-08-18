@@ -59,10 +59,14 @@ const uploadToBahmni = async (req, res, next) => {
 
         // Get patient UUID first to ensure patient exists
         const patientUuid = await bahmniService.getPatientUuid(mrnNumber);
-
+        const [visitTypeUuid, encounterTypeUuid] = await Promise.all([
+            bahmniService.getVisitTypeId(env.bahmni.visitType || "OPD"),
+            bahmniService.getEncounterTypeId("Patient Document")
+        ]);
+        console.log('this is encounter type', encounterTypeUuid);
         // Prepare other required UUIDs in parallel
         const [providerUuid, locationUuid] = await Promise.all([
-            bahmniService.getProviderUuid(),
+            bahmniService.getProviderUuid(patientUuid, encounterTypeUuid),
             bahmniService.getLocationUuidByName(env.bahmni.locationName || "Bahmni Clinic"),
         ]);
 
@@ -98,10 +102,7 @@ const uploadToBahmni = async (req, res, next) => {
         }
 
         // Get additional UUIDs needed for linking
-        const [visitTypeUuid, encounterTypeUuid] = await Promise.all([
-            bahmniService.getVisitTypeId(env.bahmni.visitType || "OPD"),
-            bahmniService.getEncounterTypeId("Patient Document")
-        ]);
+
 
         const testUUid = await bahmniService.getTestUuid();
         const now = new Date().toISOString();
