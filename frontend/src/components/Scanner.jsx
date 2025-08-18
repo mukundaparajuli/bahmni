@@ -3,12 +3,12 @@ import Webcam from 'react-webcam';
 import Cropper from 'react-cropper';
 import 'cropperjs/dist/cropper.css';
 import jsPDF from 'jspdf';
-import { getMRN } from '@/api/scanner-api';
 import axiosInstance from '@/api/axios-instance';
 import useToastError from '@/hooks/useToastError';
 import { Button } from '@/components/ui/button';
-
-import { FiCamera, FiUpload, FiX, FiTrash2, FiCheck, FiPaperclip, FiZap, FiZapOff, FiTarget, FiRotateCw, FiSettings } from 'react-icons/fi';
+import { compressFile, formatFileSize, validateFile } from '@/utils/compression';
+import { getMRN } from '@/api/scanner-api';
+import { FiCamera, FiUpload, FiX, FiTrash2, FiCheck, FiPaperclip, FiZap, FiTarget, FiRotateCw } from 'react-icons/fi';
 
 // Web Worker code for image processing
 const createImageProcessorWorker = () => {
@@ -114,6 +114,7 @@ const UniversalDocumentScanner = () => {
     const [patientName, setPatientName] = useState("");
     const [loadingMRN, setLoadingMRN] = useState(false);
     const [errorMessage, setErrorMessage] = useState("");
+    const [isMRNVerified, setIsMRNVerified] = useState(false);
 
     // Memoized worker creation
     const imageWorker = useMemo(() => {
@@ -516,7 +517,6 @@ const UniversalDocumentScanner = () => {
 
     // Performance-optimized capture
     const handleCapture = useCallback(async () => {
-        console.log("new code")
         if (capturedImages.length >= MAX_IMAGES) {
             showError(new Error(`Cannot capture more than ${MAX_IMAGES} images`), 'Limit Reached');
             return;
@@ -598,63 +598,67 @@ const UniversalDocumentScanner = () => {
     }, [showSuccess, showError]);
 
     // File upload handler
-    // const handleFileChange = async (e) => {
-    //     const file = e.target.files[0];
-    //     if (!file) return;
+    const handleFileChange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
 
-    //     setIsProcessing(true);
-    //     try {
-    //         const validation = validateFile(file, {
-    //             maxSize: 100 * 1024 * 1024, // 100MB
-    //             allowedTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'application/pdf']
-    //         });
+        setIsProcessing(true);
+        try {
+            const validation = validateFile(file, {
+                maxSize: 100 * 1024 * 1024, // 100MB
+                allowedTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'application/pdf']
+            });
 
-    //         if (!validation.isValid) {
-    //             throw new Error(validation.errors.join(', '));
-    //         }
+            if (!validation.isValid) {
+                throw new Error(validation.errors.join(', '));
+            }
 
-    //         const sizeMB = file.size / (1024 * 1024);
-    //         let processedFile = file;
+            const sizeMB = file.size / (1024 * 1024);
+            let processedFile = file;
 
-    //         // Smart compression
-    //         if (sizeMB > 25) {
-    //             processedFile = await compressFile(file, {
-    //                 maxSizeMB: 20,
-    //                 maxWidthOrHeight: 2560,
-    //                 quality: 0.92,
-    //             });
-    //         }
+            // Smart compression
+            if (sizeMB > 25) {
+                processedFile = await compressFile(file, {
+                    maxSizeMB: 20,
+                    maxWidthOrHeight: 2560,
+                    quality: 0.92,
+                });
+            }
 
-    //         const type = processedFile.type;
-    //         if (type.startsWith('image/')) {
-    //             const reader = new FileReader();
-    //             reader.onload = () => {
-    //                 setImage(reader.result);
-    //                 setPdfFile(null);
-    //                 setPdfName('');
-    //                 setPdfSize(0);
-    //                 setIsProcessing(false);
-    //                 showSuccess(`Image loaded! Size: ${formatFileSize(processedFile.size)}`);
-    //             };
-    //             reader.readAsDataURL(processedFile);
-    //         } else if (type === 'application/pdf') {
-    //             setPdfFile(processedFile);
-    //             setImage(null);
-    //             setPdfName(processedFile.name);
-    //             setPdfSize((processedFile.size / (1024 * 1024)).toFixed(2));
-    //             setIsProcessing(false);
-    //             showSuccess(`PDF loaded! Size: ${formatFileSize(processedFile.size)}`);
-    //         }
-    //     } catch (error) {
-    //         setIsProcessing(false);
-    //         showError(error, 'File Processing Failed');
-    //     }
-    // };
+            const type = processedFile.type;
+            if (type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = () => {
+                    setImage(reader.result);
+                    setPdfFile(null);
+                    setPdfName('');
+                    setPdfSize(0);
+                    setIsProcessing(false);
+                    showSuccess(`Image loaded! Size: ${formatFileSize(processedFile.size)}`);
+                };
+                reader.readAsDataURL(processedFile);
+            } else if (type === 'application/pdf') {
+                setPdfFile(processedFile);
+                setImage(null);
+                setPdfName(processedFile.name);
+                setPdfSize((processedFile.size / (1024 * 1024)).toFixed(2));
+                setIsProcessing(false);
+                showSuccess(`PDF loaded! Size: ${formatFileSize(processedFile.size)}`);
+            }
+        } catch (error) {
+            setIsProcessing(false);
+            showError(error, 'File Processing Failed');
+        }
+    };
 
     // Streaming PDF generation with size control
     const generateAndUploadPdf = async () => {
         if (!mrn.trim()) {
             showError(new Error('Please enter the patient MRN'), 'Validation Error');
+            return;
+        }
+        if (!isMRNVerified) {
+            showError(new Error('Please verify the patient MRN before uploading'), 'Verification Required');
             return;
         }
         if (capturedImages.length === 0) {
@@ -861,65 +865,78 @@ const UniversalDocumentScanner = () => {
             showError(err, 'PDF upload failed')
         }
     };
-    // Add these functions to the component (inside the UniversalDocumentScanner component)
 
-    // const uploadCroppedImage = useCallback(async () => {
-    //     const cropper = cropperRef.current?.cropper;
-    //     if (!cropper) return;
+    const uploadCroppedImage = useCallback(async () => {
+        const cropper = cropperRef.current?.cropper;
+        if (!cropper) return;
 
-    //     setIsProcessing(true);
-    //     try {
-    //         const canvas = cropper.getCroppedCanvas({
-    //             width: 1600,
-    //             height: Math.round(1600 * (297 / 210)),
-    //             imageSmoothingEnabled: true,
-    //             imageSmoothingQuality: 'high',
-    //         });
+        if (!mrn.trim()) {
+            showError(new Error('Please enter the patient MRN'), 'Validation Error');
+            return;
+        }
+        if (!isMRNVerified) {
+            showError(new Error('Please verify the patient MRN before uploading'), 'Verification Required');
+            return;
+        }
 
-    //         const blob = await new Promise((resolve) =>
-    //             canvas.toBlob(resolve, 'image/jpeg', 0.90)
-    //         );
-    //         const file = new File([blob], `cropped-${Date.now()}.jpg`, { type: 'image/jpeg' });
+        setIsProcessing(true);
+        try {
+            const canvas = cropper.getCroppedCanvas({
+                width: 1600,
+                height: Math.round(1600 * (297 / 210)),
+                imageSmoothingEnabled: true,
+                imageSmoothingQuality: 'high',
+            });
 
-    //         const formData = new FormData();
-    //         formData.append('file', file);
-    //         formData.append('patientMRN', mrn);
-    //         formData.append('fileName', fileName);
+            const blob = await new Promise((resolve) =>
+                canvas.toBlob(resolve, 'image/jpeg', 0.90)
+            );
+            const file = new File([blob], `cropped-${Date.now()}.jpg`, { type: 'image/jpeg' });
 
-    //         await axiosInstance.post('/clerk/uploadDoc', formData);
-    //         setIsProcessing(false);
-    //         showSuccess('Image uploaded successfully!');
-    //         setImage(null);
-    //     } catch (error) {
-    //         setIsProcessing(false);
-    //         showError(error, 'Image Upload Failed');
-    //     }
-    // }, [mrn, fileName, showSuccess, showError]);
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('patientMRN', mrn);
+            formData.append('fileName', fileName);
 
-    // const uploadPdf = useCallback(async () => {
-    //     if (!mrn.trim()) {
-    //         showError(new Error('Please enter the patient MRN'), 'Validation Error');
-    //         return;
-    //     }
+            await axiosInstance.post('/clerk/uploadDoc', formData);
+            setIsProcessing(false);
+            showSuccess('Image uploaded successfully!');
+            setImage(null);
+        } catch (error) {
+            setIsProcessing(false);
+            showError(error, 'Image Upload Failed');
+        }
+    }, [mrn, fileName, isMRNVerified, showSuccess, showError]);
 
-    //     setIsProcessing(true);
-    //     try {
-    //         const formData = new FormData();
-    //         formData.append('file', pdfFile);
-    //         formData.append('patientMRN', mrn);
-    //         formData.append('fileName', fileName);
+    const uploadPdf = useCallback(async () => {
+        if (!mrn.trim()) {
+            showError(new Error('Please enter the patient MRN'), 'Validation Error');
+            return;
+        }
+        if (!isMRNVerified) {
+            showError(new Error('Please verify the patient MRN before uploading'), 'Verification Required');
+            return;
+        }
 
-    //         await axiosInstance.post('/clerk/uploadDoc', formData);
-    //         setIsProcessing(false);
-    //         showSuccess('PDF uploaded successfully!');
-    //         setPdfFile(null);
-    //         setPdfName('');
-    //         setPdfSize(0);
-    //     } catch (error) {
-    //         setIsProcessing(false);
-    //         showError(error, 'PDF Upload Failed');
-    //     }
-    // }, [mrn, fileName, pdfFile, showSuccess, showError]);
+        setIsProcessing(true);
+        try {
+            const formData = new FormData();
+            formData.append('file', pdfFile);
+            formData.append('patientMRN', mrn);
+            formData.append('fileName', fileName);
+
+            await axiosInstance.post('/clerk/uploadDoc', formData);
+            setIsProcessing(false);
+            showSuccess('PDF uploaded successfully!');
+            setPdfFile(null);
+            setPdfName('');
+            setPdfSize(0);
+        } catch (error) {
+            setIsProcessing(false);
+            showError(error, 'PDF Upload Failed');
+        }
+    }, [mrn, fileName, pdfFile, isMRNVerified, showSuccess, showError]);
+
     return (
         <div className="max-w-4xl mx-auto p-4 md:p-6" >
             <div className="bg-white rounded-lg shadow-md p-6" >
@@ -966,6 +983,7 @@ const UniversalDocumentScanner = () => {
                         </div>
                     )}
 
+                {/* Patient MRN with Verification */}
                 <div className="mb-6">
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                         Patient MRN
@@ -976,7 +994,9 @@ const UniversalDocumentScanner = () => {
                             value={mrn}
                             onChange={(e) => {
                                 setMrn(e.target.value);
-                                setErrorMessage(""); // Clear error when user types
+                                setErrorMessage("");
+                                setIsMRNVerified(false);
+                                setPatientName("");
                             }}
                             className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
                             placeholder="e.g., MRN123456"
@@ -989,7 +1009,8 @@ const UniversalDocumentScanner = () => {
 
                                 try {
                                     setLoadingMRN(true);
-                                    setErrorMessage(""); // Reset previous error
+                                    setErrorMessage("");
+                                    setIsMRNVerified(false);
 
                                     const response = await getMRN({ mrn });
                                     const patientResults = response?.data?.data?.patientMRN?.results;
@@ -1000,14 +1021,19 @@ const UniversalDocumentScanner = () => {
                                             return displayText.split(" - ")[1] || "Unknown";
                                         });
                                         setPatientName(names.join(", "));
+                                        setIsMRNVerified(true);
                                     } else {
                                         setPatientName("");
                                         setErrorMessage("The user is not registered in Bahmni. Please verify the MRN and try again.");
+                                        setIsMRNVerified(false);
+                                        showError(new Error('Patient with this MRN does not exist'), 'Verification Failed');
                                     }
                                 } catch (err) {
                                     console.error(err);
                                     setPatientName("");
                                     setErrorMessage("An error occurred while fetching the patient details. Please try again.");
+                                    setIsMRNVerified(false);
+                                    showError(err, 'Verification Failed');
                                 } finally {
                                     setLoadingMRN(false);
                                 }
@@ -1015,7 +1041,7 @@ const UniversalDocumentScanner = () => {
                             className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
                             disabled={loadingMRN}
                         >
-                            {loadingMRN ? "Searching..." : "Search"}
+                            {loadingMRN ? "Verifying..." : "Verify Patient"}
                         </button>
                     </div>
 
@@ -1032,11 +1058,6 @@ const UniversalDocumentScanner = () => {
                     )}
                 </div>
 
-
-
-
-
-
                 {/* File name Input */}
                 <div className="mb-6" >
                     <label className="block text-sm font-medium text-gray-700 mb-2" > File Name </label>
@@ -1052,7 +1073,8 @@ const UniversalDocumentScanner = () => {
 
                 {/* Action Buttons */}
                 <div className="flex flex-col sm:flex-row gap-4 mb-6" >
-                    {/* <label className="flex-1 cursor-pointer" >
+                    {/**
+                    <label className="flex-1 cursor-pointer" >
                         <input
                             type="file"
                             accept="image/*,application/pdf"
@@ -1064,7 +1086,8 @@ const UniversalDocumentScanner = () => {
                             <FiUpload className="text-blue-600" />
                             <span className="text-sm font-medium text-gray-700" > Upload File </span>
                         </div>
-                    </label> */}
+                    </label>
+                    */}
 
                     < button
                         onClick={() => setShowWebcam(!showWebcam)}
@@ -1318,7 +1341,7 @@ const UniversalDocumentScanner = () => {
                             < button
                                 onClick={generateAndUploadPdf}
                                 className="w-full mt-4 flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 transition disabled:bg-gray-400"
-                                disabled={isProcessing}
+                                disabled={isProcessing || !isMRNVerified}
                             >
                                 <FiUpload />
                                 {
@@ -1360,7 +1383,7 @@ const UniversalDocumentScanner = () => {
                             < button
                                 onClick={uploadCroppedImage}
                                 className="w-full mt-4 flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 transition disabled:bg-gray-400"
-                                disabled={isProcessing}
+                                disabled={isProcessing || !isMRNVerified}
                             >
                                 <FiUpload />
                                 {isProcessing ? 'Uploading...' : 'Upload Cropped Image'}
@@ -1384,7 +1407,7 @@ const UniversalDocumentScanner = () => {
                             < button
                                 onClick={uploadPdf}
                                 className="w-full mt-4 flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 transition disabled:bg-gray-400"
-                                disabled={isProcessing}
+                                disabled={isProcessing || !isMRNVerified}
                             >
                                 <FiUpload />
                                 {isProcessing ? 'Uploading...' : 'Upload PDF'}
