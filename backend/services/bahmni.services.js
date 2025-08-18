@@ -276,7 +276,7 @@ class BahmniService {
         try {
             console.log("Getting provider UUID from session...");
 
-            const url = `${env.bahmni.baseUrl}/ws/rest/v1/encounter?encounterType=${encounterType}&order=desc&patient=${patientUuid}&v=custom:(uuid,provider,visit:(uuid,startDatetime,stopDatetime),obs:(uuid,concept:(uuid,name),groupMembers:(id,uuid,obsDatetime,value,comment)))`;
+            const url = `${env.bahmni.baseUrl}/ws/rest/v1/provider`;
 
             const response = await this._makeRequest("get", url);
             console.log(response);
@@ -285,7 +285,7 @@ class BahmniService {
                 throw new Error("No encounters found for this patient and encounter type");
             }
 
-            const providerUuid = response.results[0].provider?.uuid;
+            const providerUuid = response.results[0].uuid;
             if (!providerUuid) {
                 throw new Error("Provider not found in encounter");
             }
