@@ -20,7 +20,7 @@ const uploadToBahmni = async (req, res, next) => {
         if (!documentId || !mrnNumber) {
             throw new ApiError(400, "Document ID and MRN number are required");
         }
-
+        console.log(documentId);
         // Get document from database
         const document = await db.document.findUnique({
             where: { id: +documentId },
@@ -30,8 +30,8 @@ const uploadToBahmni = async (req, res, next) => {
             throw new ApiError(404, "Document not found");
         }
 
-        if (document.status !== "approved") {
-            throw new ApiError(400, "Only approved documents can be uploaded");
+        if (document.status !== "approved" && document.status !== "uploaded") {
+            throw new ApiError(400, "Only approved or uploaded documents can be uploaded");
         }
 
         // Read file content

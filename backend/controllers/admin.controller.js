@@ -6,7 +6,7 @@ const { bahmniService } = require("../services/bahmni.services");
 const path = require("path");
 const env = require("../config/env");
 const fs = require("fs").promises;
-
+const { uploadToBahmni } = require("../controllers/uploader.controller")
 exports.getAllDocuments = asyncHandler(async (req, res) => {
     // Parse query parameters
     const page = parseInt(req.query.page) || 1;
@@ -322,7 +322,7 @@ exports.getOverview = asyncHandler(async (req, res) => {
         "Overview retrieved successfully")
 })
 
-exports.replaceDocumentInBahmni = asyncHandler(async (req, res) => {
+exports.replaceDocumentInBahmni = asyncHandler(async (req, res, next) => {
     console.log(req.body)
     const { id, mrnNumber } = req.body;
 
@@ -387,121 +387,15 @@ exports.replaceDocumentInBahmni = asyncHandler(async (req, res) => {
     const testUUid = await bahmniService.getTestUuid();
     const { startDatetime, stopDatetime } = await bahmniService.getVisitStartDateAndEndDate(visitUuid);
 
-
-    // delete that document from the bahmni
-    const deletedDoc = await bahmniService.deleteDocument(bahmniUrl);
-
-    await bahmniService.linkDocumentToPatient({
-        patientUuid,
-        visitTypeUuid,
-        visitStartDate: startDatetime,
-        encounterTypeUuid,
-        encounterDateTime: null,
-        providerUuid,
-        visitUuid,
-        locationUuid,
-        documents: [
-            {
-                testUuid: testUUid,
-                image: bahmniUrl,
-                obsDateTime: null,
-            },
-        ],
-    });
-
-
-    // <-------------------------------------uploading to bahmni ---------------------------------------->
-
-
-    // Read file content
-    const baseDir = path.resolve(__dirname, "..");
-    const filePath = path.join(baseDir, newFilePath);
-    let fileContent;
-
-    // read the file
     try {
-        await fs.access(filePath); // Check if file exists
-        const stats = await fs.stat(filePath);
-
-        // Check file size (limit to 10MB for safety)
-        const maxSize = 10 * 1024 * 1024; // 10MB
-        if (stats.size > maxSize) {
-            throw new Error(`File too large: ${(stats.size / (1024 * 1024)).toFixed(2)}MB. Maximum allowed: 10MB`);
-        }
-
-        console.log(`Reading file: ${filePath} (${(stats.size / (1024 * 1024)).toFixed(2)}MB)`);
-        fileContent = await fs.readFile(filePath);
-    } catch (err) {
-        console.error("File read error:", err);
+        const deletedDoc = await bahmniService.deleteVisit(visitUuid);
+        req.body.documentId = id;   // Ensure id from replaceDocumentInBahmni
+        req.body.mrnNumber = mrnNumber;
+        req.file = file
+        return await uploadToBahmni(req, res, next);
+    } catch (error) {
+        console.log(error);
     }
+    // delete that document from the bahmni
 
-
-
-
-    // // Create visit
-    // const visitUuid = await bahmniService.createVisit(
-    //     patientUuid,
-    //     env.bahmni.visitType || "OPD",
-    //     env.bahmni.locationName || "Bahmni Clinic"
-    // );
-
-    // Prepare document data
-    const fileName = document.fileName || path.basename(filePath);
-    const ext = path.extname(filePath).substring(1).toLowerCase();
-    const fileType = ext.match(/(jpg|jpeg|png|gif)$/) ? "image" : ext;
-
-    const format = ext;
-    const base64Content = fileContent.toString("base64");
-
-
-    // Upload document to Bahmni
-    const uploadResponse = await bahmniService.uploadDocument({
-        content: base64Content,
-        encounterTypeName: "Patient Document",
-        visitUuid,
-        format,
-        patientUuid,
-        fileType,
-        fileName
-    });
-
-    if (!uploadResponse?.url) {
-        throw new Error("Failed to upload document to Bahmni");
-    }
-
-
-
-
-    // Link document to patient
-    await bahmniService.linkDocumentToPatient({
-        patientUuid,
-        visitTypeUuid,
-        visitStartDate: startDatetime,
-        encounterTypeUuid,
-        encounterDateTime: null,
-        providerUuid,
-        visitUuid,
-        locationUuid,
-        documents: [
-            {
-                testUuid: testUUid,
-                image: uploadResponse.url,
-                obsDateTime: null,
-            },
-        ],
-    });
-
-    // Update document status only after everything succeeds
-    const updatedDocument = await db.document.update({
-        where: { id: +id },
-        data: {
-            status: "uploaded",
-            filePath: newFilePath,
-            fileName: newFileName,
-            bahmniUrl: uploadResponse.url,
-            uploadedAt: new Date(),
-        },
-    });
-
-    return ApiResponse(res, 200, updatedDocument, "Document was replaced successfully in bahmni")
 })

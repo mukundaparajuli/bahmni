@@ -451,6 +451,16 @@ class BahmniService {
             throw error;
         }
     }
+    async deleteVisit(visitUuid) {
+        try {
+            console.log('deleting patient visit')
+            const response = await this._makeRequest('delete', `${env.bahmni.baseUrl}/ws/rest/v1/visit/${visitUuid}?reason=Entered%20in%20error`);
+            return response;
+        } catch (error) {
+            console.log(error);
+            throw error;
+        }
+    }
 
 
 }
