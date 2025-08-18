@@ -356,7 +356,12 @@ exports.replaceDocumentInBahmni = asyncHandler(async (req, res, next) => {
     }
 
 
-
+    const updatedDocument = await db.document.update({
+        where: { id: parseInt(id) }, // or +id
+        data: {
+            filePath: newFilePath, // replace newPath with your actual value
+        },
+    });
     // get the bahmni url
     const bahmniUrl = document.bahmniUrl;
     const visitUuid = document.visitUUid;
@@ -391,7 +396,7 @@ exports.replaceDocumentInBahmni = asyncHandler(async (req, res, next) => {
         const deletedDoc = await bahmniService.deleteVisit(visitUuid);
         req.body.documentId = id;   // Ensure id from replaceDocumentInBahmni
         req.body.mrnNumber = mrnNumber;
-        req.file = file
+
         return await uploadToBahmni(req, res, next);
     } catch (error) {
         console.log(error);
