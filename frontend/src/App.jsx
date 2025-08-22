@@ -36,7 +36,7 @@ import UploaderInfo from './components/admin/UploaderInfo';
 import { Overview } from './components/admin/Overview';
 import AdminRescanner from './components/admin/AdminRescanner';
 import PerformanceSummary from './components/admin/PerformanceSummary';
-import UploadedDocuments from './components/uploader/Uploadeddocuments';
+import UploadedDocuments from './components/uploader/UploadedDocuments';
 
 const App = () => (
   <>
