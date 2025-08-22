@@ -1,8 +1,7 @@
 const bcrypt = require('bcrypt');
 const db = require('./config/db');
 const seedOptions = require('./utils/seed-options');
-const cron = require('node-cron');
-const { execSync } = require('child_process');
+
 
 const seedAdmin = async () => {
     try {
