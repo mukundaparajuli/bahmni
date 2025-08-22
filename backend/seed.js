@@ -4,19 +4,6 @@ const seedOptions = require('./utils/seed-options');
 const cron = require('node-cron');
 const { execSync } = require('child_process');
 
-// cleans the schema when some error occurs during the development phase
-const cleanSchemas = () => {
-    try {
-        execSync('npx prisma migrate reset --force', { stdio: 'inherit' });
-    } catch (err) {
-        console.log(err);
-    }
-};
-
-cron.schedule('0 0 */15 * *', async () => {
-    cleanSchemas();
-});
-
 const seedAdmin = async () => {
     try {
         // First seed the options data
