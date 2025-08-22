@@ -1,4 +1,4 @@
-import { Inbox, LayoutDashboardIcon, Scan } from "lucide-react"
+import { Inbox, LayoutDashboardIcon, Scan, UploadIcon } from "lucide-react"
 
 import {
     Sidebar,
@@ -20,6 +20,11 @@ const items = [
         title: "Upload Documents",
         url: "/uploader/approved",
         icon: Inbox,
+    },
+    {
+        title: "Uploaded Documents",
+        url: "/uploader/uploaded",
+        icon: UploadIcon,
     }
 ]
 export function AppSidebar() {

@@ -153,7 +153,7 @@ const ReviewDocumentCard = React.memo(({ document, refetch }) => {
             </div>
 
             {/* Preview Section */}
-            <div className="relative w-full h-48 rounded-md overflow-hidden border border-gray-200 mb-4">
+            <div className="relative w-full h-48 rounded-md overflow-hidden border border-gray-200 mb-4 flex justify-center items-center">
                 {isLoading && (
                     <div className="absolute inset-0 flex items-center justify-center bg-gray-50">
                         <Loader2 className="h-6 w-6 animate-spin text-gray-500" />

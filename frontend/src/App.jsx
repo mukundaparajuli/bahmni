@@ -36,6 +36,7 @@ import UploaderInfo from './components/admin/UploaderInfo';
 import { Overview } from './components/admin/Overview';
 import AdminRescanner from './components/admin/AdminRescanner';
 import PerformanceSummary from './components/admin/PerformanceSummary';
+import UploadedDocuments from './components/uploader/Uploadeddocuments';
 
 const App = () => (
   <>
@@ -98,6 +99,8 @@ const App = () => (
           <Route path="/uploader" element={<UploaderDashboard />} >
             <Route index element={<DocsToUpload />} />
             <Route path="upload" element={<DocsToUpload />} />
+            <Route path="approved" element={<DocsToUpload />} />
+            <Route path="uploaded" element={<UploadedDocuments />} />
           </Route>
 
           <Route path="/test" element={<AdminRescanner />} />

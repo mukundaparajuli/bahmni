@@ -5,11 +5,15 @@ import { Outlet } from 'react-router-dom'
 
 const ScannerDashboard = () => {
     return (
-        <div className='mt-8'>
+        <div className="h-screen flex mt-8">
             <SidebarProvider>
                 <AppSidebar />
-                <SidebarTrigger />
-                <Outlet />
+                <div className="flex flex-col flex-1 overflow-hidden">
+                    <SidebarTrigger />
+                    <main className="flex-1 overflow-auto">
+                        <Outlet />
+                    </main>
+                </div>
             </SidebarProvider>
         </div>
     )

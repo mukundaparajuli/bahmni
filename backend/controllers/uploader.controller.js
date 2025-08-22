@@ -214,7 +214,57 @@ const getAllApprovedDocuments = async (req, res, next) => {
     }
 };
 
+const getALlUploadedDocuments = async (req, res, next) => {
+    try {
+
+
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const skip = (page - 1) * limit;
+
+        // Get total count
+        const total = await db.document.count({
+            where: {
+                status: 'uploaded',
+                uploaderId: req.user.id
+            },
+        });
+
+
+        const uploadedDocs = await db.document.findMany({
+            where: {
+                status: 'uploaded',
+                uploaderId: req.user.id
+            },
+            skip,
+            take: limit,
+            orderBy: {
+                scannedAt: 'desc'
+            }
+        });
+
+
+        // Return empty array instead of 404 for better UX
+        return ApiResponse(res, 200, {
+            data: uploadedDocs,
+            page,
+            total,
+            totalPages: Math.ceil(total / limit),
+        },
+            uploadedDocs.length > 0
+                ? "Retrieved all uploaded documents"
+                : "No uploaded documents found",
+        );
+
+    } catch (error) {
+        console.error("Error retrieving uploaded documents:", error);
+        const apiError = new ApiError(500, "Failed to retrieve uploaded documents");
+        next(apiError);
+    }
+}
+
 module.exports = {
     uploadToBahmni,
     getAllApprovedDocuments,
+    getALlUploadedDocuments
 };

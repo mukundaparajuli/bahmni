@@ -135,7 +135,7 @@ const ScannedDocumentCard = React.memo(
         const statusStyles = STATUS_CONFIG[status] || STATUS_CONFIG.default;
 
         return (
-            <div className="w-full max-w-md bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200 p-4 relative">
+            <div className="w-full max-w-sm bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200 p-4 relative">
                 {/* Header */}
                 <div className="flex items-center gap-2 mb-3">
                     <FileText className="h-5 w-5 text-blue-500 flex-shrink-0" aria-hidden="true" />
@@ -150,7 +150,7 @@ const ScannedDocumentCard = React.memo(
                 {/* Content */}
                 <div className="space-y-4">
                     {/* Preview Section */}
-                    <div className="relative w-full h-48 rounded-md overflow-hidden border border-gray-200">
+                    <div className="relative w-full h-48 rounded-md overflow-hidden border border-gray-200 justify-center items-center">
                         {isLoading && (
                             <div className="absolute inset-0 flex items-center justify-center bg-gray-50">
                                 <Loader2 className="h-6 w-6 animate-spin text-gray-500" />
