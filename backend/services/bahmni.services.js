@@ -164,7 +164,7 @@ class BahmniService {
                 patientUuid: documentData.patientUuid,
                 encounterTypeName: documentData.encounterTypeName,
                 fileType: documentData.fileType,
-                fileName: documentData.fileName,
+                //fileName: documentData.fileName,
 
             };
 
@@ -410,13 +410,14 @@ class BahmniService {
     }
 
     async getTestUuid() {
-        try {
-            const response = await this._makeRequest('get', `${env.bahmni.baseUrl}/ws/rest/v1/concept?s=byFullySpecifiedName&name=Patient+Document&v=custom:(uuid,setMembers:(uuid, name: (name)))`);
-            return response.results[0].setMembers[2].uuid;
-        } catch (err) {
-            console.log("test uuid fetch error", err);
-            throw new Error(`Failed to get uuid: ${err.message} `);
-        }
+        // try {
+        //     const response = await this._makeRequest('get', `${env.bahmni.baseUrl}/ws/rest/v1/concept?s=byFullySpecifiedName&name=Patient+Document&v=custom:(uuid,setMembers:(uuid, name: (name)))`);
+        //     return response.results[0].setMembers[2].uuid;
+        // } catch (err) {
+        //     console.log("test uuid fetch error", err);
+        //     throw new Error(`Failed to get uuid: ${err.message} `);
+        // }
+        return "c4694ad6-3f10-11e4-adec-0800271c1b75";
     }
 
     async verifyDetails(data) {
