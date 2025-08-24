@@ -186,6 +186,29 @@ const getAllApprovedDocuments = async (req, res, next) => {
                     in: ["approved", "rescanned_approved"],
                 },
             },
+            include: {
+                scanner: {
+                    include: {
+                        department: true,
+                        education: true,
+                        profession: true,
+                    }
+                },
+                approver: {
+                    include: {
+                        department: true,
+                        education: true,
+                        profession: true,
+                    }
+                },
+                uploader: {
+                    include: {
+                        department: true,
+                        education: true,
+                        profession: true,
+                    }
+                }
+            },
             skip,
             take: limit,
             orderBy: {
@@ -235,6 +258,29 @@ const getALlUploadedDocuments = async (req, res, next) => {
             where: {
                 status: 'uploaded',
                 uploaderId: req.user.id
+            },
+            include: {
+                scanner: {
+                    include: {
+                        department: true,
+                        education: true,
+                        profession: true,
+                    }
+                },
+                approver: {
+                    include: {
+                        department: true,
+                        education: true,
+                        profession: true,
+                    }
+                },
+                uploader: {
+                    include: {
+                        department: true,
+                        education: true,
+                        profession: true,
+                    }
+                }
             },
             skip,
             take: limit,

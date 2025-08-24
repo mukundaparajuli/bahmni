@@ -18,6 +18,7 @@ import useToastError from "@/hooks/useToastError";
 import "@/utils/pdf-config";
 import { getFileSizeFromUrl } from "@/utils/get-file-size";
 import { uploadToBahmni } from "@/api/uploader-api";
+import { useMutation } from "@tanstack/react-query";
 
 const STATUS_CONFIG = {
     draft: { bg: "bg-yellow-100", text: "text-yellow-800", dot: "bg-yellow-500" },
@@ -50,6 +51,7 @@ const ScannedDocumentCard = React.memo(
             reviewedAt,
             approver,
         } = document;
+        console.log(document);
         const [isPreviewOpen, setIsPreviewOpen] = useState(false);
         const [isInfoDialogOpen, setIsInfoDialogOpen] = useState(false);
         const [isLoading, setIsLoading] = useState(true);
@@ -91,20 +93,23 @@ const ScannedDocumentCard = React.memo(
             if (e.target === e.currentTarget) setIsPreviewOpen(false);
         }, []);
 
-        const handleUploadToBahmni = useCallback(async () => {
-            setUploading(true);
-            await uploadToBahmni({ documentId: id, mrnNumber: patientMRN });
-            showSuccess("Successfully uploaded to bahmni");
-            try {
-                setUploading(true);
-                await uploadToBahmni({ documentId: id, mrnNumber: patientMRN });
-                showSuccess("Successfully uploaded to bahmni");
-            } catch (error) {
-                showError("Could not upload the document");
-            } finally {
-                setUploading(false);
-            }
-        })
+
+        // uploading to bahmni
+        const uploadMutation = useMutation({
+            mutationFn: () => uploadToBahmni({ documentId: id, mrnNumber: patientMRN }),
+            onSuccess: () => {
+                showSuccess(`${fileName} uploaded successfully.`);
+                refetch?.();
+            },
+            onError: (error) => {
+                showError(`Failed to upload document: ${error.message}`);
+                console.error(error);
+            },
+        });
+
+        const handleUploadToBahmni = useCallback(() => {
+            uploadMutation.mutate();
+        }, [uploadMutation]);
 
         useEffect(() => {
             const handleEscape = (e) => {
@@ -404,9 +409,9 @@ const ScannedDocumentCard = React.memo(
                             onClick={handleUploadToBahmni}
                             className="w-full h-9 text-white text-sm"
                             aria-label="Upload to Bahmni"
-                            disabled={uploading}
+                            disabled={uploadMutation.isPending || uploading}
                         >
-                            {uploading ? (
+                            {uploadMutation.isPending ? (
                                 <>
                                     <Loader2 className="h-4 w-4 animate-spin mr-2" />
                                     Uploading...

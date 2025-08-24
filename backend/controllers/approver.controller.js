@@ -35,9 +35,27 @@ exports.approveDocument = asyncHandler(async (req, res) => {
             fileName: document.fileName,
         },
         include: {
-            scanner: true,
-            approver: true,
-            uploader: true,
+            scanner: {
+                include: {
+                    department: true,
+                    education: true,
+                    profession: true,
+                }
+            },
+            approver: {
+                include: {
+                    department: true,
+                    education: true,
+                    profession: true,
+                }
+            },
+            uploader: {
+                include: {
+                    department: true,
+                    education: true,
+                    profession: true,
+                }
+            }
         },
     });
 
@@ -87,9 +105,27 @@ exports.rejectDocument = asyncHandler(async (req, res) => {
             fileName: document.fileName,
         },
         include: {
-            scanner: true,
-            approver: true,
-            uploader: true,
+            scanner: {
+                include: {
+                    department: true,
+                    education: true,
+                    profession: true,
+                }
+            },
+            approver: {
+                include: {
+                    department: true,
+                    education: true,
+                    profession: true,
+                }
+            },
+            uploader: {
+                include: {
+                    department: true,
+                    education: true,
+                    profession: true,
+                }
+            }
         },
     });
 
@@ -120,9 +156,27 @@ exports.getScannedDocuments = asyncHandler(async (req, res) => {
         take: limit,
         orderBy: { scannedAt: 'desc' },
         include: {
-            scanner: true,
-            approver: true,
-            uploader: true,
+            scanner: {
+                include: {
+                    department: true,
+                    education: true,
+                    profession: true,
+                }
+            },
+            approver: {
+                include: {
+                    department: true,
+                    education: true,
+                    profession: true,
+                }
+            },
+            uploader: {
+                include: {
+                    department: true,
+                    education: true,
+                    profession: true,
+                }
+            }
         },
     });
 
@@ -150,9 +204,27 @@ exports.getAllMyApprovedDocuments = asyncHandler(async (req, res) => {
         take: limit,
         orderBy: { reviewedAt: 'desc' },
         include: {
-            scanner: true,
-            approver: true,
-            uploader: true,
+            scanner: {
+                include: {
+                    department: true,
+                    education: true,
+                    profession: true,
+                }
+            },
+            approver: {
+                include: {
+                    department: true,
+                    education: true,
+                    profession: true,
+                }
+            },
+            uploader: {
+                include: {
+                    department: true,
+                    education: true,
+                    profession: true,
+                }
+            }
         },
     });
 
@@ -184,9 +256,27 @@ exports.getAllMyRejectedDocuments = asyncHandler(async (req, res) => {
         take: limit,
         orderBy: { reviewedAt: 'desc' },
         include: {
-            scanner: true,
-            approver: true,
-            uploader: true,
+            scanner: {
+                include: {
+                    department: true,
+                    education: true,
+                    profession: true,
+                }
+            },
+            approver: {
+                include: {
+                    department: true,
+                    education: true,
+                    profession: true,
+                }
+            },
+            uploader: {
+                include: {
+                    department: true,
+                    education: true,
+                    profession: true,
+                }
+            }
         },
     });
 
@@ -230,9 +320,27 @@ exports.getSearchedDocuments = asyncHandler(async (req, res) => {
         take: limit,
         orderBy: { scannedAt: 'desc' },
         include: {
-            scanner: true,
-            approver: true,
-            uploader: true,
+            scanner: {
+                include: {
+                    department: true,
+                    education: true,
+                    profession: true,
+                }
+            },
+            approver: {
+                include: {
+                    department: true,
+                    education: true,
+                    profession: true,
+                }
+            },
+            uploader: {
+                include: {
+                    department: true,
+                    education: true,
+                    profession: true,
+                }
+            }
         },
     });
 
