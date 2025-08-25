@@ -34,7 +34,7 @@ const STATUS_CONFIG = {
 };
 
 const ScannedDocumentCard = React.memo(
-    ({ document, deleteButton, onDelete, isScanner, isApprover, isUploader }) => {
+    ({ document, deleteButton, onDelete, isScanner, isApprover, isUploader, refetch }) => {
         const { showError, showSuccess } = useToastError();
         const {
             id,
@@ -81,7 +81,7 @@ const ScannedDocumentCard = React.memo(
             } finally {
                 setIsSubmitting(false);
             }
-        }, [id, status, showSuccess, showError]);
+        }, [id, status, showSuccess, showError, refetch]);
 
         const handleRescanOrResubmit = useCallback(() => {
             navigate("/rescan", {

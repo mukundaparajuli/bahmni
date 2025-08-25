@@ -1,17 +1,20 @@
-import React from 'react'
+import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getAllApprovedDocuments } from '@/api/uploader-api';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '../ui/pagination';
-import { Loader2 } from 'lucide-react';
 import ScannedDocumentCard from '../ScannedDocumentCard';
 
 const DocsToUpload = () => {
-    const { data, isPending, isError, error } = useQuery({
-        queryKey: ['docs-to-upload'],
-        queryFn: getAllApprovedDocuments
+    const [page, setPage] = useState(1);
+    const limit = 16;
+
+    const { data, isPending, isError, error, refetch } = useQuery({
+        queryKey: ['docs-to-upload', page],
+        queryFn: () => getAllApprovedDocuments({ page, limit }),
     });
+
     const docs = data?.data?.data?.data || [];
-    const totalPages = data?.data?.data?.totalPages;
+    const totalPages = data?.data?.data?.totalPages || 1;
 
     if (isPending) {
         return <div className='text-center text-gray-500'>Loading...</div>;
@@ -31,11 +34,9 @@ const DocsToUpload = () => {
             <h1 className='text-2xl font-bold mb-4'>Approved Documents</h1>
             <div>
                 <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                    {docs.length > 0 && (
-                        docs.map((doc) => (
-                            <ScannedDocumentCard key={doc.id} document={doc} isUploader />
-                        ))
-                    )}
+                    {docs.map((doc) => (
+                        <ScannedDocumentCard key={doc.id} document={doc} isUploader refetch={refetch} />
+                    ))}
                 </div>
             </div>
 
@@ -73,8 +74,7 @@ const DocsToUpload = () => {
                 </Pagination>
             )}
         </div>
-    )
-}
-
+    );
+};
 
 export default DocsToUpload;
